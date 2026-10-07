@@ -1,0 +1,17 @@
+10 states, 80 branches to run, 3 workers
+20:04:29 seed 25001: A [7, 6, 6, 8] B [8, 1, 5, 8] (130s; 9 states left, 135s so far)
+20:05:35 seed 25002: A [1, 3, 2, 1] B [1, 2, 3, 2] (196s; 8 states left, 200s so far)
+20:06:33 seed 25000: A [3, 5, 1, 1] B [1, 3, 3, 5] (251s; 7 states left, 259s so far)
+20:08:39 seed 25004: A [1, 6, 7, 5] B [1, 5, 2, 3] (179s; 6 states left, 385s so far)
+20:09:02 seed 25003: A [2, 1, 3, 3] B [4, 2, 3, 3] (267s; 5 states left, 408s so far)
+20:10:07 seed 25005: A [6, 3, 6, 3] B [4, 1, 1, 1] (208s; 4 states left, 472s so far)
+20:12:35 seed 25006: A [1, 1, 1, 3] B [1, 1, 1, 3] (230s; 3 states left, 620s so far)
+20:14:07 seed 25007: A [1, 2, 2, 1] B [1, 3, 3, 1] (298s; 2 states left, 712s so far)
+20:14:57 seed 25008: A [1, 1, 1, 1] B [1, 2, 1, 1] (285s; 1 states left, 762s so far)
+20:15:51 seed 25009: A [1, 1, 1, 1] B [1, 2, 1, 1] (190s; 0 states left, 817s so far)
+mimicfc - mimic from 3-3: 10 states, 80 branches
+  placement B - A: -0.350 ±0.865 (t over states; bootstrap [-1.125, +0.275]); A 2.75, B 2.40
+  B changed a hero action in 100% of states, 100% of branch pairs; same-k correlation 0.37620011227219513
+  effect SD across states 0.91, heterogeneity p=0.042
+  4-1: A hp 68.7 gold 58.8 lvl 7.05  B hp 71.3 gold 53.1 lvl 7.10
+  5-1: A hp 56.3 gold 70.8 lvl 8.00  B hp 66.1 gold 71.1 lvl 8.00

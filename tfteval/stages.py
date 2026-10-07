@@ -8,8 +8,10 @@ with index `idx` is followed by the round `game_round.game_rounds[idx]`:
     idx 3..8    2-1, 2-2, 2-3, 2-5 (the 2-4 carousel runs right after this planning phase), 2-6, 2-7 PvE
     then 6 indices per stage the same way: idx 9 = 3-1, idx 14 = 3-7, idx 15 = 4-1, ...
 
-PvE losses cost no HP and do not touch streaks (the fork still leaves PvE damage out, FORK_NOTES.md
-"Other findings"); 6-7 (idx 32) is a PvE round on the fork.
+PvE results do not touch streaks. PvE losses cost HP only with the fork's `pve_damage` option (on in
+the "realistic" simulator profile, tfteval.runner.SIM_PROFILES; FORK_NOTES.md row 10); the damage
+model below counts PvP fights only, 0 for PvE rounds under either profile. 6-7 (idx 32) is a PvE
+round on the fork.
 
 Damage. Losing a PvP fight costs the base damage of the stage plus damage for the winner's surviving
 units. Both numbers come from the simulator's economy rules profile (Simulator/game/rules.py on the

@@ -14,6 +14,8 @@ python -m pytest tests        # 或者 python tests/test_stats.py
 
 需要 Python 3.10 以上。
 
+整套测试要打真实对局，单进程约 25 分钟（`tests/test_branching.py` 约 18 分钟，每个测试在两套模拟器配置下各跑一遍）；`TFT_TEST_WORKERS` 设 `tests/test_regression.py` 重放参考对局用几个进程（默认 2）。不打对局的部分（除 `test_branching.py`、`test_regression.py`、`test_sim_profiles.py` 和 `test_branch_compare.py` 的 A/A 之外）约 15 秒。
+
 ## 跑一组对局
 
 ```bash
@@ -30,9 +32,37 @@ python scripts/compare.py results/hero_rule.json results/hero_noisy20.json --pol
 
 可用的策略：`random`、`rule`（模拟器自带的规则 bot）、`noisyN`（有 N% 动作随机的规则 bot）、`mimic` 和它的经济变体 `fast8`、`rolldown8`、`hp50`、`fast8roll`、`fodder2`（计划加执行器，见下）、`llm`（由大模型出计划）、`stance`（规则姿态策略第二版）、`stance1`（第一版）和它们的对照（见下）。写成 `别名=策略` 可以让某个座位以自己的名字出现在统计里。
 
+## 模拟器配置：`realistic` 和 `default`
+
+fork 的 `develop`（`scripts/setup_sim.sh` 固定在 2ba01d5）加了几个让对局更接近正式游戏的选项，在模拟器里默认都关（fork 的 `FORK_NOTES.md`，"Realism options"）。我们把它们打包成两套配置（`tfteval/runner.py` 的 `SIM_PROFILES`），新跑的对局默认用 `realistic`：
+
+| 配置 | 选项 |
+|---|---|
+| `realistic` | `pve_damage`：野怪回合输了扣血（按对战的公式：阶段伤害加每个活下来的野怪）；`fortune_orbs`：命运羁绊赢下对战后掉战利品球；`carousel_fixes`：第五次选秀（5-4）按 10.19 版本的装备表，装备随机配给单位；`hide_next_opponent`：下回合的对手在战斗时才抽，备战阶段只能看到候选集合；`rng_streams="keyed"`：每件事（某个座位刷新商店、某场战斗、本回合的对手匹配……）各用一条随机流，每个座位的规则 bot 各有一个发生器 |
+| `default` | 全关，和加这些选项之前的 fork 一样 |
+
+用法：`run_lobby.py --sim default`（`smoke_executor.py`、`branch_compare.py` 同样有 `--sim`），或设 `TFT_SIM`，每个工作进程都读它；配置名后面可以改单个选项，如 `--sim realistic,rng_streams=shared`。结果里 `sim` 记录配置（连同改动），`sim_options` 记录实际传给 `TFTConfig` 的选项，`carousel_pickers` 记录哪些座位自己选秀。经济规则（`--rules`、`TFT_RULES`）与此无关，照旧单独设。换了配置的对局不能和另一套配置的对局放在一起比。
+
+- **选秀**：计划座位（带执行器的 `mimic`、`stance` 等）选秀时自己挑（`PlanExecutor.carousel_pick`）：先挑目标阵容里的单位（星级高、费用高的优先）；没有的话挑带着想要的装备的单位：能和手里的散件（装备栏里的，或场上单位身上单独的一件）合成的散件，或者成装；再没有就挑最贵的（模拟器的默认）。出错时也退回默认。runner 在 `env.reset` 之前把选秀函数挂上，1-1 也是自己挑；其他座位（规则 bot 等）照旧用模拟器的默认。每次选秀（回合、可选的单位、选了哪个、理由）记在执行器的 `carousel_log` 里，`smoke_executor.py` 写进输出的 `games[].carousel`，执行器统计里有 `carousel_picks` 和按理由的计数（`carousel_comp`、`carousel_item`、`carousel_default`）。`TFT_PICKERS=0`（或 `play_game(..., pickers=False)`）全部用默认。分叉时换了策略的座位换成新策略的选秀函数。
+- **看不到下回合的对手**：`hide_next_opponent` 下备战阶段 `game_round.matchups` 是空的，env 在 `info["opponent_candidates"]` 里给出候选集合（最近对手规则没排除的、还活着的对手；野怪回合之前为空），`describe()` 的 `next_from` 用的就是它（`tfteval/public.py`）。我们的代码从不读确切的对手；`tests/test_sim_profiles.py` 在一局 `realistic` 里逐回合核对 `matchups` 为空、`next_from` 等于 env 给的候选集合和 `player.opponent_options`。
+- **规则 bot 的随机数**：keyed 下每个座位的规则 bot 用自己的发生器（`player.default_agent.rng`）选阵容，不再用 numpy 全局的；执行器就是它那个座位的规则 bot，也从这个发生器抽。
+- **回归**：`tests/test_regression.py` 核对两份参考。`executor_reference.json` 是 `default` 配置、不挂选秀函数，在 2ba01d5 上照旧逐动作重放，没有重录；`executor_reference_realistic.json` 是 `realistic` 配置加选秀函数，在 2ba01d5 上新录的。`tests/test_branching.py` 的每个测试在两套配置下各跑一遍。
+- **扣血表没有算野怪**：`tfteval/stages.py` 的 `dmg_per_loss`、`losses_to_death` 只算对战，野怪回合为 0；`realistic` 下野怪回合输了也扣血，但下文冒烟的 56 局里 hero 在野怪回合一次血都没掉，暂时没改。给大模型的提示词里"输给野怪不扣血"那句也还没改。
+
+**耗时。** `realistic` 一开始比 `default` 慢十几倍。原因在模拟器：规则 bot 给每个候选的买入和换人在棋盘的深拷贝上打分（`Simulator/generators/default_agent.py` 第 306、324、467、491、597 行的 `deepcopy(player.board)`，7 个规则 bot 一局约 10 万次），每个棋子都引用 env 的战斗上下文（`Simulator/battle/champion.py:153`，`self.ctx = get_ctx()`），每次拷贝连上下文一起拷：它的随机数发生器、战斗列表；keyed 下还有 `KeyedStreams`，它持有当前的 `Game_Round`（`Simulator/simulators/tft_simulator.py:265` 设置 `streams.game_round`，`Simulator/rng.py:215`、`221`），等于拷了整局游戏。2-3 时拷一次棋盘 keyed 要 12 毫秒，shared 1 毫秒。runner 在各座位选动作的那段时间让深拷贝共享这个上下文（`runner.light_board_copies`：给上下文的类加一个 deepcopy 分派项，不改模拟器）。拷贝只用来打分，既不从它的上下文抽随机数也不往里写，选动作本身也不从 env 的随机流抽（动作在 `env.step` 里执行，在这段时间之外），所以对局一点不变：`tests/test_sim_profiles.py` 开、关各打一局逐座位核对，下表每一行修之前和修之后的名次、步数也完全相同。单进程，种子 24000，set4：
+
+| 对局 | 修之前 | 修之后 |
+|---|---|---|
+| `hero=stance:1,rule:7`，`realistic` | 655 秒 | 41 秒 |
+| 8 种座位各一个（`rule`、`mimic`、`mimicfc`、`fast8`、`stance1`、`stance`、`stance+hold`、`stance+lossstreak`），`realistic` | 580 秒 | 33 秒 |
+| `hero=stance:1,rule:7`，`default` | 85 秒 | 36 秒 |
+| 8 种座位各一个，`default` | 68 秒 | 31 秒 |
+
+（`realistic` 修之前那两局跑的时候机器上还有 1～3 个别的进程，其余几局机器空闲。）修之后用 cProfile 看：战斗约占 53%，规则 bot 的棋盘拷贝约 45%，我们自己的代码（计划、执行器、`describe()`）每局约 0.2 秒，没有别的便宜可捡。正经的修法应该在 fork 里：拷贝棋子时不拷上下文，或者 `KeyedStreams` 不持有 `Game_Round`。
+
 ## 计划与执行器
 
-计划座位每回合出一份计划，由执行器（改过的规则 bot）展开成原子动作，见 `tfteval/planner.py`（计划者、计划编译）和 `tfteval/executor.py`（执行器）。计划的基本字段是 `comp`、`level_to`、`roll_floor`、`carry`。下面这些字段是给策略层用的，不写就和原来完全一样（`tests/test_regression.py` 用录下的动作序列逐个座位核对；参考序列最初在旧模拟器上、加这些字段之前录下，换 fork 后在 fork 上重录）。
+计划座位每回合出一份计划，由执行器（改过的规则 bot）展开成原子动作，见 `tfteval/planner.py`（计划者、计划编译）和 `tfteval/executor.py`（执行器）。计划的基本字段是 `comp`、`level_to`、`roll_floor`、`carry`。下面这些字段是给策略层用的，不写就和原来完全一样（`tests/test_regression.py` 用录下的动作序列逐个座位核对；参考序列最初在旧模拟器上、加这些字段之前录下，换 fork 后在 fork 上重录；现在 `default`、`realistic` 两套配置各一份，见"模拟器配置"）。
 
 fork 修好了规则 bot 的换人检查（把备战席上的棋子换上场，旧模拟器上是死代码）：第 3～10 回合，换上后规则 bot 的阵容分（`rank_comp`：费用星级加羁绊人数乘档位）更高就换；第 11 回合起还会把备战席上的本阵容棋子换下场上的非本阵容棋子，不看强弱。执行器的旋钮接管上场阵容时，规则 bot 的换人动作和它的卖棋子、上装备一样被丢掉：`fodder` 接管全部换人，`field_comp` 接管"本阵容换非本阵容"（`PlanExecutor.owns_swap`）；`hold` 不接管换人。执行器丢掉规则 bot 的任何一步（换人、上装备、站位、`hold` 拦下的卖棋子）后，规则 bot 的这项检查在本回合就算做完了（刷新商店后重新打开），它接着做后面的检查，不会每个动作都提同一个动作、把后面的检查堵住（`PlanExecutor.skip_check`；换人计数 `swaps_dropped`，`hold` 拦下的计数 `hold_filtered`）。
 
@@ -74,7 +104,7 @@ fork 修好了规则 bot 的换人检查（把备战席上的棋子换上场，�
 | `field_comp` | 3-3 起 | 场上本阵容占比 4-1 44%、4-2 57%、5-1 75%，对照 23%、24%、30%；5-1 血量 56.9 对 45.0，名次 2.25 对 2.88 |
 | `survival` | 全程 2 | 8 局里 6 局触发，平均每局 4.75 回合；名次只有 1 局变化（8 到 7）。触发后金币压到 10 左右，但同样受每回合动作数限制 |
 
-`describe()` 给计划者的局面只含公开信息：自己的全部状态；每个对手的场上棋子（星级、装备、天选）、血量、等级、连胜连败、利息档；下回合可能碰到的对手集合（来自 `player.opponent_options`）；各阵容的棋子在对手场上有几张。另有阶段标签（2-1 这种）、离下一次选秀/野怪/换阶段还有几回合、本阶段每输一场的平均扣血和"还能输几把"，见 `tfteval/stages.py`、`tfteval/public.py`。紧凑 JSON 一局下来每回合 1242～2469 字符，平均约 2000（种子 7400，8 人都活着时最长；原来的 describe 平均约 835）。
+`describe()` 给计划者的局面只含公开信息：自己的全部状态；每个对手的场上棋子（星级、装备、天选）、血量、等级、连胜连败、利息档；下回合可能碰到的对手集合（`hide_next_opponent` 下来自 env 的 `info["opponent_candidates"]`，否则来自 `player.opponent_options`；从不读确切的对手）；各阵容的棋子在对手场上有几张。另有阶段标签（2-1 这种）、离下一次选秀/野怪/换阶段还有几回合、本阶段每输一场的平均扣血和"还能输几把"，见 `tfteval/stages.py`、`tfteval/public.py`。紧凑 JSON 一局下来每回合 1242～2469 字符，平均约 2000（种子 7400，8 人都活着时最长；原来的 describe 平均约 835）。
 
 ## 规则姿态策略 v1（E4）
 
@@ -324,7 +354,7 @@ python scripts/measure_damage.py --summarize results/damage/set4.json   # 改了
 - set4 的第 2～5 阶段是用来定分布的数据本身，对得上是当然的；set18 是样本外的检查：第 2～6 阶段相差都在 0.3 血以内，两套规则下对面活下来几个几乎一样（每阶段平均相差 0～0.25 个），一张分布够用。`tests/test_stages.py` 对两套规则都核对：每阶段（50 场以上的）差不超过 1 血或 10%。第 7 阶段只有 9 场和 2 场，不作数。
 - 与旧表相比，set4 第 2 阶段每输一场少扣约 2.5 血（5.4 对 8.0），第 3、4 阶段少约 1 血，第 6 阶段少得更多（15 对 16.5～23）。"还能输几把"普遍多 1 把：4-1 时 50 血旧表算 4 把、现在 5 把；4-2 时 40 血 3 把对 4 把；5-1 时 30 血 2 把对 3 把；2-1 时 100 血 12 把对 13 把。
 - 一个阶段内前后也有差别（set4 第 2 阶段 2-1 每场 4.4、2-6 每场 6.7；第 3 阶段 3-1 9.0、3-6 10.4），`stages.py` 按阶段取平均，和 `describe()` 里"本阶段每输一场的平均扣血"的说法一致。
-- 野怪回合输了不扣血（fork 还是这样，见 fork 的 `FORK_NOTES.md`），`dmg_per_loss` 在野怪回合为 0。
+- 野怪回合输了扣不扣血看配置：`default` 不扣，`realistic`（`pve_damage`）扣；这张表只算对战，`dmg_per_loss` 在野怪回合都为 0（见"模拟器配置"）。上面的实测是加这个选项之前、野怪不扣血时测的。
 
 ## fork 上的执行器冒烟
 
@@ -375,8 +405,34 @@ python scripts/stance_report.py results/fork_smoke2/stance_log.jsonl
 
 - **扣血表换了以后，止血只晚了一点。** `stance` 到 3-1 为止每回合的动作数、血量、金币都和第一次相同，止血的回合从 53 个降到 49 个，第一次触发的中位回合从 4-2 推到 4-3，8 局里 7 局触发、3 局在 4-2 之前（第一次 8 局、4 局）。止血仍几乎都是"钱来不及花完"（`in reach` 42 次）；"还能输几把"每阶段多了 1 把左右，而触发线 2 + ⌈(金币 − 20) / 15⌉ 在 50 金时就是 4 把，阈值还是按旧表定的，没有重调。另外 3 局在 3-1 因"连败 3 场且阵容弱"触发（两次都一样）。
 - **`hold`（只留棋子）不再拖累第 2 阶段。** 2-5 时手里 11.8 张棋子（`stance` 8.0），和第一版 `hold` 一样多；但上场交还给规则 bot 以后，2-2～3-1 开始时场上的阵容分（规则 bot 的 `rank_comp` 加装备分，姿态日志的 `score`）平均 17.3，`stance` 18.5，第一版 `hold` 14.4；第 2 阶段对候选对手"明显更弱"的回合占 31%（`stance` 31%，第一版 `hold` 71%）。五场掉 17.3 血（第一版 27.8，`stance` 14.5）。被拦下的卖棋子每局只有 3.9 次（第一版过滤 57.4 次：一半以上是上装备，而且第一版没有把丢掉的那一步标记为做完，同一个提议每个动作都会再提一次）。止血仍比 `stance` 早：8 局里 4 局在 3-1、3-2 因连败触发，另 2 局"钱来不及花完"在 3-7、4-2 触发。
-- **`stance+lossstreak`**：8 局都做了垫子（2.9 回合），每局换回 3.5 步，没有卡住的回合。这一组之前跑过两次，换回都卡住过：一次是 `bot_board` 的结果随棋子站在哪里而变，换一步就换出另一套阵容；一次是场上和备战席各有一张 2 星娜美，`bot_board` 要的是备战席那张，换回就在两张之间来回换了三个回合（每回合 15 步）。两处都已修（见"计划与执行器"的 `fodder` 一行），另加了每回合最多 10 步的保险（这次没有触发）。8 局里 4 局在垫子结束后的 3-1、3-2 立刻因"连败"进了止血：这条规则数的正是控制连败自己输出来的连败，钱被 D 掉，控制连败攒钱的意义就没了。要评测 `stance+lossstreak`，先让止血的连败条件不算垫子回合的连败。
+- **`stance+lossstreak`**：8 局都做了垫子（2.9 回合），每局换回 3.5 步，没有卡住的回合。这一组之前跑过两次，换回都卡住过：一次是 `bot_board` 的结果随棋子站在哪里而变，换一步就换出另一套阵容；一次是场上和备战席各有一张 2 星娜美，`bot_board` 要的是备战席那张，换回就在两张之间来回换了三个回合（每回合 15 步）。两处都已修（见"计划与执行器"的 `fodder` 一行），另加了每回合最多 10 步的保险（这次没有触发）。8 局里 4 局在垫子结束后的 3-1、3-2 立刻因"连败"进了止血：这条规则数的正是控制连败自己输出来的连败，钱被 D 掉，控制连败攒钱的意义就没了。要评测 `stance+lossstreak`，先让止血的连败条件不算垫子回合的连败。（已改，见下面的"`realistic` 上的冒烟"。）
 - `mimic`、`mimicfc`、`fodder2` 没有重跑：`mimic` 不用这些旋钮；`mimicfc` 丢掉换人的处理和第一次相同（标记做完，再问一次规则 bot）；`fodder2` 的强视图换成了规则 bot 自己的阵容（`bot_board`），上面那一行是改之前的。
+
+### `realistic` 上的冒烟
+
+先改了两处：
+
+- **止血不再数控制连败自己输的场。** `stance+lossstreak` 在第 2 阶段故意输，带着这串连败进第 3 阶段，止血的"连败 3 场"（`heavy: loss streak`）在 3-1 就满足了，把连败攒的钱 D 掉（上面重跑里 8 局有 4 局这样）。现在计划者记下自己上垫子的回合，这条规则只数当前连败里不是垫子回合输的那几场（`StancePlanner.own_losses`，姿态日志的 `features.own_losses`）；垫子结束后再输的照常算。
+- **经济数字跟着对局的经济规则走。** `describe()` 的局面里多了 `rules`（`set4` 或 `set18`）；升级经验表（`planner.level_costs`、`xp_to_level`）、姿态策略的连胜连败金、按利息推算的金币（基础收入加利息）、买经验的花费、执行器欠的经验，以及 `smoke_executor.py`、`branch_compare.py` 算的连胜连败金，都从模拟器的 `Simulator/game/rules.py` 读，不再写死 S4 的数。set4 下每个数都和原来一样；set18 下 8 升 9 要 68 经验（set4 80），能升到 10 级，连胜连败金 4 连 1、5 连 2（set4 2、3）。
+
+冒烟只看能不能打完、有没有报错：`hero=X:1,rule:7`，每种座位 4 局，种子 24000–24003，3 个进程，`realistic` 配置，set4 和 set18 各一遍：`python scripts/smoke_executor.py --hero X --control none --games 4 --seed 24000 --workers 3 --rules set4 --out results/realistic_smoke/set4/X.json`，姿态座位另设 `TFT_STANCE_LOG`。结果、打印的汇总和姿态日志在 `results/realistic_smoke/`（`+` 在文件名里写成 `_`）。
+
+| 座位 | set4 名次（各局） | set4 每局选秀：阵容 / 装备 / 默认 | set18 名次（各局） | set18 每局选秀：阵容 / 装备 / 默认 |
+|---|---|---|---|---|
+| `mimic` | 2.25（3、1、2、3） | 5.75（1.75 / 2.25 / 1.75） | 2.75（6、3、1、1） | 5.00（1.00 / 1.50 / 2.50） |
+| `mimicfc` | 2.75（2、3、2、4） | 5.50（1.50 / 2.50 / 1.50） | 1.50（1、2、1、2） | 5.50（1.50 / 1.50 / 2.50） |
+| `fast8` | 1.75（1、1、2、3） | 5.50（1.00 / 2.00 / 2.50） | 1.75（2、2、1、2） | 5.50（1.25 / 1.50 / 2.75） |
+| `stance1` | 2.00（2、2、2、2） | 5.75（1.50 / 2.75 / 1.50） | 1.25（1、2、1、1） | 5.75（1.50 / 1.75 / 2.50） |
+| `stance` | 1.25（1、1、1、2） | 5.75（1.50 / 2.50 / 1.75） | 2.25（1、5、1、2） | 5.25（1.50 / 1.50 / 2.25） |
+| `stance+hold` | 1.75（3、1、1、2） | 5.25（1.00 / 2.50 / 1.75） | 2.25（3、3、1、2） | 5.00（1.50 / 1.50 / 2.00） |
+| `stance+lossstreak` | 2.75（2、1、3、5） | 5.50（1.50 / 2.75 / 1.25） | 3.25（5、5、1、2） | 5.25（2.50 / 1.50 / 1.25） |
+
+读法：
+
+- 56 局全部打完，hero 和其余 7 个座位都没有策略报错（`fallbacks` 为 0），选秀函数也没有出错退回默认（`carousel_error` 为 0）。hero 每局自己选 5～6 次（1-1、2-4、3-4、4-4、5-4、6-4 里还活着的那几次），阵容、装备、默认三种理由都有。每局 32～38 秒。
+- 名次只能看有没有坏掉。同样 4 个种子、同一个座位，hero 换成规则 bot：`realistic` 下 8、1、2、7 名（平均 4.5），`default` 配置下 2、1、3、2 名（平均 2.0）；4 局的平均名次差 2 名也可能只是种子的运气。`mimic` 关掉选秀函数（`TFT_PICKERS=0`）是 2、1、2、3 名，开着是 3、1、2、3 名（`results/realistic_smoke/set4_extra/`）。选秀函数和这些座位有没有用，要等正式的对比。
+- 止血的修正起作用了：set4 有 1 局 3-1 时连败 4 场，其中 3 场是垫子回合输的，只算 1 场，没有进止血；set18 有 3 局做了垫子，3-1 时连败 4～5 场都只算 0～1 场，其中两局到 3-3 真输满 3 场才因连败进止血（`heavy: loss streak 3`）。8 局里没有一局在垫子刚结束时就因连败进止血。
+- 野怪：hero 在这 56 局里打了 337 个野怪回合（1-3 起），一次血都没掉，所以扣血表不算野怪暂时没有影响。
 
 ## 目前的结果
 
@@ -408,11 +464,12 @@ branch(snap).run().result()                      # 不重新播种：与原局�
 branch(snap, reseed=3, switch={"player_3": switch_planner("fast8")}).run().result()  # 换一个未来，hero 换经济策略
 ```
 
-- **存了什么**：整个 `runner.Game`（env 连同它的随机数发生器和战斗上下文、各座位策略、兜底随机策略、已出局名次、血量、步数），再加上进程级的 numpy 全局随机数（规则 bot 在第 11 回合用它选阵容）和 Python `random` 的状态。存档是一个 pickle，可以写盘或交给别的进程，但那个进程必须用同一个 `PYTHONHASHSEED`，否则 `restore` 直接报错。
-- **重新播种**：`reseed=k` 换掉一局读到的所有随机流：env 的两个发生器（商店、选秀、战利品、对手匹配、战斗）、numpy 全局、`random`、策略对象里的发生器。种子由（局种子、回合、k）派生，所以同一个存档的第 k 个分叉不管换进哪个策略都用同一组随机数；两边的动作一旦不同，后面的随机数就错开了。
+- **存了什么**：整个 `runner.Game`（env 连同它的随机数发生器和战斗上下文、各座位策略、兜底随机策略、已出局名次、血量、步数），再加上进程级的 numpy 全局随机数（shared 随机流下规则 bot 在第 11 回合用它选阵容；keyed 下每个座位的规则 bot 用 env 里自己的发生器，随 env 一起存）和 Python `random` 的状态。存档是一个 pickle，可以写盘或交给别的进程，但那个进程必须用同一个 `PYTHONHASHSEED`，否则 `restore` 直接报错。
+- **重新播种**：`reseed=k` 换掉一局读到的所有随机流：env 的随机流（经 fork 的 `env.unwrapped.reseed_rng`：商店、选秀、战利品、对手匹配、战斗；keyed 下还有每个座位规则 bot 的发生器，由 env 重新派生）、numpy 全局、`random`、策略对象里的发生器。策略对象里找到的 env 规则 bot 发生器跳过（执行器拿着的就是它那个座位的），每个发生器只播一次种。种子由（局种子、回合、k）派生，所以同一个存档的第 k 个分叉不管换进哪个策略都用同一组随机数。shared（`default` 配置）下 env 只有一条随机流，两边的动作一旦不同，后面所有人的随机数就错开了；keyed（`realistic`）下每件事各有一条流，两边共有的事（别的座位刷商店、和 hero 无关的战斗、对手匹配……）继续用同样的随机数，见下文"公共随机数"。改用 `reseed_rng` 以后，同一个 k 的未来和以前不同（种子的派生方式变了）。
+- **选秀**：换了策略的座位同时换上新策略的选秀函数（新策略没有就用模拟器的默认）。
 - **换策略**：`switch_planner("fast8")` 只换计划器，保留执行器已经选定的阵容、记下的对子等状态。直接换一个新的 `PlanPolicy` 会让它在局中途忘掉阵容，那是另一种改动。
 - **一个坑**：pickle 和 deepcopy 重建上面那个座位名集合时，按迭代顺序重新插入，遇到哈希冲突时槽位会变，恢复出来的局从下一回合起就把商店随机数发给了别的座位，结果和原局对不上（第 7000 号种子第 13 回合存档实测）。`restore` 按模拟器自己的插入顺序重建这个集合，并检查顺序与存档时一致。
-- **验证**：`tests/test_branching.py` 在 7100–7102 号种子、第 9/13/17 回合存档，续打的名次、步数、每座位动作数与一口气打完的原局完全一致；重新播种的分叉彼此不同、各自可重放。另有一局（7110 号种子）让一个座位跑带 `fodder`、`level_by`、`field_comp` 窗口的 `OverlayPlanner`，在垫子阵容还开着的第 9 回合存档，续打结果和执行器的动作统计也与原局一致。另外实测过跨进程：一个进程在 7104 号种子第 11 回合存档写盘，另一个新进程读回续打，与一口气打完的原局一致。
+- **验证**：`tests/test_branching.py` 的每个测试在 `default`、`realistic` 两套配置下各跑一遍（约 18 分钟）。在 7100–7102 号种子、第 9/13/17 回合存档，续打的名次、步数、每座位动作数与一口气打完的原局完全一致；重新播种的分叉彼此不同、各自可重放。另有一局（7110 号种子）让一个座位跑带 `fodder`、`level_by`、`field_comp` 窗口的 `OverlayPlanner`，在垫子阵容还开着的第 9 回合存档，续打结果和执行器的动作统计也与原局一致。另外实测过跨进程：一个进程在 7104 号种子第 11 回合存档写盘，另一个新进程读回续打，与一口气打完的原局一致。
 - **耗时**：实验中 600 次分叉的均值，存档 0.012 秒（最慢 0.024），恢复 0.011 秒（最慢 0.058），每个存档 4.7 MB；机器满载时测的。
 
 ### 分叉有没有信号
@@ -491,6 +548,34 @@ python scripts/branch_compare.py --a mimic --b fodder2 --round 2-1 --seeds 9800:
 - **效果随存档变化**（存档间标准差约 0.8 名，置换检验 p=0.11）。2-1 时大家都是 100 血，血量排名没有信息；与 hero 场上强度的排名几乎无关（r=−0.10）。看 `mimic` 自己从这个存档出发在第 2 阶段会输几场（用 2 个分叉估计输的场数、另外 3 个分叉算名次差，避免同一批分叉的噪声互相牵连）：估计输不到 2 场的存档，`fodder2` 的差约 0；2～3 场的 −0.4；3.5 场以上的 −1.2（交叉估计的 Spearman 相关 −0.30）。也就是本来就要输的局，把它输干净才有好处；本来能赢的局，垫子只是白丢血。
 - 同一 k 两边名次的相关是 −0.07：垫子在分叉当回合就改动作，公共随机数完全不起作用，一对分叉之差的标准差 3.0 名。
 
+### 公共随机数：shared 对 keyed（试点）
+
+同一个 k 的两个分叉用同一组随机数，配对差的方差才小。shared 下 env 只有一条随机流，hero 的动作一变，之后所有人的随机数都错开；keyed 下每件事各有一条流，hero 改了动作，别的座位的商店、和 hero 无关的战斗、对手匹配仍然用同样的随机数。试点量 keyed 能省多少：hero=`mimic` 打到 3-3 存档，`mimicfc` 对 `mimic`，种子 25000–25009 共 10 个存档，每边 4 个分叉，两种随机流各 80 次续打，其余都是 `realistic`（set4）：
+
+```bash
+python scripts/branch_compare.py --a mimic --b mimicfc --round 3-3 --seeds 25000:10 --branches 4 --workers 3 \
+    --sim realistic,rng_streams=shared --out results/crn_pilot/shared.jsonl
+python scripts/branch_compare.py --a mimic --b mimicfc --round 3-3 --seeds 25000:10 --branches 4 --workers 3 \
+    --sim realistic --out results/crn_pilot/keyed.jsonl
+```
+
+| | shared | keyed |
+|---|---|---|
+| 同一 k 两边名次的相关（`crn_correlation`；按存档自助法的 95% 区间） | 0.30（−0.43～0.83） | 0.38（0.03～0.64） |
+| 同一存档内名次的标准差：`mimic` / `mimicfc` | 1.91 / 1.37 | 1.33 / 1.52 |
+| 同一存档内一对分叉之差的标准差（`paired_branch_sd`） | 1.99 | 1.60 |
+| 效果在存档间的标准差（`effect_sd_across_states`） | 0.71（p=0.19） | 0.91（p=0.04） |
+| 名次 `mimicfc` − `mimic` | +0.17 ±0.87 | −0.35 ±0.86 |
+| 单个存档标到 ±0.3 要几对分叉：⌈(1.96 × 配对差标准差 / 0.3)²⌉ | 169 对（338 次续打） | 109 对（218 次） |
+| 平均差标到 ±0.3 要几个存档：每边 1 / 4 / 10 个分叉 | 190 / 64 / 39 个（380 / 512 / 780 次续打） | 145 / 63 / 47 个（290 / 504 / 940 次） |
+| 用时（3 个进程，另有 1 个进程在跑测试） | 787 秒，每次续打平均 25 秒 | 817 秒，28 秒 |
+
+读法：
+
+- **这个试点分不出两种随机流。** 相关为 ρ 时，配对差的方差是独立播种（ρ=0）时的 1−ρ 倍：shared 0.70，keyed 0.62，但两个区间都很宽、互相重叠。keyed 的区间不含 0，同一个 k 配对至少有些用；shared 的区间太宽，说不清。配对差的标准差 keyed 小两成，这一点也不能全算在随机流头上：两边连存档都不是同一批（随机流的结构不同，打到 3-3 就已经是不同的局；keyed 那批里有 2 个存档 `mimic` 4 个分叉全是第 1 名），存档内名次本身的标准差也不一样。`mimicfc` 在分叉当回合就改动作（100% 的分叉对改过，第一次改动的中位数在分叉当回合），hero 自己的对战从第一场起就不同，keyed 能保住的只是别人的事。
+- 两种随机流下效果都随存档变化（存档间标准差 0.7～0.9 名），所以要的是存档多、每个存档分叉少：每边 1 个分叉时约 150～190 个存档；每边 4 个分叉也要约 60 个存档，总续打次数反而更多。这些数是从 10 个存档估的，只能当量级。
+- 要定下 keyed 省多少，得加大样本，最好换一对晚一点才改动作的策略（比如 `fast8` 对 `mimic`），那时 keyed 才可能帮得上。同一批存档上直接比两种随机流，现在的代码做不到：随机流的结构在建 env 时定下。下一步的实验照旧用默认的 keyed。
+
 ## 对模拟器的修正
 
 模拟器用我们的 fork [kkkyr1e/TFTMuZeroAgent](https://github.com/kkkyr1e/TFTMuZeroAgent)，`scripts/setup_sim.sh` 固定在 `develop` 的一个提交上。bug 修在 fork 里，每个修正是一个单独的分支、带一个单元测试，可以单独给上游提 PR；`develop` 合并了全部修正。清单、出处和测试见 fork 里的 `FORK_NOTES.md`。
@@ -507,8 +592,11 @@ python scripts/branch_compare.py --a mimic --b fodder2 --round 2-1 --seeds 9800:
 | 规则 bot | Katarina 拼错；备战席换上场的逻辑是死代码 | 修好；执行器的旋钮接管上场阵容时丢掉它的换人，见"计划与执行器" |
 | 天选价格 | 2～5 费天选比正式游戏便宜 1 金 | 1 星价格的 3 倍 |
 
-fork 里另外加了两个选项，默认都关：
+fork 里另外加了几个选项，默认都关：
 - 跳过就结束本回合，并可调高每回合的动作上限。
+- 更接近正式游戏的规则（野怪扣血、命运战利品、第五次选秀的装备表、每个座位自己选秀、看不到下回合的对手）和按事件分开的随机流（`rng_streams="keyed"`，以及给存档重新播种的 `reseed_rng`）。我们的 `realistic` 配置全部打开，见上文"模拟器配置"。
+
+发现但没有在 fork 里修的问题：keyed 下规则 bot 每次深拷贝棋盘都会拷贝整局游戏（棋子的 `ctx` → 战斗上下文的 `streams` → `Game_Round`；`Simulator/battle/champion.py:153`，`Simulator/simulators/tft_simulator.py:265`，`Simulator/rng.py:215`、`221`，`Simulator/generators/default_agent.py:306`、`324`、`467`、`491`、`597`），一局慢十几倍。我们在 runner 里绕开了（`light_board_copies`，见"模拟器配置"的耗时），用模拟器自带的 `Default_Agent` 跑整局的人仍会遇到。
 - 经济规则可切换成当前赛季 S18：商店概率、升级经验（最高 10 级）、卡池数量、连胜连败金、扣血公式按 S18，英雄、羁绊、装备和战斗仍是 S4。仙灵、海克斯等 S18 专有机制没有做。数值和出处见 fork 的 `FORK_NOTES.md`。用法：`run_lobby.py --rules set18`，或设 `TFT_RULES=set18`；结果里的 `rules` 字段记录用的是哪套。
 
 **这次换模拟器以后，之前所有的结果都不能再拿来比**：伤害、收入、买牌、匹配和规则 bot 都变了。上文标了"旧模拟器"的数字都是换之前的。结果里的 `sim_commit` 字段记录当局用的是哪个模拟器提交。
@@ -519,7 +607,7 @@ fork 里另外加了两个选项，默认都关：
 
 | 路径 | 内容 |
 |---|---|
-| `tfteval/runner.py` | 打一整局并给出名次 |
+| `tfteval/runner.py` | 打一整局并给出名次；模拟器配置（`SIM_PROFILES`）、挂选秀函数 |
 | `tfteval/branching.py` | 存档、续打、分叉 |
 | `tfteval/policies.py` | 座位策略：随机、规则 bot、带噪声的规则 bot、计划座位 |
 | `tfteval/planner.py` | 计划者（规则经济、大模型）、计划编译 |
@@ -531,7 +619,7 @@ fork 里另外加了两个选项，默认都关：
 | `tfteval/public.py` | 公开观察：对手能被看到的部分 |
 | `tfteval/stats.py` | 平均名次与区间、配对差、以存档为单位的区间、所需局数 |
 | `scripts/` | 批量对局、比较两次运行、安装模拟器、按经济规则测扣血（`measure_damage.py`）、执行器冒烟对比（`smoke_executor.py`）、分叉实验与分析（`branching_validity.py`、`analyze_branching.py`）、两个策略的分叉对比（`branch_compare.py`）、姿态分布统计（`stance_report.py`）、记录对战与拟合胜率模型（`collect_fights.py`、`fit_winprob.py`） |
-| `results/` | 原始对局结果；`results/branching/` 是分叉实验，`results/fork_smoke/` 是 fork 上的执行器冒烟（`results/fork_smoke2/` 是修正扣血表、改 `hold` 之后重跑的），`results/damage/` 是两套经济规则下的扣血实测，`results/fights/` 是记录下的对战（`mixed_9600` 旧模拟器，`fork_22000` 和 `fork_set18_23000` 在 fork 上） |
+| `results/` | 原始对局结果；`results/branching/` 是分叉实验，`results/fork_smoke/` 是 fork 上的执行器冒烟（`results/fork_smoke2/` 是修正扣血表、改 `hold` 之后重跑的），`results/damage/` 是两套经济规则下的扣血实测，`results/fights/` 是记录下的对战（`mixed_9600` 旧模拟器，`fork_22000` 和 `fork_set18_23000` 在 fork 上），`results/crn_pilot/` 是 shared 对 keyed 随机流的分叉试点，`results/realistic_smoke/` 是 `realistic` 配置上的冒烟 |
 | `docs/PLAN.md` | 方针 |
 | `docs/STRATEGY.md` | 策略层方案 |
 
