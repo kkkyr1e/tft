@@ -24,6 +24,7 @@ class GameResult:
     actions: dict = field(default_factory=dict)  # seat -> number of actions the policy chose
     fallbacks: dict = field(default_factory=dict)  # seat -> actions replaced because the policy raised
     reproducible: bool = False  # True only when PYTHONHASHSEED was pinned for this process
+    sim_fixes: list = field(default_factory=list)  # tfteval.simfixes active in this game; [] = upstream simulator
 
     def to_json(self) -> dict:
         return asdict(self)
@@ -33,7 +34,8 @@ def _seat_seed(game_seed: int, seat_index: int) -> int:
     return int(np.random.SeedSequence([game_seed, seat_index]).generate_state(1)[0])
 
 
-def play_game(seat_policies: dict[str, Policy], seed: int, max_steps: int = 20000, quiet: bool = True) -> GameResult:
+def play_game(seat_policies: dict[str, Policy], seed: int, max_steps: int = 20000, quiet: bool = True,
+              sim_fixes: bool | None = None) -> GameResult:
     """Run one game. `seat_policies` maps "player_0".."player_7" to a policy.
 
     The same seed replays the same game only if the interpreter was started with a fixed
@@ -43,8 +45,17 @@ def play_game(seat_policies: dict[str, Policy], seed: int, max_steps: int = 2000
     Places are handed out from 8 upward as seats are eliminated; seats eliminated in the
     same step are ordered by remaining health, lower health taking the worse place.
     If a policy raises, a random legal action is substituted and counted in `fallbacks`.
+
+    `sim_fixes` installs tfteval.simfixes (default on; TFT_SIM_FIXES=0 turns it off, e.g. to
+    replay runs made before the fixes). A process cannot switch back once they are installed.
     """
     from Simulator.simulators.tft_simulator import TFTConfig, parallel_env
+
+    from tfteval import simfixes
+
+    if sim_fixes is None:
+        sim_fixes = os.environ.get("TFT_SIM_FIXES", "1") != "0"
+    active = list(simfixes.apply()) if sim_fixes else []
 
     started = time.time()
     np.random.seed(seed % (2**32))  # the upstream rule bot uses numpy's global generator
@@ -107,6 +118,7 @@ def play_game(seat_policies: dict[str, Policy], seed: int, max_steps: int = 2000
         actions=actions,
         fallbacks=fallbacks,
         reproducible=os.environ.get("PYTHONHASHSEED", "random").isdigit(),
+        sim_fixes=active,
     )
 
 
