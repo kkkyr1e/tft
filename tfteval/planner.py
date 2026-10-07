@@ -448,6 +448,15 @@ class PlanPolicy:
         command = self.executor.act(player, shop, game_round, mask)
         return decode_action([command])[0]
 
+    def carousel_picker(self):
+        """The seat's carousel picker (tfteval.executor.CarouselPicker on this seat's executor); the
+        runner attaches it to the env before reset, after reset(seed) built the executor."""
+        if self.executor is None:
+            return None
+        from tfteval.executor import CarouselPicker
+
+        return CarouselPicker(self.executor)
+
 
 def make_plan_policy(kind: str) -> PlanPolicy:
     """An economy variant from VARIANTS (`mimic`, `fast8`, ...), or `llm` configured by env vars

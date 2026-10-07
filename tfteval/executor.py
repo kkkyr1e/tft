@@ -8,6 +8,7 @@ from __future__ import annotations
 import math
 from collections import Counter
 
+from Simulator.battle.item_stats import basic_items, item_builds
 from Simulator.battle.stats import BASE_CHAMPION_LIST
 from Simulator.game.pool_stats import cost_star_values
 from Simulator.generators.default_agent import Default_Agent
@@ -17,9 +18,22 @@ from Simulator.utils import coord_to_x_y, x_y_to_1d_coord
 from tfteval import public
 from tfteval.planner import ACTIONS_PER_ROUND, compile_knobs, xp_to_level
 
+# Components the executor combines (place_item never places a Spatula), and the full item each pair makes.
+COMPONENTS = frozenset(basic_items) - {"spatula"}
+RECIPES = [tuple(parts) for parts in item_builds.values() if len(parts) == 2 and set(parts) <= COMPONENTS]
+
 
 def strength(unit) -> int:
     return cost_star_values[unit.cost - 1][unit.stars - 1] + 2 * len(unit.items) + (1 if unit.chosen else 0)
+
+
+def default_pick(options: list) -> int:
+    """The simulator's own carousel choice: the most expensive unit, the first in carousel order on ties."""
+    best = 0
+    for i, option in enumerate(options):
+        if option["cost"] > options[best]["cost"]:
+            best = i
+    return best
 
 
 class PlanExecutor(Default_Agent):
@@ -37,6 +51,7 @@ class PlanExecutor(Default_Agent):
         self.rule_calls, self.took_over = 0, False  # this round: rule-bot calls, executor-only actions
         self.arrange_moves = 0  # this round: fodder or restore moves
         self.stats = Counter()
+        self.carousel_log = []  # every carousel pick: {"round", "options", "choice", "why"} (carousel_pick)
 
     def begin_round(self, plan: dict, knobs: dict, game_round: int | None = None) -> None:
         """New round: the plan and its compiled knobs (compile_knobs)."""
@@ -378,6 +393,63 @@ class PlanExecutor(Default_Agent):
             return "0"
         return command
 
+    # ---- carousel (TFTConfig.carousel_pickers; the runner attaches CarouselPicker before env.reset)
+    def target_units(self) -> list:
+        """Units of the target comp: the comp in play, else the plan's `comp`; [] before either exists."""
+        if self.comp_number >= 0:
+            return list(TEAM_COMPS[self.comp_number])
+        return list(COMPS.get(self.knobs.get("comp"), ()))
+
+    @staticmethod
+    def wanted_components(player) -> set:
+        """The components the seat's item plan wants. The executor has no item list of its own: it
+        combines whatever components it holds and places items on the carry first (place_item). So
+        it wants every component that completes a recipe with one it holds, on the item bench or
+        alone on a fielded unit (a second component on a unit combines with it)."""
+        held = {item for item in getattr(player, "item_bench", ()) if item in COMPONENTS}
+        for unit in public.board_units(player):
+            if unit.items and unit.items[-1] in COMPONENTS:
+                held.add(unit.items[-1])
+        return {b for a, b in RECIPES if a in held} | {a for a, b in RECIPES if b in held}
+
+    @staticmethod
+    def wants_item(item, components: set) -> bool:
+        """A carousel item the item plan wants: a full item (ready to place) or a wanted component.
+        Spatulas and Neeko's Help are never placed by the executor."""
+        if not item or item in ("spatula", "champion_duplicator"):
+            return False
+        return item in components if item in basic_items else True
+
+    def carousel_pick(self, player, options: list) -> int:
+        """Index into `options` (the units left on the carousel, in carousel order, each {"slot",
+        "name", "cost", "stars", "item"}): a unit of the target comp (higher star, then cost), else a
+        unit holding an item the item plan wants (wants_item; higher cost, then a full item before a
+        component), else the most expensive (the simulator's default). Ties go to the first in
+        carousel order. Every pick is logged in carousel_log and counted in stats. Never raises (an
+        exception would stop the game inside the simulator): an error falls back to the default pick."""
+        try:
+            comp = set(self.target_units())
+            components = self.wanted_components(player)
+            in_comp = [i for i, o in enumerate(options) if o["name"] in comp]
+            for_items = [i for i, o in enumerate(options) if self.wants_item(o.get("item"), components)]
+            if in_comp:
+                best = max(in_comp, key=lambda i: (int(options[i]["stars"]), int(options[i]["cost"]), -i))
+                why = "comp"
+            elif for_items:
+                best = max(for_items, key=lambda i: (int(options[i]["cost"]),
+                                                     options[i].get("item") not in basic_items, -i))
+                why = "item"
+            else:
+                best, why = default_pick(options), "default"
+        except Exception:
+            best, why = default_pick(options), "error"
+        self.stats["carousel_picks"] += 1
+        self.stats["carousel_" + why] += 1
+        self.carousel_log.append({"round": int(getattr(player, "round", -1)),
+                                  "options": [f"{o['name']}:{o['cost']}:{o.get('item')}" for o in options],
+                                  "choice": best, "why": why})
+        return best
+
     # ---- economy
     def _xp_owed(self, player) -> int:
         need = 0
@@ -493,6 +565,17 @@ class StrongView:
     def team_tiers(self):  # decide_comp picks a comp from the traits of the fielded units
         chosen = next((u.chosen for col in self.board for u in col if u and u.chosen), "")
         return Default_Agent.update_team_tiers(None, self.board, chosen)[1]
+
+
+class CarouselPicker:
+    """A plan-executor seat's carousel picker (fn(player, options) -> index, see
+    PlanExecutor.carousel_pick). Module level so the env, which holds it, can be pickled."""
+
+    def __init__(self, executor: PlanExecutor):
+        self.executor = executor
+
+    def __call__(self, player, options):
+        return self.executor.carousel_pick(player, options)
 
 
 COMPS = dict(zip(TEAM_COMP_TRAITS, TEAM_COMPS))

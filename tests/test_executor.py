@@ -503,3 +503,59 @@ def test_overlay_planner_adds_fields_inside_windows():
     comps = [planner.plan({**state(i), "xp_needed": 20}, {}, None).get("comp") for i in (10, 11, 14, 15, 30)]
     assert comps == [None, "mage", "mage", "divine", "divine"]
     assert "survival" not in planner.plan({**state(12), "xp_needed": 20}, {}, None)
+
+
+# --------------------------------------------------------------------------- carousel picker
+
+def options(*specs):
+    """Carousel options as the simulator passes them: (name, cost, item) in carousel order."""
+    return [{"slot": i, "name": n, "cost": c, "stars": 1, "item": it} for i, (n, c, it) in enumerate(specs)]
+
+
+def test_carousel_pick_prefers_the_target_comp_then_wanted_items_then_cost():
+    import pickle
+
+    from tfteval.executor import CarouselPicker
+
+    ex = PlanExecutor()
+    p = make_player(board=["ahri"])
+    trait = TRAITS[0]
+    ex.comp_number = 0
+    comp = COMPS[trait]
+    other = [n for n in ("vayne", "garen", "fiora", "maokai", "nami") if n not in comp]
+    p.round = 12
+    opts = options((other[0], 1, "bf_sword"), (comp[0], 1, "chain_vest"), (other[1], 3, "tear_of_the_goddess"))
+    assert ex.carousel_pick(p, opts) == 1  # a comp unit beats a more expensive one
+    assert ex.carousel_log[-1] == {"round": 12, "choice": 1, "why": "comp",
+                                   "options": [f"{o['name']}:{o['cost']}:{o['item']}" for o in opts]}
+
+    ex.comp_number = -1  # no comp yet (before 3-3), no plan comp: items, then cost
+    p.item_bench[0] = "bf_sword"  # holding a B.F. Sword: a component that makes an item with it is wanted
+    opts = options((other[0], 1, "spatula"), (other[1], 2, "recurve_bow"), (other[2], 3, "spatula"))
+    assert ex.carousel_pick(p, opts) == 1 and ex.carousel_log[-1]["why"] == "item"  # Bow + Sword = Giant Slayer
+    full = [i for i in __import__("Simulator.battle.item_stats", fromlist=["x"]).item_builds
+            if "spatula" not in __import__("Simulator.battle.item_stats", fromlist=["x"]).item_builds[i]][0]
+    opts = options((other[0], 1, "chain_vest"), (other[1], 1, full), (other[2], 1, "recurve_bow"))
+    assert ex.carousel_pick(p, opts) == 1  # same cost: a full item before a wanted component
+    p.item_bench[0] = None
+    opts = options((other[0], 1, "recurve_bow"), (other[1], 3, "spatula"), (other[2], 3, "chain_vest"))
+    assert ex.carousel_pick(p, opts) == 1 and ex.carousel_log[-1]["why"] == "default"  # nothing wanted: cost
+    ex.knobs = {**ex.knobs, "comp": trait}  # a plan comp counts before the executor has one
+    assert ex.carousel_pick(p, options((other[0], 4, None), (comp[1], 1, None))) == 1
+    # an error inside the pick (here: no player) falls back to the default instead of stopping the game
+    assert ex.carousel_pick(None, options((other[0], 1, None), (other[1], 2, None))) == 1
+    assert ex.carousel_log[-1]["why"] == "error" and ex.carousel_log[-1]["round"] == -1
+    assert ex.stats["carousel_picks"] == 6 and ex.stats["carousel_comp"] == 2 and ex.stats["carousel_error"] == 1
+
+    picker = pickle.loads(pickle.dumps(CarouselPicker(ex)))  # the env holds it: it must pickle
+    assert picker(p, options((other[0], 1, None), (comp[0], 1, None))) == 1
+
+
+def test_component_on_a_fielded_unit_wants_its_partner():
+    ex = PlanExecutor()
+    p = make_player(board=["ahri"])
+    p.board[0][0].items = ["needlessly_large_rod"]
+    wanted = ex.wanted_components(p)
+    assert "needlessly_large_rod" in wanted and "tear_of_the_goddess" in wanted  # Deathcap, Shojin
+    assert "spatula" not in wanted
+
