@@ -11,10 +11,14 @@ from __future__ import annotations
 import argparse
 import json
 import math
-from collections import defaultdict
+from collections import Counter, defaultdict
 from pathlib import Path
 
+import warnings
+
 import numpy as np
+
+warnings.filterwarnings("ignore", category=RuntimeWarning)  # NaN statistics on tiny subsets are reported as NaN
 
 Z95, Z80 = 1.959964, 0.841621
 INDEPENDENT_SD = 2.25  # SD of one hero placement over independent games (README; 200 games of hero=mimic: 2.24)
@@ -36,7 +40,8 @@ def proxy(row, h, kind="hp+gold"):
 
 
 def anova(groups):
-    """One-way random-effects decomposition over equal-ish groups (list of 1-D arrays)."""
+    """One-way random-effects decomposition over equal-ish groups (list of 1-D arrays).
+    A group is the branches of one policy from one state."""
     groups = [np.asarray(g, float) for g in groups if len(g) >= 2]
     k = np.mean([len(g) for g in groups])
     allv = np.concatenate(groups)
@@ -45,7 +50,7 @@ def anova(groups):
     msb = float(k * means.var(ddof=1))
     between = max(0.0, (msb - within) / k)
     return {
-        "states": len(groups), "branches_per_state": float(k), "n": int(allv.size),
+        "groups": len(groups), "branches_per_group": float(k), "n": int(allv.size),
         "mean": float(allv.mean()),
         "total_sd": float(allv.std(ddof=1)),
         "within_sd": math.sqrt(within),  # pooled SD of branches from one state
@@ -123,6 +128,16 @@ def policy_difference(states, a, b, metric):
         changed.append(any(pols[b][k]["plan_differs_from_mimic"] or pols[a][k]["plan_differs_from_mimic"] for k in ks))
     d = np.array(d)
     S = len(d)
+    # does the effect differ between states? permute paired branch differences across states
+    e = [np.array([metric(pols[a][k]) - metric(pols[b][k]) for k in sorted(set(pols[a]) & set(pols[b]))], float)
+         for _, pols in sorted(states.items()) if a in pols and b in pols]
+    sizes, pooled = [len(x) for x in e], np.concatenate(e)
+    observed = np.var([x.mean() for x in e])
+    rng, hits = np.random.default_rng(0), 0
+    for _ in range(2000):
+        perm = rng.permutation(pooled)
+        hits += np.var([c.mean() for c in np.split(perm, np.cumsum(sizes)[:-1])]) >= observed - 1e-12
+    heterogeneity_p = (hits + 1) / 2001
     K = np.mean([len(set(p[a]) & set(p[b])) for p in states.values() if a in p and b in p])
     v_pair = float(np.mean(pair_var))  # variance of one paired branch difference within a state
     tau2 = max(0.0, float(d.var(ddof=1)) - v_pair / K)  # spread of the true effect across states
@@ -133,6 +148,7 @@ def policy_difference(states, a, b, metric):
         "paired_branch_sd": math.sqrt(v_pair),
         "effect_sd_across_states": math.sqrt(tau2),
         "crn_correlation": corr(paired_a, paired_b),  # within-state correlation of a and b branches with the same k
+        "effect_heterogeneity_p": float(heterogeneity_p),  # permutation test: same effect in every state?
         "states_where_plan_ever_differed": int(sum(changed)),
         "mean_where_plan_differed": float(d[np.array(changed)].mean()) if any(changed) else None,
         "_tau2": tau2, "_v_pair": v_pair,
@@ -159,6 +175,13 @@ def main():
     rounds = sorted({r for r, _ in states})
     policies = sorted({row["policy"] for row in rows})
     summary = {"rows": len(rows), "states": len(states), "rounds": rounds, "policies": policies}
+
+    # do re-seeded branches really differ? distinct 8-seat placement vectors among a group's branches
+    futures = defaultdict(set)
+    for row in rows:
+        futures[(row["round"], row["index"], row["policy"])].add(tuple(sorted(row["placements"].items())))
+    counts = Counter(len(v) for v in futures.values())
+    summary["distinct_futures_per_group"] = {str(n): counts[n] for n in sorted(counts)}
 
     # timing and size of snapshots
     summary["snapshot"] = {
@@ -203,16 +226,33 @@ def main():
         for R in rounds + ["all"]:
             sub = {k: v for k, v in states.items() if R in ("all", k[0])}
             diff[f"place R{R}"] = policy_difference(sub, "mimic", "fast8", lambda r: r["place"])
-        diff["hp+gold +5 Rall"] = policy_difference(states, "mimic", "fast8", lambda r: proxy(r, 5))
-        diff["hp+gold +3 Rall"] = policy_difference(states, "mimic", "fast8", lambda r: proxy(r, 3))
+        changed = {k: v for k, v in states.items()
+                   if any(r["plan_differs_from_mimic"] for r in v.get("fast8", {}).values())}
+        diff["place Rall, states where fast8 changed a plan"] = policy_difference(
+            changed, "mimic", "fast8", lambda r: r["place"])
+        for h in (3, 5):
+            for kind in ("hp+gold", "hp", "gold"):
+                diff[f"{kind} +{h} Rall"] = policy_difference(states, "mimic", "fast8",
+                                                             lambda r, h=h, kind=kind: proxy(r, h, kind))
+        for d in diff.values():  # effect in units of the SD of one paired branch difference
+            d["standardized"] = d["mean"] / d["paired_branch_sd"] if d["paired_branch_sd"] else None
         summary["mimic_minus_fast8"] = {k: {kk: vv for kk, vv in v.items() if not kk.startswith("_")}
                                         for k, v in diff.items()}
         summary["sample_size_for_0.3"] = {
+            "note": "states x branches per policy for a 95% CI half-width of 0.3 (or 80% power at 0.3) on the "
+                    "mean placement difference over states; playouts = 2 policies x states x branches",
             "with_common_random_numbers": sample_size(diff["place Rall"]),
+            "with_common_random_numbers_states_where_fast8_changed_a_plan":
+                sample_size(diff["place Rall, states where fast8 changed a plan"]),
             "independent_branches": sample_size({**diff["place Rall"],
                                                  "_v_pair": 2 * var["all/Rall"]["within_sd"] ** 2}),
             "independent_games_per_policy": math.ceil((Z95 * INDEPENDENT_SD * math.sqrt(2) / 0.3) ** 2),
         }
+        firsts = [r["plan_differs_from_mimic"][0] - r["round"] for r in rows
+                  if r["policy"] == "fast8" and r["plan_differs_from_mimic"]]
+        summary["fast8_first_changed_plan_rounds_after_branch"] = {
+            "median": float(np.median(firsts)) if firsts else None,
+            "quartiles": [float(np.percentile(firsts, 25)), float(np.percentile(firsts, 75))] if firsts else None}
         fired = [bool(r["plan_differs_from_mimic"]) for r in rows if r["policy"] == "fast8"]
         summary["fast8_plan_ever_differs_share"] = float(np.mean(fired))
         summary["fast8_plan_differs_share_by_round"] = {
