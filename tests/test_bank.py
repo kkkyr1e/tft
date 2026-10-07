@@ -274,3 +274,12 @@ def test_hero_view_is_the_planners_state():
                                              "candidates": bank.menu("3-2"),
                                              "hero_policy": game.seat_policies[recipe["hero_seat"]]}) \
         in {"save", "level", "roll"}
+
+
+def test_a_later_line_replaces_an_item(tmp_path):
+    a, b = make_item({"save": [1] * 5, "roll": [2] * 5}, game="g#1"), make_item({"save": [1] * 5}, game="g#2")
+    longer = {**a, "kl": 5, "note": "extended"}
+    path = tmp_path / "bank.jsonl"
+    path.write_text("".join(json.dumps(x) + "\n" for x in (a, b, longer)))
+    items = bank.load_items(path)
+    assert [it["id"] for it in items] == [a["id"], b["id"]] and items[0]["note"] == "extended"

@@ -13,6 +13,10 @@ playing --continuation (default `stance`), until the hero is out. One item per l
 schema is in tfteval/bank.py and README). A rerun skips the items already in --out, so a build can be
 stopped and resumed; items whose hero is out before the point, or whose candidates all played the same
 actions, are written too (with `dropped`) so they are not rebuilt.
+
+A larger --kl than an existing item has extends it: its state is rebuilt from the recipe (checked against
+the fingerprint, on the same simulator commit), the missing label branches are played and the item is
+written again with new labels (a later line replaces an earlier one with the same id).
 """
 
 from __future__ import annotations
@@ -47,7 +51,10 @@ def parse_seeds(text: str) -> list[int]:
 
 
 def run_job(job):
-    lineup, seed, point, config = job
+    if job[0] == "extend":
+        _, item, config = job
+        return bank.extend_item(item, config["kl"], config["harness"])
+    _, lineup, seed, point, config = job
     return bank.build_item(lineup, seed, point, config["kd"], config["kl"], config["continuation"],
                            config["settings"], config["harness"], config["early_drop"])
 
@@ -84,19 +91,25 @@ def main():
     config = {"kd": args.kd, "kl": args.kl, "continuation": args.continuation, "settings": settings,
               "harness": bank.harness_commit(), "early_drop": args.early_drop}
     for it in items:
-        mismatch = [key for key, mine in (("kd", args.kd), ("kl", args.kl), ("continuation", args.continuation))
-                    if it.get(key) != mine]
+        mismatch = [key for key, mine in (("kd", args.kd), ("continuation", args.continuation)) if it.get(key) != mine]
         mismatch += [key for key in ("rules", "sim_profile", "sim_options")
                      if (it["recipe"].get(key) or None) != (settings.get(key) or None)]
         if mismatch:
             raise SystemExit(f"{out} holds {it['id']} built with other settings ({', '.join(mismatch)}); "
                              f"use another --out")
-    done = {it["id"] for it in items}
-    jobs = [(lineup, seed, point, config) for lineup in args.lineups for seed in parse_seeds(args.seeds)
-            for point in args.points if bank.item_id(lineup, seed, point) not in done]
-    branches = sum(len(bank.POINTS[j[2]]["menu"]) for j in jobs) * (args.kd + args.kl)
-    print(f"{len(jobs)} items to build ({len(done)} already in {out}), up to {branches} branches, "
-          f"{args.workers} workers; harness {config['harness']}, rules {settings['rules']}", flush=True)
+    done = {it["id"]: it for it in items}
+    wanted = [(lineup, seed, point) for lineup in args.lineups for seed in parse_seeds(args.seeds)
+              for point in args.points]
+    jobs = [("build", lineup, seed, point, config) for lineup, seed, point in wanted
+            if bank.item_id(lineup, seed, point) not in done]
+    branches = sum(len(bank.POINTS[j[3]]["menu"]) for j in jobs) * (args.kd + args.kl)
+    extend = [done[bank.item_id(*w)] for w in wanted if bank.item_id(*w) in done]
+    extend = [it for it in extend if not it.get("dropped") and int(it["kl"]) < args.kl]
+    jobs += [("extend", it, config) for it in extend]
+    branches += sum(len(it["candidates"]) * (args.kl - int(it["kl"])) for it in extend)
+    print(f"{len(jobs) - len(extend)} items to build, {len(extend)} to extend to kl={args.kl} ({len(done)} already "
+          f"in {out}), up to {branches} branches, {args.workers} workers; harness {config['harness']}, "
+          f"rules {settings['rules']}", flush=True)
     out.parent.mkdir(parents=True, exist_ok=True)
     started = time.time()
     with ProcessPoolExecutor(max_workers=args.workers) as pool, out.open("a") as fh:
@@ -109,13 +122,17 @@ def main():
                 item = fut.result()
                 fh.write(json.dumps(item) + "\n")
                 fh.flush()
-                items.append(item)
+                items = [it for it in items if it["id"] != item["id"]] + [item]
                 lab = item.get("label") or {}
                 what = item["dropped"] or (f"{lab['kind']}, best {lab['best']}, regrets "
                                            + " ".join(f"{c}:{r:+.2f}" for c, r in lab["regret"].items()))
                 t = item.get("timing", {})
-                print(f"{dt.datetime.now(dt.timezone.utc):%H:%M:%S} {item['id']}: {what} "
-                      f"({t.get('item_seconds', t.get('rebuild_seconds'))}s, {t.get('branch_seconds_mean')}s a branch; "
+                if item.get("extended"):
+                    took = f"extended to kl={item['kl']} in {item['extended'][-1]['seconds']}s"
+                else:
+                    took = f"{t.get('item_seconds', t.get('rebuild_seconds'))}s, "
+                    took += f"{t.get('branch_seconds_mean')}s a branch"
+                print(f"{dt.datetime.now(dt.timezone.utc):%H:%M:%S} {item['id']}: {what} ({took}; "
                       f"{len(jobs) + len(pending)} left, {time.time() - started:.0f}s so far)", flush=True)
     print(json.dumps(bank.bank_summary(items), indent=1))
 

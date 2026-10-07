@@ -86,7 +86,7 @@ def main():
     summary = bank.bank_summary(items)
     good = bank.usable(items, args.sd_floor)
     print(f"{path}: {summary['built']} items built, {summary['usable']} usable ({summary['clear']} clear) from "
-          f"{summary['games']} source games; dev {summary['splits']['dev']}, held-out {summary['splits']['heldout']}; "
+          f"{summary['games']} source games; items dev {summary['splits']['dev']}, held-out {summary['splits']['heldout']}; "
           f"dropped {summary['dropped'] or 0}", flush=True)
     if not good:
         raise SystemExit("no usable items")

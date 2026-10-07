@@ -486,6 +486,36 @@ def build_item(lineup: str, seed: int, point: str, kd: int, kl: int, continuatio
     return item
 
 
+def extend_item(item: dict, kl: int, harness: str | None = None) -> dict:
+    """The item with label branches added up to `kl` (re-seeds kd+old kl .. kd+kl-1) and relabelled.
+    The state is rebuilt from the recipe and checked against the fingerprint; the simulator must be the
+    one the item was built on, since the new branches have to come from the same game dynamics."""
+    from tfteval import simfixes
+    from tfteval.branching import snapshot
+
+    if item.get("dropped"):
+        raise ValueError(f"{item['id']} is dropped ({item['dropped']}); not extended")
+    if simfixes.sim_commit() != item["recipe"].get("sim_commit"):
+        raise RuntimeError(f"{item['id']} was built on simulator {item['recipe'].get('sim_commit')}, "
+                           f"this one is {simfixes.sim_commit()}")
+    started = time.time()
+    kd, old = int(item["kd"]), int(item["kl"])
+    game = rebuild(item["recipe"], item["fingerprint_hash"])
+    seat = item["recipe"]["hero_seat"]
+    snap = snapshot(game)
+    del game
+    branches = list(item["branches"])
+    for k in range(kd + old, kd + kl):
+        for c in item["candidates"]:
+            branches.append({**play_branch(snap, seat, c, k, item["continuation"]), "set": "label"})
+    new = {**item, "kl": max(old, kl), "branches": branches}
+    new["extended"] = list(item.get("extended", [])) + [{"from_kl": old, "to_kl": kl, "harness_commit": harness,
+                                                          "seconds": round(time.time() - started, 2)}]
+    lab = label_item(new)
+    new["label"], new["dropped"] = lab, lab.get("dropped")
+    return new
+
+
 # --------------------------------------------------------------------------- labels
 
 def t975(df: int) -> float:
@@ -742,7 +772,14 @@ def make_agent(spec: str):
 # --------------------------------------------------------------------------- scoring
 
 def load_items(path) -> list[dict]:
-    return [json.loads(line) for line in Path(path).read_text().splitlines() if line.strip()]
+    """The items of a bank file; an item written again (extended with more label branches) replaces
+    its earlier line, in the order items first appeared."""
+    items: dict[str, dict] = {}
+    for line in Path(path).read_text().splitlines():
+        if line.strip():
+            item = json.loads(line)
+            items[item["id"]] = item
+    return list(items.values())
 
 
 def usable(items: list[dict], sd_floor: float = SD_FLOOR) -> list[dict]:
