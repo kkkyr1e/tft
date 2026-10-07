@@ -77,25 +77,44 @@ def describe(player, shop, game_round: int, env) -> dict:
 
 # --------------------------------------------------------------------------- planners
 
-class MimicPlanner:
-    """The rule bot's own economy, written as a plan."""
+class ParamPlanner:
+    """A fixed economy with a few knobs. The defaults are the rule bot's own economy.
 
-    name = "mimic"
+    From round 11: level while below `max_level` and gold >= `level_gold`; at `max_level` reroll
+    down to `top_floor`; below `desperate_hp` level and reroll down to `desperate_floor`.
+    """
+
+    def __init__(self, name="mimic", level_gold=54, max_level=8, top_floor=52, desperate_hp=30, desperate_floor=4):
+        self.name, self.level_gold, self.max_level = name, level_gold, max_level
+        self.top_floor, self.desperate_hp, self.desperate_floor = top_floor, desperate_hp, desperate_floor
 
     def plan(self, state: dict, comps: dict, comp_now: str | None) -> dict:
         hp, gold, level = state["hp"], state["gold"], state["level"]
-        desperate = hp < 30
+        desperate = hp < self.desperate_hp
         if state["round"] < 11:  # the rule bot levels when it is 4 xp short
             level_to = level + 1 if state["xp"] == state["xp_needed"] - 4 else level
             return {"comp": None, "level_to": level_to, "roll_floor": 999, "carry": None}
-        level_to = level + 1 if level < 8 and (gold >= 54 or (desperate and gold > 4)) else level
+        wants_level = gold >= self.level_gold or (desperate and gold > self.desperate_floor)
+        level_to = level + 1 if level < self.max_level and wants_level else level
         if desperate:
-            roll_floor = 4
-        elif level == 8:
-            roll_floor = 52
+            roll_floor = self.desperate_floor
+        elif level >= self.max_level:
+            roll_floor = self.top_floor
         else:
             roll_floor = 999
         return {"comp": None, "level_to": level_to, "roll_floor": roll_floor, "carry": None}
+
+
+MimicPlanner = ParamPlanner
+
+# Economy variants for tuning the executor without a model (name -> knobs).
+VARIANTS = {
+    "mimic": {},
+    "fast8": {"level_gold": 34},  # level whenever 30 gold is left after buying xp
+    "rolldown8": {"top_floor": 10},  # at level 8 spend down to 10 gold
+    "hp50": {"desperate_hp": 50},  # start the desperate roll-down earlier
+    "fast8roll": {"level_gold": 34, "top_floor": 10},
+}
 
 
 PROMPT = """You are playing Teamfight Tactics (Set 4, 8 players, last one alive wins; you want the best placement).
@@ -129,7 +148,7 @@ class LLMPlanner:
         self.cache_dir = Path(cache_dir) if cache_dir else None
         if self.cache_dir:
             self.cache_dir.mkdir(parents=True, exist_ok=True)
-        self.fallback = MimicPlanner()
+        self.fallback = ParamPlanner()
         self.calls = self.invalid = 0
         self.context: dict = {}
 
@@ -288,9 +307,10 @@ class PlanPolicy:
 
 
 def make_plan_policy(kind: str) -> PlanPolicy:
-    """`mimic`, or `llm` configured by env vars TFT_LLM_CMD, TFT_LLM_LOG, TFT_LLM_CACHE, TFT_LLM_NAME."""
-    if kind == "mimic":
-        return PlanPolicy(MimicPlanner())
+    """An economy variant from VARIANTS (`mimic`, `fast8`, ...), or `llm` configured by env vars
+    TFT_LLM_CMD, TFT_LLM_LOG, TFT_LLM_CACHE, TFT_LLM_NAME."""
+    if kind in VARIANTS:
+        return PlanPolicy(ParamPlanner(kind, **VARIANTS[kind]), name=kind)
     if kind == "llm":
         cmd = os.environ.get("TFT_LLM_CMD")
         if not cmd:

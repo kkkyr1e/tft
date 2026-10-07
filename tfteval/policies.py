@@ -101,9 +101,9 @@ def make_policy(spec: str) -> Policy:
     actions), `mimic` (plan executor with the rule bot's economy) or `llm` (plan executor with a
     model planner, see tfteval/planner.py). Prefix `alias=` to report a seat under its own name, e.g. `hero=rule`."""
     alias, _, kind = spec.rpartition("=")
-    if kind in ("mimic", "llm"):
-        from tfteval.planner import make_plan_policy
+    from tfteval.planner import VARIANTS, make_plan_policy
 
+    if kind in VARIANTS or kind == "llm":
         policy = make_plan_policy(kind)
     elif kind.startswith("noisy") and kind[5:].isdigit():
         policy = NoisyRulePolicy(int(kind[5:]) / 100)
