@@ -1,8 +1,13 @@
 """Fixes to the pinned simulator, applied at runtime so no file in third_party is edited.
 
-Each fix is a function that patches one simulator function. `apply()` installs all of them
-(idempotent); `play_game` calls it unless sim fixes are switched off, and records which fixes
-were active in the game result, so runs made before and after a fix are never mixed silently.
+Each fix is a function that patches one simulator function. `apply()` installs the ones the
+simulator still needs (idempotent); `play_game` calls it unless sim fixes are switched off, and
+records which fixes were active in the game result, so runs made before and after a fix are
+never mixed silently.
+
+Since the switch to our simulator fork (scripts/setup_sim.sh), the fork carries these fixes
+itself and `apply()` installs nothing; the patches stay for runs against the original upstream
+commit. Which simulator a game ran on is recorded separately (`sim_commit` in the result).
 
 carousel_order
     Upstream builds the pick order by walking the players once and inserting a player at the
@@ -20,6 +25,7 @@ from __future__ import annotations
 
 FIXES = ("carousel_order",)
 _applied = False
+_commit = None
 
 
 def carousel_order(players, r, rng):
@@ -57,13 +63,40 @@ def _fixed_carousel(players, r, pool_obj):
         pool_obj.update_pool(current, -1)
 
 
+def needed() -> tuple[str, ...]:
+    """The fixes this simulator still lacks: none once it ships its own `carousel_order`."""
+    from Simulator.game import carousel as carousel_module
+
+    return () if hasattr(carousel_module, "carousel_order") else FIXES
+
+
 def apply() -> tuple[str, ...]:
     global _applied
-    if not _applied:
+    fixes = needed()
+    if fixes and not _applied:
         from Simulator.game import carousel as carousel_module
         from Simulator.game import game_round
 
         carousel_module.carousel = _fixed_carousel
         game_round.carousel = _fixed_carousel  # game_round imported the name directly
         _applied = True
-    return FIXES
+    return FIXES if _applied else ()
+
+
+def sim_commit() -> str | None:
+    """Git commit of the simulator on the path, or None if it is not a git checkout."""
+    global _commit
+    if _commit is None:
+        import pathlib
+        import subprocess
+
+        import Simulator
+
+        root = pathlib.Path(Simulator.__file__).resolve().parent.parent
+        try:
+            out = subprocess.run(["git", "-C", str(root), "rev-parse", "HEAD"], capture_output=True, text=True,
+                                 timeout=10)
+            _commit = out.stdout.strip() if out.returncode == 0 else ""
+        except (OSError, subprocess.SubprocessError):
+            _commit = ""
+    return _commit or None

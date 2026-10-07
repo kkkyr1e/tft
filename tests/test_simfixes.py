@@ -34,3 +34,12 @@ def test_first_carousel_is_everyone_at_once():
     players = _players([100] * 8)
     order = carousel_order(players, 0, random.Random(3))
     assert len(order) == 8
+
+
+def test_no_runtime_patch_when_the_simulator_has_the_fix(monkeypatch):
+    from Simulator.game import carousel as carousel_module
+
+    from tfteval import simfixes
+
+    monkeypatch.setattr(carousel_module, "carousel_order", lambda players, r: list(players), raising=False)
+    assert simfixes.needed() == ()

@@ -24,7 +24,9 @@ class GameResult:
     actions: dict = field(default_factory=dict)  # seat -> number of actions the policy chose
     fallbacks: dict = field(default_factory=dict)  # seat -> actions replaced because the policy raised
     reproducible: bool = False  # True only when PYTHONHASHSEED was pinned for this process
-    sim_fixes: list = field(default_factory=list)  # tfteval.simfixes active in this game; [] = upstream simulator
+    sim_fixes: list = field(default_factory=list)  # tfteval.simfixes patched in at runtime; [] = simulator as checked out
+    sim_commit: str | None = None  # git commit of the simulator checkout (scripts/setup_sim.sh pins it)
+    rules: str = "set4"  # simulator economy profile
 
     def to_json(self) -> dict:
         return asdict(self)
@@ -35,7 +37,7 @@ def _seat_seed(game_seed: int, seat_index: int) -> int:
 
 
 def play_game(seat_policies: dict[str, Policy], seed: int, max_steps: int = 20000, quiet: bool = True,
-              sim_fixes: bool | None = None) -> GameResult:
+              sim_fixes: bool | None = None, rules: str | None = None) -> GameResult:
     """Run one game. `seat_policies` maps "player_0".."player_7" to a policy.
 
     The same seed replays the same game only if the interpreter was started with a fixed
@@ -48,6 +50,10 @@ def play_game(seat_policies: dict[str, Policy], seed: int, max_steps: int = 2000
 
     `sim_fixes` installs tfteval.simfixes (default on; TFT_SIM_FIXES=0 turns it off, e.g. to
     replay runs made before the fixes). A process cannot switch back once they are installed.
+
+    `rules` picks the simulator's economy profile: "set4" (default) or "set18" (current-set shop
+    odds, xp, pool sizes, streak gold and player damage on the Set 4 roster; needs the fork).
+    Default from TFT_RULES.
     """
     from Simulator.simulators.tft_simulator import TFTConfig, parallel_env
 
@@ -56,12 +62,14 @@ def play_game(seat_policies: dict[str, Policy], seed: int, max_steps: int = 2000
     if sim_fixes is None:
         sim_fixes = os.environ.get("TFT_SIM_FIXES", "1") != "0"
     active = list(simfixes.apply()) if sim_fixes else []
+    rules = rules or os.environ.get("TFT_RULES", "set4")
+    config = {"rules": rules} if rules != "set4" else {}  # older simulators have no rules option
 
     started = time.time()
     np.random.seed(seed % (2**32))  # the upstream rule bot uses numpy's global generator
     sink = io.StringIO()
     with contextlib.redirect_stdout(sink if quiet else _Passthrough()):
-        env = parallel_env(TFTConfig(num_players=len(seat_policies)))
+        env = parallel_env(TFTConfig(num_players=len(seat_policies), **config))
         observations, infos = env.reset(seed=seed)
         seats = list(env.possible_agents)
         if set(seats) != set(seat_policies):
@@ -119,6 +127,8 @@ def play_game(seat_policies: dict[str, Policy], seed: int, max_steps: int = 2000
         fallbacks=fallbacks,
         reproducible=os.environ.get("PYTHONHASHSEED", "random").isdigit(),
         sim_fixes=active,
+        sim_commit=simfixes.sim_commit(),
+        rules=rules,
     )
 
 

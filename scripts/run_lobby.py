@@ -50,8 +50,11 @@ def main():
     parser.add_argument("--seed", type=int, default=0, help="first game seed; game i uses seed+i")
     parser.add_argument("--workers", type=int, default=1)
     parser.add_argument("--no-rotate", action="store_true", help="keep policies on fixed seats")
+    parser.add_argument("--rules", choices=["set4", "set18"], help="economy profile (default set4, or TFT_RULES)")
     parser.add_argument("--out", required=True)
     args = parser.parse_args()
+    if args.rules:
+        os.environ["TFT_RULES"] = args.rules  # read by play_game in every worker
 
     names = parse_lobby(args.lobby)
     jobs = [(names, args.seed + i, not args.no_rotate) for i in range(args.games)]
