@@ -81,8 +81,13 @@ def _restore_seat_set_order(game: Game, want: list) -> None:
     iteration order, and when two names collide in the hash table that lands them in different slots
     than the original insertion order (player_0 .. player_7) did: the restored game then deals the
     same random numbers to different seats and diverges from the next round on (measured on seed 7000).
-    Rebuilding the set the way the simulator builds it restores the original order."""
+    Rebuilding the set the way the simulator builds it restores the original order.
+    Our simulator fork keeps the seats in a list, which pickles in order; nothing to do there."""
     manager = game.env.unwrapped.player_manager
+    if isinstance(manager.players, list):
+        if manager.players != want:
+            raise RuntimeError(f"restored seat order {manager.players} differs from the snapshot's {want}")
+        return
     rebuilt = {"player_" + str(i) for i in range(len(want))}  # PlayerManager.__init__'s insertion order
     if list(rebuilt) != want:
         raise RuntimeError(f"cannot restore the seat iteration order {want}; rebuilt set gives {list(rebuilt)}")

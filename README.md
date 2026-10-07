@@ -1,6 +1,6 @@
 # 云顶调优
 
-云顶之弈调优项目：agent 的评测与调优框架，跑在开源的 S4 模拟器 [TFTMuZeroAgent](https://github.com/silverlight6/TFTMuZeroAgent) 上。
+云顶之弈调优项目：agent 的评测与调优框架，跑在开源的 S4 模拟器 [TFTMuZeroAgent](https://github.com/silverlight6/TFTMuZeroAgent) 上，用的是我们修过 bug 的 fork：[kkkyr1e/TFTMuZeroAgent](https://github.com/kkkyr1e/TFTMuZeroAgent) 的 `develop` 分支。
 
 整体方针见 [docs/PLAN.md](docs/PLAN.md)。当前状态是 M0：环境可跑、种子可复现、有两条基线；被测的 LLM agent 还没有实现。
 
@@ -250,7 +250,7 @@ python scripts/compare.py results/hero_rule.json results/hero_noisy20.json --pol
 
 ## 关于复现
 
-同一个种子只有在固定 `PYTHONHASHSEED` 时才会重放出同一局；不固定的话，每换一个进程结果都不同。原因已找到：模拟器把 8 个座位名放在一个集合里（`PlayerManager.players`），每回合开始按这个集合的迭代顺序给各座位刷新商店，而所有座位共用一个棋子池和一条随机流，所以迭代顺序决定谁拿到哪一段随机数；集合的顺序取决于字符串哈希。`scripts/run_lobby.py` 会自动固定为 0；自己写脚本调用 `play_game` 时需要手动设置，结果里的 `reproducible` 字段会标明这一点。
+同一个种子只有在固定 `PYTHONHASHSEED` 时才会重放出同一局；不固定的话，每换一个进程结果都不同。原因已找到：模拟器把 8 个座位名放在一个集合里（`PlayerManager.players`），每回合开始按这个集合的迭代顺序给各座位刷新商店，而所有座位共用一个棋子池和一条随机流，所以迭代顺序决定谁拿到哪一段随机数；集合的顺序取决于字符串哈希。fork 的 `develop` 已把座位改成固定顺序（见下文"对模拟器的修正"），同一种子在不同 `PYTHONHASHSEED` 下是同一局；`scripts/run_lobby.py` 仍固定为 0，结果里的 `reproducible` 字段照旧记录。
 
 ## 存档与分叉
 
@@ -298,19 +298,27 @@ branch(snap, reseed=3, switch={"player_3": switch_planner("fast8")}).run().resul
 
 ## 对模拟器的修正
 
-模拟器固定在一个提交上，不改 `third_party/` 里的文件；修正写在 `tfteval/simfixes.py`，由 `play_game`（`runner.Game`）在运行时装上，从存档恢复时也会装上，结果里的 `sim_fixes` 字段记录当局用了哪些修正（空列表表示原版模拟器）。设 `TFT_SIM_FIXES=0` 可以关掉，用来重放修正之前的运行。修正前后的结果不能混在一起比。
+模拟器用我们的 fork [kkkyr1e/TFTMuZeroAgent](https://github.com/kkkyr1e/TFTMuZeroAgent)，`scripts/setup_sim.sh` 固定在 `develop` 的一个提交上。bug 修在 fork 里，每个修正是一个单独的分支、带一个单元测试，可以单独给上游提 PR；`develop` 合并了全部修正。清单、出处和测试见 fork 里的 `FORK_NOTES.md`。
 
 | 修正 | 原版的问题 | 修正后 |
 |---|---|---|
-| `carousel_order` | 选秀顺序的循环只把"血量不高于当前队首"的玩家插到队首，其余玩家拿不到选秀单位。实测 3 局：第一次选秀 8 人里只有 1 人拿到，之后每次 1～5 人 | 每个活着的玩家都拿一次。第一次选秀所有人同时放出，之后从血量最低起两人一组放出，同血量随机。每人仍拿费用最高的单位，与原版相同 |
+| 选秀顺序 | 只有血量不高于队首的玩家能拿到单位，第一次选秀 8 人里只有 1 人拿到 | 人人有份；第一次所有人同时，之后从低血起两人一组 |
+| 阶段伤害 | 每档伤害提前一个阶段生效，第 2 阶段就有基础伤害 | 按 10.24 版本的 S4 表：第 1～7 阶段基础伤害 0/0/2/3/5/8/15 |
+| 6-7 野怪 | 被跳过 | 正常打 |
+| 前期收入 | 1-2、1-3 没有收入，金币和经验晚两回合 | 1-2/1-3/1-4/2-1 给 2/2/3/4 金，每回合 2 经验 |
+| 匹配 | 加权抽签会抽到不该遇到的对手 | 只在可遇到的对手里按权重抽 |
+| 买牌 | 每次刷新只能买一张 | 商店里剩下的都能买 |
+| 座位顺序 | 座位放在 set 里，同一个种子在不同进程里是不同的对局 | 固定顺序；实测同一种子在 `PYTHONHASHSEED` 为 0 和 1 时名次完全一致 |
+| 规则 bot | Katarina 拼错；备战席换上场的逻辑是死代码 | 修好 |
+| 天选价格 | 2～5 费天选比正式游戏便宜 1 金 | 1 星价格的 3 倍 |
 
-已知但没有修的问题（对所有座位一样，改了会改变基线，先记下）：
+fork 里另外加了两个选项，默认都关：
+- 跳过就结束本回合，并可调高每回合的动作上限。
+- 经济规则可切换成当前赛季 S18：商店概率、升级经验（最高 10 级）、卡池数量、连胜连败金、扣血公式按 S18，英雄、羁绊、装备和战斗仍是 S4。仙灵、海克斯等 S18 专有机制没有做。数值和出处见 fork 的 `FORK_NOTES.md`。用法：`run_lobby.py --rules set18`，或设 `TFT_RULES=set18`；结果里的 `rules` 字段记录用的是哪套。
 
-| 问题 | 位置 | 影响 |
-|---|---|---|
-| 商店里只要有一格空着，购买掩码就全部关闭（`shop_empty` 实际判断的是"有空格"） | `game/player.py` `shop_empty`，`encoding/token/action.py` | 按掩码行动的策略（包括规则 bot）每次刷新只能买 1 张卡 |
-| 规则 bot 把备战席棋子换上场的检查永远不触发（`棋子对象 in 名字列表`） | `generators/default_agent.py` 两处 `in BASE_CHAMPION_LIST` | 规则 bot 只在有空位时上人，阵容选择只影响买和卖，不影响上场的棋子（计划座位可用 `field_comp` 补上） |
-| fortune 阵容里写的是 `katerina`，棋子名是 `katarina` | `generators/default_agent_stats.py` | 规则 bot 和执行器在 fortune 阵容里永远不会把卡特琳娜当本阵容的棋子买；`contested_by_comp` 里它也总是 0 |
+**这次换模拟器以后，之前所有的结果都不能再拿来比**：伤害、收入、买牌、匹配和规则 bot 都变了。结果里的 `sim_commit` 字段记录当局用的是哪个模拟器提交。
+
+`tfteval/simfixes.py` 是换 fork 之前在运行时打的补丁，现在模拟器自带修正，它就什么都不装（`sim_fixes` 为空列表）；只有用原版上游模拟器时才会装上。
 
 ## 目录
 
