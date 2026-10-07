@@ -4,7 +4,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from tfteval.stats import games_needed, paired_diff, summarize  # noqa: E402
+from tfteval.stats import cluster_mean_ci, games_needed, paired_diff, summarize, t_quantile  # noqa: E402
 
 
 def game(seed, places, names=("a", "a", "a", "a", "b", "b", "b", "b"), finished=True):
@@ -56,3 +56,15 @@ if __name__ == "__main__":  # lets the suite run without pytest installed
         if name.startswith("test_"):
             fn()
             print("ok", name)
+
+
+def test_t_quantile_matches_tables():
+    for df, exact in ((5, 2.5706), (10, 2.2281), (29, 2.0452), (39, 2.0227), (1000, 1.9623)):
+        assert abs(t_quantile(0.975, df) - exact) < 1e-3
+
+
+def test_cluster_mean_ci():
+    out = cluster_mean_ci([1.0, -1.0, 1.0, -1.0])
+    assert out["n"] == 4 and out["mean"] == 0.0
+    assert math.isclose(out["ci95"], t_quantile(0.975, 3) * math.sqrt(4 / 3) / 2)
+    assert cluster_mean_ci([2.0])["ci95"] is None

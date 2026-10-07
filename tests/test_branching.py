@@ -45,8 +45,8 @@ def test_resume_without_reseed_replays_the_original_game(seed, rnd):
 # knows to field its strongest units again in 3-1 from the knobs it carries over; level_by is
 # scheduled across the snapshot and field_comp starts after it. Executor state (knobs, tracked pairs,
 # the rule bot's round checks, stats) has to come through the pickle for the resumed game to match.
-# With PYTHONHASHSEED=0 every capability acts in this game: fodder buys and moves, restore moves,
-# comp swaps and xp bought ahead of the rule bot.
+# With PYTHONHASHSEED=0 every capability acts in this game: fodder moves (on the rule bot's strong
+# view), restore moves, comp swaps and xp bought ahead of the rule bot.
 OVERLAY = [
     {"from": "2-3", "to": "2-7", "fields": {"fodder": True}},
     {"from": "2-5", "to": "4-1", "fields": {"level_by": {"level": 8, "by": "4-1"}}},

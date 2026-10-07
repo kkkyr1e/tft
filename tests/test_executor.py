@@ -191,57 +191,94 @@ def test_fodder_fields_the_weakest_and_reverts():
     assert board_names(p) == board_names(plain) == ["ahri", "annie", "nami"]
 
 
-def test_fodder_buys_one_costs_when_the_bench_has_no_weak_units():
-    # 3 gold: the rule bot cannot afford the 3- and 4-costs left in the shop (with more gold it buys
-    # them after the fodder buy, now that the rest of a shop stays buyable)
-    p = make_player(board=STRONG, gold=3)
+def owned(p):
+    return sorted(board_names(p) + bench_names(p))
+
+
+def weakest_fielded(p):
+    from tfteval.executor import strength
+
+    units = [u for col in p.board for u in col if u] + [u for u in p.bench if u]
+    fielded = sorted(strength(u) for col in p.board for u in col if u)
+    return fielded == sorted(strength(u) for u in units)[:len(fielded)]
+
+
+# 1-costs with no trait in common with STRONG. The rule bot decides on the strong view, which fields
+# the strongest units by strength(); on the simulator fork the base economy's own swap check fields by
+# its comp score, so a weak unit that completes a trait (nami: a third mage, vayne: a second
+# sharpshooter) goes onto the base board and the two boards, and the decisions after, part ways.
+WEAK_NO_TRAIT = ["fiora", "garen", "maokai"]
+
+
+@pytest.mark.parametrize("board,bench,shop,gold,items", [
+    # the base economy buys a second jinx, fields it in place of annie and sells annie and a 1-cost to
+    # get back to 10 gold (the rest of the shop stays buyable on the fork, nothing else is worth it):
+    # in fodder mode the units sold stand on the fodder board, so they are sold from there
+    (STRONG, WEAK_NO_TRAIT, ["jinx", "garen", "fiora", "maokai", "garen"], 10, ()),
+    (STRONG, WEAK_NO_TRAIT, ["jinx", "garen", "fiora", "maokai", "garen"], 10, ("bf_sword",)),  # item left unplaced
+    # nothing the base economy wants: a rule bot looking at the fodder board would buy the pair of
+    # the fodder fiora
+    (STRONG, WEAK, ["fiora"] * 5, 20, ()),
+    # no weak units at all: the fodder board is the weakest of what is owned, nothing is bought for it
+    (STRONG, (), ["vayne", "fiora", "nami", "fiora", "nami"], 6, ()),
+])
+def test_fodder_plays_the_base_economy(board, bench, shop, gold, items):
+    def play(fodder):
+        p = make_player(board=board, bench=bench, gold=gold)
+        for i, item in enumerate(items):
+            p.item_bench[i] = item
+        set_shop(p, shop)
+        ex = PlanExecutor()
+        commands = run_round(ex, p, 4, {**BASE, "level_to": 3, "fodder": fodder})
+        return p, ex, [c for c in commands if c.startswith("3_")]
+
+    base, _, base_buys = play(False)
+    p, ex, buys = play(True)
+    assert buys == base_buys and p.gold == base.gold and owned(p) == owned(base)
+    assert weakest_fielded(p) and ex.stats["fodder_rounds"] == 1 and "fodder_buys" not in ex.stats
+    assert [i for i in p.item_bench if i] == list(items)  # no items on a fodder board
+    if items:
+        assert not [i for i in base.item_bench if i]
+
+
+def test_fodder_board_without_weak_units_stays_as_it_is():
+    p = make_player(board=STRONG, gold=0)
+    set_shop(p, ["vayne", "fiora", "nami", "fiora", "nami"])
     ex = PlanExecutor()
-    for idx, name in zip((4, 5, 6), WEAK):
-        set_shop(p, [name, "ahri", "jinx", "ahri", "jinx"])
-        commands = run_round(ex, p, idx, {**BASE, "level_to": 3, "fodder": True})
-        assert commands[0] == "3_0"  # the 1-cost, not the stronger units next to it
-    assert ex.stats["fodder_buys"] == 3
-    assert board_names(p) == sorted(WEAK) and bench_names(p) == sorted(STRONG)
-    assert p.gold == 0  # the three 1-costs still sell for 3
+    commands = run_round(ex, p, 4, {**BASE, "level_to": 3, "fodder": True})
+    assert not [c for c in commands if c[0] in "1346"]  # no buys, sales, xp or items (moves are fine)
+    assert board_names(p) == sorted(STRONG) and p.gold == 0 and ex.stats["fodder_moves"] == 0
 
 
-class BuyLog(PlanExecutor):
-    """Records the gold before each of the executor's own fodder buys."""
-
-    def __init__(self):
-        super().__init__()
-        self.buys = []
-
-    def fodder_buy(self, player, shop, mask):
-        command = super().fodder_buy(player, shop, mask)
-        if command:
-            self.buys.append(player.gold)
-        return command
-
-
-def test_fodder_keeps_the_interest_bracket():
-    for gold, first, buys in ((20, None, [19, 18]), (21, "3_0", [21])):
-        p = make_player(board=STRONG, gold=gold)
-        set_shop(p, ["vayne", "fiora", "nami", "fiora", "nami"])
-        ex = BuyLog()
-        assert ex.fodder_buy(p, p.shop, mask_of(p)) == first  # 20 -> 19 would cost a gold of interest
-        ex.buys.clear()
-        run_round(ex, p, 4, {**BASE, "level_to": 3, "fodder": True})
-        # At 20 the rule bot buys vayne itself (it ignores interest), and the rest of the shop stays
-        # buyable; the fodder buys that follow stay inside the bracket the seat is in then.
-        assert ex.buys == buys and all(min(g // 10, 5) == min((g - 1) // 10, 5) for g in ex.buys)
+def test_strong_view_and_translation():
+    p = make_player(board=WEAK, bench=STRONG)
+    ex = PlanExecutor()
+    view, swaps = ex.strong_view(p)
+    assert sorted(u.name for col in view.board for u in col if u) == sorted(STRONG)
+    assert sorted(u.name for u in view.bench if u) == sorted(WEAK) and not view.bench_full()
+    assert view.gold == p.gold and view.num_units_in_play == 3  # the rest comes from the player
+    assert len(swaps) == 6 and all(swaps[swaps[loc]] == loc for loc in swaps)
+    assert board_names(p) == sorted(WEAK)  # the player itself is untouched
+    slot = 28 + next(i for i, u in enumerate(view.bench) if u and u.name == "nami")
+    cell = swaps[slot]  # where nami really stands: on the fodder board
+    x, y = cell // 4, cell % 4
+    assert p.board[x][y].name == "nami" and ex.translate("4_" + str(slot), swaps) == "4_" + str(cell)
+    assert ex.translate("3_2", swaps) == "3_2" and ex.translate("1", swaps) == "1"
 
 
-def test_fodder_filter_blocks_rule_bot_undoing_it():
+def test_fodder_filter():
     p = make_player(board=WEAK, bench=STRONG)
     ex = PlanExecutor()
     ex.begin_round({**BASE, "fodder": True}, compile_knobs({**BASE, "fodder": True}, state(5)))
-    kept = 28 + [u.name for u in p.bench if u].index("ahri")
-    assert ex.fodder_filter("4_" + str(kept), p) == "0"  # selling a kept unit
+    p.actions_remaining = 5
     assert ex.fodder_filter("5_28_3", p) == "0"  # fielding a benched unit
+    assert ex.fodder_filter("5_3_28", p) == "0"  # benching a fielded one
     assert ex.fodder_filter("6_0_1", p) == "0"  # items on a fodder unit
     assert ex.fodder_filter("5_0_4", p) == "5_0_4"  # board to board is fine
     assert ex.fodder_filter("3_2", p) == "3_2"
+    assert ex.fodder_filter("4_0", p) == "4_0" and ex.fodder_filter("4_28", p) == "4_28"
+    p.actions_remaining = 1  # a board sale on the last action would let autofill field a strong unit
+    assert ex.fodder_filter("4_0", p) == "0" and ex.fodder_filter("4_28", p) == "4_28"
 
 
 def test_pivot_sells_off_comp_bench_units_and_keeps_playing():

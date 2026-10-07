@@ -76,6 +76,30 @@ def paired_diff(results_a: list[dict], results_b: list[dict], policy_a: str, pol
     return summary
 
 
+def t_quantile(p: float, df: float) -> float:
+    """Student-t quantile by the Cornish-Fisher expansion (Abramowitz & Stegun 26.7.5); within 1e-3
+    of the exact value for df >= 5, which is all a cluster interval over states needs (no scipy here)."""
+    z = NormalDist().inv_cdf(p)
+    g = ((z**3 + z) / 4,
+         (5 * z**5 + 16 * z**3 + 3 * z) / 96,
+         (3 * z**7 + 19 * z**5 + 17 * z**3 - 15 * z) / 384,
+         (79 * z**9 + 776 * z**7 + 1482 * z**5 - 1920 * z**3 - 945 * z) / 92160)
+    return z + sum(gi / df ** (i + 1) for i, gi in enumerate(g))
+
+
+def cluster_mean_ci(values) -> dict:
+    """Mean of per-cluster values with a 95% t interval, the cluster (e.g. a saved state, whose
+    branches share their past) being the independent unit."""
+    values = np.asarray(values, dtype=float)
+    n = len(values)
+    mean = float(values.mean()) if n else float("nan")
+    if n < 2:
+        return {"n": n, "mean": mean, "sd": None, "ci95": None, "low": None, "high": None}
+    sd = float(values.std(ddof=1))
+    half = t_quantile(0.975, n - 1) * sd / math.sqrt(n)
+    return {"n": n, "mean": mean, "sd": sd, "ci95": half, "low": mean - half, "high": mean + half}
+
+
 def games_needed(sd_per_game: float, half_width: float) -> int:
     """Games required for a 95% interval of the given half width."""
     return math.ceil((_Z95 * sd_per_game / half_width) ** 2)
