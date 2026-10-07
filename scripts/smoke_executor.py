@@ -7,8 +7,14 @@
     python scripts/smoke_executor.py --hero mimic --name lvl8 --games 8 \
         --overlay '[{"from": "3-5", "fields": {"level_by": {"level": 8, "by": "4-1"}}}]'
 
+    # the hero alone (no control games), e.g. a stance seat with its per-round stance log
+    TFT_STANCE_LOG=log.jsonl python scripts/smoke_executor.py --hero stance --control none --games 8
+
 Each seed is played twice: once with the hero policy on the rotating hero seat and once with the
-control policy there; the other seven seats are rule bots. Reported per policy (means over games):
+control policy there (only once with --control none); the other seven seats are rule bots. The
+rotating seat is the one `run_lobby.py --lobby hero=X:1,rule:7` gives the hero. Every traced round
+also records the seat's actions in it by kind (buy, sell, move, item, xp, roll, pass). Reported per
+policy (means over games):
 
 * for the PvP fights in --window: fights lost, HP lost, and the gold the fights paid: win gold
   (+1 per win) plus streak gold in the incomes they feed (the income at the start of a round with
@@ -16,7 +22,7 @@ control policy there; the other seven seats are rule bots. Reported per policy (
 * HP, gold, level, share of games at level >= 8 and share of fielded units that belong to the
   executor's target comp, at the start of each --at round;
 * the executor's counters (fodder moves and buys, pivots, xp taken from the rule bot, ...);
-* final placement (noisy at these sample sizes).
+* final placement (noisy at these sample sizes), unfinished games and policy errors.
 """
 
 from __future__ import annotations
@@ -44,8 +50,11 @@ def streak_bonus(win: int, loss: int) -> int:
     return 0 if s < 2 else 1 if s <= 3 else 2 if s == 4 else 3
 
 
+ACTION_KINDS = ("pass", "xp", "roll", "buy", "sell", "move", "item")  # action type 0..6
+
+
 class Tracer:
-    """Wraps a policy; records the seat's state at the start of every round."""
+    """Wraps a policy; records the seat's state at the start of every round and its actions in it."""
 
     def __init__(self, policy):
         self.policy, self.name, self.rows, self.round = policy, policy.name, [], None
@@ -72,8 +81,11 @@ class Tracer:
                 "win": int(player.win_streak), "loss": int(player.loss_streak), "comp": comp, "on_comp": on_comp,
                 "board": sorted(f"{u.name}*{u.stars}" for u in board_units(player)),
                 "bench": sorted(f"{c.name}*{c.stars}" for c in player.bench if c),
+                "max_units": int(player.max_units), "actions": Counter(),
             })
-        return self.policy.act(observation, info, agent, env)
+        action = self.policy.act(observation, info, agent, env)
+        self.rows[-1]["actions"][ACTION_KINDS[int(action[0])]] += 1
+        return action
 
 
 def window_stats(rows: list, first: int, last: int) -> dict:
@@ -115,8 +127,12 @@ def play(job):
     tracer = lobby[hero_seat] = Tracer(make_hero(spec))
     result = play_game(lobby, seed)
     executor = getattr(tracer.policy, "executor", None)
-    return {"seed": seed, "policy": spec["name"], "seat": hero_seat, "place": result.placements[hero_seat],
-            "rows": tracer.rows, "executor": dict(executor.stats) if executor is not None else {}}
+    return {"seed": seed, "policy": spec["name"], "seat": hero_seat, "place": result.placements.get(hero_seat),
+            "finished": result.finished, "fallbacks": result.fallbacks[hero_seat],
+            "fallbacks_all_seats": sum(result.fallbacks.values()), "steps": result.steps,
+            "sim_commit": result.sim_commit,
+            "rows": [{**r, "actions": dict(r["actions"])} for r in tracer.rows],
+            "executor": dict(executor.stats) if executor is not None else {}}
 
 
 def _mean(vals):
@@ -126,7 +142,10 @@ def _mean(vals):
 
 def summarise(games, first, last, checkpoints):
     windows = [window_stats(g["rows"], first, last) for g in games]
-    out = {"n": len(games), "place": _mean([g["place"] for g in games])}
+    out = {"n": len(games), "place": _mean([g["place"] for g in games]),
+           "unfinished": sum(not g.get("finished", True) for g in games),
+           "policy_errors": sum(g.get("fallbacks", 0) for g in games),
+           "policy_errors_all_seats": sum(g.get("fallbacks_all_seats", 0) for g in games)}
     out["window"] = {k: _mean([w[k] for w in windows]) for k in windows[0]} if windows else {}
     at = {}
     for label in checkpoints:
@@ -150,7 +169,7 @@ def main():
     parser.add_argument("--hero", required=True, help="a policy name; with --overlay a VARIANTS name")
     parser.add_argument("--overlay", help="JSON list of {from, to, fields} windows added to the hero's plans")
     parser.add_argument("--name", help="label for the hero (default: --hero)")
-    parser.add_argument("--control", default="mimic")
+    parser.add_argument("--control", default="mimic", help="a policy name, or none for no control games")
     parser.add_argument("--control-overlay", help="like --overlay, for the control seat")
     parser.add_argument("--control-name", help="label for the control (default: --control)")
     parser.add_argument("--games", type=int, default=16)
@@ -163,17 +182,20 @@ def main():
 
     hero = {"policy": args.hero, "name": args.name or args.hero,
             "overlay": json.loads(args.overlay) if args.overlay else None}
-    control = {"policy": args.control, "name": args.control_name or args.control,
-               "overlay": json.loads(args.control_overlay) if args.control_overlay else None}
-    if hero["name"] == control["name"]:
-        raise SystemExit("hero and control need different names (--name)")
+    control = None
+    if args.control != "none":
+        control = {"policy": args.control, "name": args.control_name or args.control,
+                   "overlay": json.loads(args.control_overlay) if args.control_overlay else None}
+        if hero["name"] == control["name"]:
+            raise SystemExit("hero and control need different names (--name)")
+    specs = [hero] + ([control] if control else [])
     first, last = (stages.parse_label(x) for x in args.window)
-    jobs = [(args.seed + i, spec) for i in range(args.games) for spec in (hero, control)]
+    jobs = [(args.seed + i, spec) for i in range(args.games) for spec in specs]
     with ProcessPoolExecutor(max_workers=args.workers) as pool:
         games = list(pool.map(play, jobs))
     report = {"hero": hero, "control": control, "window": args.window,
               "seeds": [args.seed, args.seed + args.games - 1]}
-    for spec in (hero, control):
+    for spec in specs:
         report[spec["name"]] = summarise([g for g in games if g["policy"] == spec["name"]], first, last, args.at)
     print(json.dumps(report, indent=1))
     if args.out:
