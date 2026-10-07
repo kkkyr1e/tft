@@ -28,9 +28,9 @@ Stances, in priority order (the first that applies is played):
                 candidates': `fodder` (field the weakest units, keep the strong ones on the bench).
                 Re-checked every round; ends for the game once the streak breaks or HP drops below
                 the threshold.
-* `slow_roll`   on in v1, off by default in v2 (seat kind `stance+slowroll`): the shop sells one unit
-                per refresh in this simulator (README, known issues), so a slow roll cannot find its
-                copies. A 1-3 cost unit of the target comp with SLOWROLL_COPIES copies held, few copies
+* `slow_roll`   on in v1, off by default in v2 (seat kind `stance+slowroll`): the upstream simulator's
+                shop sold one unit per refresh, so a slow roll could not find its copies (the fork
+                fixed the shop; slow_roll has not been re-tested since). A 1-3 cost unit of the target comp with SLOWROLL_COPIES copies held, few copies
                 on other boards, level at most SLOWROLL_LEVEL[cost]: go to that level, hold it, roll
                 only the gold above SLOWROLL_FLOOR, items on that unit. Kept until it is 3-star,
                 contested, too late or the seat bleeds.

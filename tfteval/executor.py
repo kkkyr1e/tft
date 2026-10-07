@@ -12,7 +12,7 @@ from Simulator.battle.stats import COST
 from Simulator.game.pool_stats import cost_star_values
 from Simulator.generators.default_agent import Default_Agent
 from Simulator.generators.default_agent_stats import TEAM_COMP_TRAITS, TEAM_COMPS
-from Simulator.utils import x_y_to_1d_coord
+from Simulator.utils import coord_to_x_y, x_y_to_1d_coord
 
 from tfteval import public
 from tfteval.planner import ACTIONS_PER_ROUND, FODDER_STRENGTH, compile_knobs, xp_to_level
@@ -83,10 +83,12 @@ class PlanExecutor(Default_Agent):
 
     def field_comp_swap(self, player):
         """Swap the weakest off-comp board unit for the strongest comp unit on the bench, if that
-        one is no weaker; None when there is nothing to swap. This is what the rule bot's own
-        bench-to-board check means to do; it never fires, because it tests
-        `champion in BASE_CHAMPION_LIST` (an object against names), so the rule bot fields units
-        only into empty slots and its comp decides what it buys, not what it fields."""
+        one is no weaker; None when there is nothing to swap. The rule bot's own bench-to-board
+        check (round_11_end) puts the first comp unit it finds on the bench in place of the first
+        off-comp board unit, however weak the comp unit is; with field_comp those swaps are dropped
+        (owns_swap) and made here instead. On the upstream simulator that check never fired (it
+        tested `champion in BASE_CHAMPION_LIST`, an object against names), so there the rule bot
+        fielded units only into empty slots; the fork fixed it."""
         units = TEAM_COMPS[self.comp_number]
         board = []
         for x in range(len(player.board)):
@@ -164,7 +166,8 @@ class PlanExecutor(Default_Agent):
     def fodder_filter(self, command: str, player) -> str:
         """In fodder mode, drop rule-bot commands that would field a benched unit or put an item
         on a unit, and keep the units that would be fielded otherwise: their sale is dropped, or
-        redirected to the weakest other bench unit when the bench is full."""
+        redirected to the weakest other bench unit when the bench is full. (The rule bot's swaps
+        never reach this: act() drops them first, see owns_swap.)"""
         kind, *args = command.split("_")
         if kind == "6":
             return "0"
@@ -179,11 +182,34 @@ class PlanExecutor(Default_Agent):
                 return "4_" + str(spare[0][2]) if spare else command
         return command
 
+    # ---- the rule bot's bench-to-board swap
+    def owns_swap(self, command: str, player, game_round: int) -> bool:
+        """Whether `command` is a rule-bot swap of a bench unit onto the board ("5_<board>_<bench>",
+        its round_3_10 / round_11_end swap check) that a knob owns. fodder and hold field the units
+        themselves (arrange), so every such swap is theirs. field_comp owns the swaps of a comp unit
+        for an off-comp unit (field_comp_swap makes them, strongest first and never a weaker unit);
+        the rule bot's other swaps (better comp score, see rank_comp) stay its own."""
+        kind, *args = command.split("_")
+        if kind != "5" or len(args) != 2:
+            return False
+        board, bench = int(args[0]), int(args[1])
+        if not board < 28 <= bench:
+            return False  # board to board, or a bench unit into an empty slot (bench first)
+        if self.knobs["fodder"] or self.knobs.get("hold"):
+            return True
+        if self.knobs["field_comp"] and game_round >= 11 and self.comp_number >= 0:
+            units = TEAM_COMPS[self.comp_number]
+            x, y = coord_to_x_y(board)
+            out, into = player.board[x][y], player.bench[bench - 28]
+            return bool(out and into and into.name in units and out.name not in units)
+        return False
+
     # ---- hold (plan field `hold`): the fodder board's filters, with the strongest units fielded
     @staticmethod
     def hold_filter(command: str, player) -> str:
         """Drop rule-bot item placements, and bench sales while the bench has room (the sales for
-        interest); a sale that makes room on a full bench goes through."""
+        interest); a sale that makes room on a full bench goes through. (The rule bot's swaps are
+        dropped before this, in act(): hold fields the units itself, see owns_swap.)"""
         kind, *args = command.split("_")
         if kind == "6":
             return "0"
@@ -254,6 +280,13 @@ class PlanExecutor(Default_Agent):
             return command
         self.rule_calls += 1
         command = self.policy(player, shop, game_round, mask)
+        if self.owns_swap(command, player, game_round):
+            # A knob owns this swap. The rule bot's swap check is done for this round, as if it had
+            # found nothing to swap (it would propose the same swap on every call), and the bot is
+            # asked again; a roll re-opens the check, as it re-opens every other rule-bot check.
+            self.stats["swaps_dropped"] += 1
+            self.round_3_10_checks[2] = self.round_11_end_checks[2] = False
+            command = self.policy(player, shop, game_round, mask)
         if knobs["fodder"]:
             filtered = self.fodder_filter(command, player)
             if filtered != command:

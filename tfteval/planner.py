@@ -13,22 +13,28 @@ Optional plan fields (absent = the executor behaves exactly as before them):
 * `comp` changed after the first choice pivots: off-comp bench units are sold as at round 11 and
   comp units on the bench are swapped onto the board (once, when the pivot is made).
 * `field_comp` true: every round, swap the weakest off-comp board unit for the strongest comp unit
-  on the bench while that one is no weaker. The rule bot's own swap check never fires, so without
-  this its comp decides what it buys but not what it fields.
+  on the bench while that one is no weaker, and drop the rule bot's own swaps of a comp unit for an
+  off-comp one. On the simulator fork the rule bot's swap check works: from round 11 it puts any
+  comp unit on the bench in place of any off-comp board unit, however weak, so without this field
+  the comp already decides what is fielded; field_comp only makes those swaps strongest first and
+  never fields a weaker unit. (On upstream the rule bot's swap check never fired, and without this
+  field the comp decided what was bought but not what was fielded.)
 * `level_by` {"level": N, "by": "4-1"} (or "rounds": K): reach level N by that round. Xp is bought
   as late as the action cap allows (at most XP_BUY_CAP buys in each earlier round, the rest on the
   deadline round, where the executor takes action slots from the rule bot if it has to).
 * `spend` {"to": G, "by": "4-2"} (or "rounds": K, counted from the round the plan is issued):
   reroll down to G gold, spread evenly over the rounds up to the deadline.
 * `fodder` true: field the weakest units up to max_units, keep the strongest on the bench, place no
-  items; the round after it goes back to false the strongest units are fielded again.
+  items, drop the rule bot's bench-to-board swaps; the round after it goes back to false the
+  strongest units are fielded again, then the rule bot plays on (its own swaps included).
 * `survival` N: when the expected losses to death (tfteval.stages.losses_to_death) are <= N, ignore
   the economy fields and fodder and roll for board strength.
 * `xp_buys` N: buy xp at least N times this round (on top of `level_to` and `level_by`), whether or
   not that completes a level; used to spend the gold above a bank on xp.
 * `hold` true: keep units and items back, field the strongest: the rule bot's bench sales (unless the
-  bench is full) and item placements are dropped, the executor places no items, and the strongest
-  units are fielded every round (the fodder board's filters without the fodder).
+  bench is full), item placements and bench-to-board swaps are dropped, the executor places no
+  items, and the strongest units (by strength(): cost, stars, items; not the rule bot's trait-aware
+  comp score) are fielded every round (the fodder board's filters without the fodder).
 
 `compile_knobs` turns a plan into the per-round knobs the executor reads (`PlanExecutor.begin_round`).
 

@@ -2,6 +2,8 @@
 
 `hold` keeps the fodder board's filters (no bench sales while the bench has room, no item placement)
 but fields the strongest units. Without the field the executor plays as before (tests/test_regression.py).
+On the simulator fork the rule bot's own bench-to-board swap works and picks by its comp score (traits
+count), not by strength; hold drops it, as fodder does, instead of trading moves with it.
 """
 
 import pytest
@@ -17,12 +19,14 @@ PLAIN = {**BASE, "level_to": 3}
 
 
 def test_hold_fields_the_strongest_units():
-    for plan, board in ((HOLD, STRONG), (PLAIN, WEAK)):  # the rule bot only fills empty slots
-        p = make_player(board=WEAK, bench=STRONG)
-        ex = PlanExecutor()
-        run_round(ex, p, 5, plan)
-        assert board_names(p) == sorted(board)
-    assert ex.stats["hold_moves"] == 0
+    # without hold the rule bot's swap check fields a third mage (nami) rather than jinx
+    for plan, board, moves in ((HOLD, STRONG, 3), (PLAIN, ["ahri", "annie", "nami"], 0)):
+        for actions in (14, 15):  # no back and forth with the rule bot: the action count does not matter
+            p = make_player(board=WEAK, bench=STRONG)
+            ex = PlanExecutor()
+            run_round(ex, p, 5, plan, actions=actions)
+            assert board_names(p) == sorted(board)
+            assert ex.stats["hold_moves"] == moves and ex.stats["swaps_dropped"] == (1 if moves else 0)
 
 
 def test_hold_keeps_the_units_the_rule_bot_sells_for_interest():

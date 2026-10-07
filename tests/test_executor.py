@@ -1,4 +1,12 @@
-"""Executor capabilities: plan compilation, comp pivot, multi-round budgets, fodder board, survival."""
+"""Executor capabilities: plan compilation, comp pivot, multi-round budgets, fodder board, survival.
+
+The executor tests run on the simulator fork (README, "对模拟器的修正"). Two of its fixes matter here:
+the rule bot's bench-to-board swap check works (on upstream it never fired, so the rule bot only
+filled empty board slots), and a shop slot stays buyable after another one was bought (on upstream
+the buy mask closed after one purchase per refresh).
+"""
+
+from contextlib import contextmanager
 
 import numpy as np
 import pytest
@@ -89,9 +97,11 @@ def test_llm_parse_accepts_the_new_fields():
 sim = pytest.importorskip("Simulator")
 
 from Simulator.battle.champion import champion  # noqa: E402
+from Simulator.battle.combat_context import CombatContext  # noqa: E402
 from Simulator.encoding.token.action import ActionToken  # noqa: E402
 from Simulator.game import pool  # noqa: E402
 from Simulator.game.player import Player  # noqa: E402
+from Simulator.rng import EnvRNG  # noqa: E402
 from Simulator.utils import decode_action  # noqa: E402
 
 from tfteval.planner import _make_executor  # noqa: E402
@@ -125,7 +135,18 @@ def perform(p, command):
     p.actions_remaining -= 1
 
 
-def run_round(ex, p, idx, plan, actions=15):
+def mask_of(p):
+    return np.asarray(ActionToken(p).fetch_action_mask()).reshape(55, 38)
+
+
+@contextmanager
+def seeded(seed):
+    """Fixed shop draws: the pool draws from the bound context's generator (a random one otherwise)."""
+    with CombatContext(rng=EnvRNG.from_episode_seed(seed)).bind():
+        yield
+
+
+def run_round(ex, p, idx, plan, actions=15, golds=None):
     if ex.current_round == 0:  # join mid-game the way the rule bot would have reached this round
         ex.next_round = idx
     ex.begin_round(plan, compile_knobs(plan, {"round": idx, "gold": p.gold, "level": p.level, "xp": p.exp,
@@ -133,8 +154,9 @@ def run_round(ex, p, idx, plan, actions=15):
     p.actions_remaining = actions
     commands = []
     for _ in range(actions):
-        mask = np.asarray(ActionToken(p).fetch_action_mask()).reshape(55, 38)
-        command = ex.act(p, p.shop, idx, mask)
+        if golds is not None:
+            golds.append(p.gold)
+        command = ex.act(p, p.shop, idx, mask_of(p))
         perform(p, command)
         commands.append(command)
     return commands
@@ -156,31 +178,58 @@ def test_fodder_fields_the_weakest_and_reverts():
     ex = PlanExecutor()
     run_round(ex, p, 5, {**BASE, "level_to": 3, "fodder": True})
     assert board_names(p) == sorted(WEAK) and bench_names(p) == sorted(STRONG)
+    # the rule bot's swap check would field a strong unit again: dropped once, then done for the round
+    assert ex.stats["swaps_dropped"] == 1
     p.end_turn_actions()  # autofill only tops up to max_units: nothing moves
     assert board_names(p) == sorted(WEAK)
     run_round(ex, p, 6, {**BASE, "level_to": 3})
-    assert board_names(p) == sorted(STRONG) and ex.stats["restore_moves"] == 3
+    assert ex.stats["restore_moves"] == 3  # the strongest units go back on ...
+    plain = make_player(board=STRONG, bench=WEAK)
+    run_round(PlanExecutor(), plain, 6, {**BASE, "level_to": 3})
+    # ... and the rule bot plays on as a seat that never fielded fodder: its swap check prefers a
+    # third mage (nami) to jinx
+    assert board_names(p) == board_names(plain) == ["ahri", "annie", "nami"]
 
 
 def test_fodder_buys_one_costs_when_the_bench_has_no_weak_units():
-    p = make_player(board=STRONG, gold=6)
+    # 3 gold: the rule bot cannot afford the 3- and 4-costs left in the shop (with more gold it buys
+    # them after the fodder buy, now that the rest of a shop stays buyable)
+    p = make_player(board=STRONG, gold=3)
     ex = PlanExecutor()
     for idx, name in zip((4, 5, 6), WEAK):
         set_shop(p, [name, "ahri", "jinx", "ahri", "jinx"])
         commands = run_round(ex, p, idx, {**BASE, "level_to": 3, "fodder": True})
-        assert commands[0] == "3_0"  # one buy per shop: the buy mask closes once a slot is empty
+        assert commands[0] == "3_0"  # the 1-cost, not the stronger units next to it
     assert ex.stats["fodder_buys"] == 3
     assert board_names(p) == sorted(WEAK) and bench_names(p) == sorted(STRONG)
-    assert p.gold == 3  # the three 1-costs still sell for 3
+    assert p.gold == 0  # the three 1-costs still sell for 3
+
+
+class BuyLog(PlanExecutor):
+    """Records the gold before each of the executor's own fodder buys."""
+
+    def __init__(self):
+        super().__init__()
+        self.buys = []
+
+    def fodder_buy(self, player, shop, mask):
+        command = super().fodder_buy(player, shop, mask)
+        if command:
+            self.buys.append(player.gold)
+        return command
 
 
 def test_fodder_keeps_the_interest_bracket():
-    for gold, buys in ((20, 0), (21, 1)):
+    for gold, first, buys in ((20, None, [19, 18]), (21, "3_0", [21])):
         p = make_player(board=STRONG, gold=gold)
         set_shop(p, ["vayne", "fiora", "nami", "fiora", "nami"])
-        ex = PlanExecutor()
+        ex = BuyLog()
+        assert ex.fodder_buy(p, p.shop, mask_of(p)) == first  # 20 -> 19 would cost a gold of interest
+        ex.buys.clear()
         run_round(ex, p, 4, {**BASE, "level_to": 3, "fodder": True})
-        assert ex.stats["fodder_buys"] == buys  # (the rule bot itself may still buy)
+        # At 20 the rule bot buys vayne itself (it ignores interest), and the rest of the shop stays
+        # buyable; the fodder buys that follow stay inside the bracket the seat is in then.
+        assert ex.buys == buys and all(min(g // 10, 5) == min((g - 1) // 10, 5) for g in ex.buys)
 
 
 def test_fodder_filter_blocks_rule_bot_undoing_it():
@@ -225,18 +274,44 @@ def test_field_comp_swaps_comp_units_onto_a_full_board():
 
     p, ex = setup()
     run_round(ex, p, 13, {**BASE, "level_to": 3, "comp": "mage"})
-    assert board_names(p) == sorted(off)  # the rule bot alone never swaps a full board
+    # the rule bot's own swap check (live in the simulator fork) fields comp units too ...
+    assert board_names(p) == sorted(bench) and ex.stats["comp_swaps"] == 0
     p, ex = setup()
     run_round(ex, p, 13, {**BASE, "level_to": 3, "comp": "mage", "field_comp": True})
+    # ... with field_comp the executor makes those swaps, strongest comp unit first
     assert board_names(p) == sorted(bench) and ex.stats["comp_swaps"] == 3
 
 
 def test_field_comp_does_not_field_a_weaker_comp_unit():
-    p = make_player(board=["jax"], bench=["nami"], gold=0, level=1)  # off-comp 2-cost / mage 1-cost
+    boards = {}
+    for field_comp in (False, True):
+        p = make_player(board=["jax"], bench=["nami"], gold=0, level=1)  # off-comp 2-cost / mage 1-cost
+        ex = PlanExecutor()
+        ex.comp_number, ex.round_11_clean_up = TRAITS.index("mage"), False
+        run_round(ex, p, 13, {**BASE, "level_to": 1, "comp": "mage", "field_comp": field_comp})
+        boards[field_comp] = board_names(p)
+        assert ex.stats["comp_swaps"] == 0 and ex.stats["swaps_dropped"] == int(field_comp)
+    # the rule bot puts any comp unit in for an off-comp one; field_comp owns those swaps and drops it
+    assert boards == {False: ["nami"], True: ["jax"]}
+
+
+def test_owns_swap():
     ex = PlanExecutor()
-    ex.comp_number, ex.round_11_clean_up = TRAITS.index("mage"), False
-    run_round(ex, p, 13, {**BASE, "level_to": 1, "comp": "mage", "field_comp": True})
-    assert board_names(p) == ["jax"] and ex.stats["comp_swaps"] == 0
+    ex.comp_number = TRAITS.index("mage")
+    p = make_player(board=["jax", "ahri"], bench=["nami", "fiora"], level=2)  # jax at 0, ahri at 4
+    nami, fiora = 28 + [u.name for u in p.bench if u].index("nami"), 28 + [u.name for u in p.bench if u].index("fiora")
+    for plan, idx, command, owned in (
+            ({**BASE}, 13, f"5_0_{nami}", False),  # no knob: the rule bot's swap goes through
+            ({**BASE, "fodder": True}, 5, f"5_0_{nami}", True),
+            ({**BASE, "hold": True}, 5, f"5_4_{fiora}", True),
+            ({**BASE, "hold": True}, 5, "5_4_8", False),  # board to board
+            ({**BASE, "hold": True}, 5, f"5_{nami}_9", False),  # a bench unit into an empty slot
+            ({**BASE, "field_comp": True}, 13, f"5_0_{nami}", True),  # comp unit in for an off-comp one
+            ({**BASE, "field_comp": True}, 13, f"5_4_{fiora}", False),  # takes a comp unit off: not field_comp's
+            ({**BASE, "field_comp": True}, 13, f"5_0_{fiora}", False),  # off-comp for off-comp
+            ({**BASE, "field_comp": True}, 9, f"5_0_{nami}", False)):  # before round 11 there is no comp
+        ex.begin_round(plan, compile_knobs(plan, state(idx)))
+        assert ex.owns_swap(command, p, idx) is owned, (plan, command)
 
 
 def test_level_by_preempts_the_rule_bot_on_the_deadline_round():
@@ -258,11 +333,24 @@ def test_without_level_by_the_same_round_does_not_reach_8():
 
 
 def test_survival_rolls_down():
-    p = make_player(board=COMPS["mage"][:5], gold=30, level=5, hp=12)
-    ex = PlanExecutor()
-    ex.comp_number, ex.round_11_clean_up = TRAITS.index("mage"), False
-    commands = run_round(ex, p, 16, {**BASE, "level_to": 5, "roll_floor": 50, "survival": 2})
-    assert ex.stats["survival_rounds"] == 1 and "2" in commands and p.gold < 10
+    for seed in range(4):  # the shops the rolls find
+        for survival in (None, 2):
+            p = make_player(board=COMPS["mage"][:5], gold=30, level=5, hp=12)
+            ex = PlanExecutor()
+            ex.comp_number, ex.round_11_clean_up = TRAITS.index("mage"), False
+            golds = []
+            with seeded(seed):
+                commands = run_round(ex, p, 16, {**BASE, "level_to": 5, "roll_floor": 50, "survival": survival},
+                                     golds=golds)
+            if survival is None:  # the plan's own floor: no roll at all
+                assert "2" not in commands and p.gold == 30
+                continue
+            assert ex.stats["survival_rounds"] == 1 and "2" in commands
+            # every action the rule bot leaves free is a roll while 2 gold are left. The rule bot's
+            # buys (several per shop) and swaps take actions too, so 15 actions do not always reach
+            # 0 gold (on upstream, one buy per shop left more actions for rolls: gold < 10 there).
+            assert all(g < 2 for c, g in zip(commands, golds) if c == "0")
+            assert p.gold <= 15
 
 
 def test_overlay_planner_adds_fields_inside_windows():
