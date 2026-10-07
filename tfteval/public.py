@@ -6,7 +6,15 @@ see an opponent's bench, shop, exact gold or xp, the pool's exact counts, or the
 opponent. The simulator's observation encodes the same public fields per opponent
 (encoding/token/basic_observation.py, `create_public_scalars` and `create_board_vector`); this
 module reads only those fields from the player objects, so nothing hidden can reach a planner.
-The candidate set comes from `player.opponent_options`, never from `game_round.matchups`.
+
+The candidate set (`next_from`) never comes from `game_round.matchups`. With the fork's
+`hide_next_opponent` (the "realistic" simulator profile, tfteval.runner.SIM_PROFILES) the pairings
+are drawn at combat time, after every planning action: during planning `info["opponent_candidates"]`
+(passed in as `candidates`) and `player.opponent_options` both hold the candidates (alive opponents
+the recent-opponent rule does not exclude; empty before a PvE round). Without it the pairings are
+drawn when planning starts and `player.opponent_options` is the eligible set plus the real opponent,
+which the simulator always adds (a tracker's view; it pins the opponent when nobody else is eligible,
+see the fork's FORK_NOTES.md row 9).
 """
 
 from __future__ import annotations
@@ -65,10 +73,13 @@ def alive_players(env) -> dict:
     return {seat: p for seat, p in sorted(manager.player_states.items()) if p is not None and p.health > 0}
 
 
-def next_candidates(seat: str, player, players: dict) -> list[str]:
-    """Seats the player can meet next round (public in the real game; always holds the real one)."""
-    options = getattr(player, "opponent_options", {}) or {}
-    return sorted(s for s, flag in options.items() if flag == 1 and s in players and s != seat)
+def next_candidates(seat: str, player, players: dict, candidates: list | None = None) -> list[str]:
+    """Seats the player can meet next round: `candidates` (info["opponent_candidates"], hidden next
+    opponent) when given, else the flags in player.opponent_options; living other seats only."""
+    if candidates is None:
+        options = getattr(player, "opponent_options", {}) or {}
+        candidates = [s for s, flag in options.items() if flag == 1]
+    return sorted(s for s in candidates if s in players and s != seat)
 
 
 def seen_copies(players: dict, seat: str) -> Counter:
@@ -81,8 +92,9 @@ def seen_copies(players: dict, seat: str) -> Counter:
     return seen
 
 
-def public_view(seat: str, player, players: dict, comps: dict | None = None, comp: str | None = None) -> dict:
-    """Opponents, the next-opponent candidates, HP rank and how contested the comps are."""
+def public_view(seat: str, player, players: dict, comps: dict | None = None, comp: str | None = None,
+                candidates: list | None = None) -> dict:
+    """Opponents, the next-opponent candidates (see next_candidates), HP rank and how contested the comps are."""
     others = {s: p for s, p in players.items() if s != seat and p is not player}
     opponents = sorted((opponent_view(s, p) for s, p in others.items()), key=lambda o: (-o["hp"], o["seat"]))
     hps = [int(p.health) for p in others.values()]
@@ -90,7 +102,7 @@ def public_view(seat: str, player, players: dict, comps: dict | None = None, com
         "hp_rank": 1 + sum(hp > int(player.health) for hp in hps),
         "alive": len(others) + 1,
         "opponents": opponents,
-        "next_from": next_candidates(seat, player, players),
+        "next_from": next_candidates(seat, player, players, candidates),
     }
     if comps:
         seen = seen_copies(players, seat)

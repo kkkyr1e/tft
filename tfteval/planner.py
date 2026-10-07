@@ -89,9 +89,11 @@ def _unit(champ) -> dict:
 
 
 def describe(player, shop, game_round: int, env=None, seat: str | None = None,
-             comps: dict | None = None, comp: str | None = None) -> dict:
+             comps: dict | None = None, comp: str | None = None, candidates: list | None = None) -> dict:
     """What a human player can see at the start of a round, as plain data: everything about
-    yourself, and only the public part of the others (tfteval.public)."""
+    yourself, and only the public part of the others (tfteval.public). `candidates` is the env's
+    info["opponent_candidates"] when the next opponent is hidden (TFTConfig.hide_next_opponent);
+    without it the candidates come from player.opponent_options (public.next_candidates)."""
     hp, idx = int(player.health), int(game_round)
     rules = getattr(player, "rules", None)  # the env's economy profile (fork); None: TFT_RULES, as the runner
     sched = stages.schedule(idx)
@@ -118,7 +120,7 @@ def describe(player, shop, game_round: int, env=None, seat: str | None = None,
     players = public.alive_players(env) if env is not None else {}
     if seat is None:
         seat = next((s for s, p in players.items() if p is player), None)
-    state.update(public.public_view(seat, player, players, comps, comp))
+    state.update(public.public_view(seat, player, players, comps, comp, candidates))
     return state
 
 
@@ -433,7 +435,8 @@ class PlanPolicy:
         if game_round != self.round:
             self.round = game_round
             comp_now = self.traits[self.executor.comp_number] if self.executor.comp_number >= 0 else None
-            state = describe(player, shop, game_round, env, seat=agent, comps=self.comps, comp=comp_now)
+            state = describe(player, shop, game_round, env, seat=agent, comps=self.comps, comp=comp_now,
+                             candidates=info.get("opponent_candidates"))
             if hasattr(self.planner, "context"):
                 self.planner.context["seat"] = agent
             plan = self.planner.plan(state, self.comps, comp_now)

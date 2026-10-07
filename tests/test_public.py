@@ -63,6 +63,15 @@ def test_candidates_come_from_opponent_options_only(lobby):
     assert public.public_view("player_0", me, players)["next_from"] == ["player_1"]
 
 
+def test_hidden_next_opponent_candidates_come_from_the_env_info(lobby):
+    """With hide_next_opponent the env's info["opponent_candidates"] is the candidate set; own seat and
+    seats that are not alive players are dropped, and [] (before a PvE round) stays empty."""
+    me, players = lobby
+    view = public.public_view("player_0", me, players, candidates=["player_0", "player_2", "player_9"])
+    assert view["next_from"] == ["player_2"]
+    assert public.public_view("player_0", me, players, candidates=[])["next_from"] == []
+
+
 def test_hidden_state_does_not_reach_the_view(lobby):
     me, players = lobby
     before = json.dumps(public.public_view("player_0", me, players, {"mage": ["ahri", "lulu"]}, "mage"))
