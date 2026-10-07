@@ -200,6 +200,27 @@ class ParamPlanner:
 
 MimicPlanner = ParamPlanner
 
+
+class OverlayPlanner:
+    """A base planner plus fixed plan fields inside windows of rounds, for smoke runs and ablations
+    of one executor capability at a time, e.g.
+
+        OverlayPlanner(ParamPlanner(), [{"from": "3-3", "to": "3-7", "fields": {"comp": "mage"}},
+                                         {"from": "4-1", "fields": {"comp": "divine"}}])
+    """
+
+    def __init__(self, base, windows: list[dict], name: str | None = None):
+        self.base, self.name = base, name or f"{base.name}+overlay"
+        self.windows = [(stages.parse_label(w.get("from", 1)), stages.parse_label(w.get("to", 10_000)),
+                         dict(w["fields"])) for w in windows]
+
+    def plan(self, state: dict, comps: dict, comp_now: str | None) -> dict:
+        plan = self.base.plan(state, comps, comp_now)
+        for first, last, fields in self.windows:
+            if first <= state["round"] <= last:
+                plan.update(fields)
+        return plan
+
 # Economy variants for tuning the executor without a model (name -> knobs).
 VARIANTS = {
     "mimic": {},

@@ -28,7 +28,21 @@ python scripts/run_lobby.py --lobby hero=noisy20:1,rule:7 --games 24 --seed 2000
 python scripts/compare.py results/hero_rule.json results/hero_noisy20.json --policy hero
 ```
 
-可用的策略：`random`、`rule`（模拟器自带的规则 bot）、`noisyN`（有 N% 动作随机的规则 bot）、`llm`（占位，未实现）。写成 `别名=策略` 可以让某个座位以自己的名字出现在统计里。
+可用的策略：`random`、`rule`（模拟器自带的规则 bot）、`noisyN`（有 N% 动作随机的规则 bot）、`mimic` 和它的经济变体 `fast8`、`rolldown8`、`hp50`、`fast8roll`、`fodder2`（计划加执行器，见下）、`llm`（由大模型出计划）。写成 `别名=策略` 可以让某个座位以自己的名字出现在统计里。
+
+## 计划与执行器
+
+计划座位每回合出一份计划，由执行器（改过的规则 bot）展开成原子动作，见 `tfteval/planner.py`。计划的基本字段是 `comp`、`level_to`、`roll_floor`、`carry`。下面这些字段是给策略层用的，不写就和原来完全一样（`tests/test_regression.py` 用改动前录下的动作序列逐个座位核对）：
+
+| 字段 | 含义 |
+|---|---|
+| `comp` 换成别的 | 换阵容：卖掉备战席上不在新阵容里、又不成对的棋子，把备战席上新阵容的棋子换上场（不弱于被换下的才换） |
+| `level_by` `{"level": 8, "by": "4-1"}` | 在该回合前升到 N 级。经验尽量晚买：截止前每回合最多排 10 次，其余在截止回合买，动作不够时抢在规则 bot 前面 |
+| `spend` `{"to": 10, "by": "4-3"}` | 在截止回合前把金币 D 到 G，按剩余回合均摊；也可以写 `"rounds": K` |
+| `fodder` `true` | 垫子阵容：上最弱的棋子（不足时买 1 费，不跨利息档、不凑三连），强棋子留在备战席，不上装备；改回 `false` 的那回合把最强的换回场上 |
+| `survival` `N` | 预计"还能输几把"不超过 N 时，忽略经济字段和垫子，D 到 0，差两次经验以内就升级 |
+
+`describe()` 给计划者的局面只含公开信息：自己的全部状态；每个对手的场上棋子（星级、装备、天选）、血量、等级、连胜连败、利息档；下回合可能碰到的对手集合（来自 `player.opponent_options`）；各阵容的棋子在对手场上有几张。另有阶段标签（2-1 这种）、离下一次选秀/野怪/换阶段还有几回合、本阶段每输一场的平均扣血和"还能输几把"，见 `tfteval/stages.py`、`tfteval/public.py`。
 
 ## 目前的结果
 
@@ -59,9 +73,12 @@ python scripts/compare.py results/hero_rule.json results/hero_noisy20.json --pol
 | 路径 | 内容 |
 |---|---|
 | `tfteval/runner.py` | 打一整局并给出名次 |
-| `tfteval/policies.py` | 座位策略：随机、规则 bot、带噪声的规则 bot、LLM 占位 |
+| `tfteval/policies.py` | 座位策略：随机、规则 bot、带噪声的规则 bot、计划座位 |
+| `tfteval/planner.py` | 计划者（规则经济、大模型）、计划编译、执行器 |
+| `tfteval/stages.py` | 回合序号与阶段标签、赛程、扣血表、"还能输几把" |
+| `tfteval/public.py` | 公开观察：对手能被看到的部分 |
 | `tfteval/stats.py` | 平均名次与区间、配对差、所需局数 |
-| `scripts/` | 批量对局、比较两次运行、安装模拟器 |
+| `scripts/` | 批量对局、比较两次运行、安装模拟器、测扣血表（`measure_damage.py`）、执行器冒烟对比（`smoke_executor.py`） |
 | `results/` | 原始对局结果 |
 | `docs/PLAN.md` | 方针 |
 

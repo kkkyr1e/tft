@@ -236,3 +236,13 @@ def test_survival_rolls_down():
     ex.comp_number, ex.round_11_clean_up = TRAITS.index("mage"), False
     commands = run_round(ex, p, 16, {**BASE, "level_to": 5, "roll_floor": 50, "survival": 2})
     assert ex.stats["survival_rounds"] == 1 and "2" in commands and p.gold < 10
+
+
+def test_overlay_planner_adds_fields_inside_windows():
+    from tfteval.planner import OverlayPlanner
+
+    planner = OverlayPlanner(ParamPlanner(), [{"from": "3-3", "to": "3-7", "fields": {"comp": "mage"}},
+                                              {"from": "4-1", "fields": {"comp": "divine", "survival": 2}}])
+    comps = [planner.plan({**state(i), "xp_needed": 20}, {}, None).get("comp") for i in (10, 11, 14, 15, 30)]
+    assert comps == [None, "mage", "mage", "divine", "divine"]
+    assert "survival" not in planner.plan({**state(12), "xp_needed": 20}, {}, None)
