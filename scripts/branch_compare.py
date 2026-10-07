@@ -15,8 +15,14 @@ until the hero's actions first differ) until the hero is out or the game ends; t
 is the hero's final placement. A plan-executor hero gets B's planner through `switch_planner`, so it
 keeps its executor state (comp, pairs, round checks); another kind of policy is switched in fresh.
 
+The simulator profile (--sim, default realistic: keyed random streams among others) and the economy
+rules (--rules) are part of the configuration. Under rng_streams="keyed" every event draws from its own
+stream, so the two arms of branch k keep sharing the random numbers of the events they have in common
+after the hero's actions differ; with "shared" streams the first different action shifts every later
+draw of every seat.
+
 One JSON line per branch in --out; a rerun skips branches already there, so a run can be stopped and
-resumed (with the same --a/--b/--round/--opponents). At the end, or with --summarize alone, the
+resumed (with the same --a/--b/--round/--opponents/--sim/--rules). At the end, or with --summarize alone, the
 summary goes to --summary (default: --out with .summary.json): the mean over states of the paired
 placement difference B - A with a 95% t interval over states (a state's branches share its past, so
 the state is the independent unit), the share of states where B changed any hero action, per-state
@@ -186,7 +192,8 @@ def run_job(job):
     seed, config, todo = job
     seat, rnd = hero_seat(seed), config["round"]
     t0 = time.time()
-    game = play_to(lobby(seed, config["a"], config["opponents"]), seed, rnd)
+    game = play_to(lobby(seed, config["a"], config["opponents"]), seed, rnd, sim=config.get("sim"),
+                   rules=config.get("rules"))
     base = {"config": config, "seed": seed, "hero_seat": seat, "round": rnd, "label": stages.label(rnd)}
     if game.done or game.round != rnd or game.player(seat) is None:
         return [{**base, "arm": arm, "k": k, "skipped": "hero out before the branch round"} for arm, k in todo]
@@ -431,6 +438,9 @@ def main():
     parser.add_argument("--workers", type=int, default=2)
     parser.add_argument("--at", nargs="*", default=["3-1", "4-1", "5-1"], help="checkpoints for the hero state")
     parser.add_argument("--window", nargs=2, help="first and last planning phase of a fight window, e.g. 2-1 2-6")
+    parser.add_argument("--sim", help="simulator profile: realistic (default) or default, optionally with overrides "
+                                      "such as realistic,rng_streams=shared (or TFT_SIM)")
+    parser.add_argument("--rules", choices=["set4", "set18"], help="economy profile (default set4, or TFT_RULES)")
     parser.add_argument("--out", required=True, help="raw JSONL, appended to")
     parser.add_argument("--summary", help="summary JSON (default: --out with .summary.json)")
     parser.add_argument("--summarize", action="store_true", help="only summarise --out")
@@ -441,14 +451,20 @@ def main():
     opponents = parse_seats(args.opponents)
     if len(opponents) != 7:
         raise SystemExit(f"--opponents needs 7 seats, got {len(opponents)}")
-    config = {"a": args.a, "b": args.b, "round": stages.parse_label(args.round), "opponents": opponents}
+    from tfteval.runner import sim_options
+
+    sim, _ = sim_options(args.sim)  # default: TFT_SIM, else realistic
+    rules = args.rules or os.environ.get("TFT_RULES", "set4")
+    os.environ["TFT_SIM"], os.environ["TFT_RULES"] = sim, rules  # read by the runner in every worker
+    config = {"a": args.a, "b": args.b, "round": stages.parse_label(args.round), "opponents": opponents,
+              "sim": sim, "rules": rules}
     if args.a == args.b:
         print("A and B are the same policy: an A/A check, every difference is noise", flush=True)
 
     rows = [json.loads(line) for line in out.read_text().splitlines() if line.strip()] if out.exists() else []
-    if rows and any(r["config"] != config for r in rows):
-        raise SystemExit(f"{out} holds rows of another configuration: {rows[0]['config']}")
     if not args.summarize:
+        if rows and any({"sim": "default", "rules": "set4", **r["config"]} != config for r in rows):  # older rows
+            raise SystemExit(f"{out} holds rows of another configuration: {rows[0]['config']}")
         done = {(r["seed"], r["arm"], r["k"]) for r in rows}
         jobs = []
         for seed in parse_seeds(args.seeds):

@@ -500,6 +500,10 @@ class PlanExecutor(Default_Agent):
 
     def act(self, player, shop, game_round, mask):
         knobs = self.knobs
+        # With rng_streams="keyed" the env gives every seat's rule bot its own generator
+        # (player.default_agent.rng, re-derived by env.reseed_rng); the executor is that seat's rule
+        # bot, so it draws its comp pick from it. None (shared streams): numpy's global generator.
+        self.rng = getattr(getattr(player, "default_agent", None), "rng", None)
         if game_round >= 11 and knobs.get("comp"):
             self.set_comp(knobs["comp"])
         command = self.take_over(player, shop, game_round, mask)

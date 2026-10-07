@@ -10,6 +10,9 @@
     # the hero alone (no control games), e.g. a stance seat with its per-round stance log
     TFT_STANCE_LOG=log.jsonl python scripts/smoke_executor.py --hero stance --control none --games 8
 
+    # under the Set 18 economy, on the simulator's default options instead of the realistic profile
+    python scripts/smoke_executor.py --hero stance --control none --rules set18 --sim default
+
 Each seed is played twice: once with the hero policy on the rotating hero seat and once with the
 control policy there (only once with --control none); the other seven seats are rule bots. The
 rotating seat is the one `run_lobby.py --lobby hero=X:1,rule:7` gives the hero. Every traced round
@@ -21,7 +24,9 @@ policy (means over games):
   idx >= 5 adds a bonus for the streak standing after the previous fight; PvE leaves streaks alone);
 * HP, gold, level, share of games at level >= 8 and share of fielded units that belong to the
   executor's target comp, at the start of each --at round;
-* the executor's counters (fodder moves, swaps dropped, pivots, xp taken from the rule bot, ...);
+* the executor's counters (fodder moves, swaps dropped, pivots, xp taken from the rule bot, carousel
+  picks by reason, ...); every carousel pick of the hero (round, options, choice) is in the output
+  file's games[].carousel;
 * final placement (noisy at these sample sizes), unfinished games and policy errors.
 """
 
@@ -61,6 +66,10 @@ class Tracer:
 
     def reset(self, seed):
         self.policy.reset(seed)
+
+    def carousel_picker(self):
+        make = getattr(self.policy, "carousel_picker", None)
+        return make() if callable(make) else None
 
     def act(self, observation, info, agent, env):
         player, idx = info["player"], info.get("game_round", 1)
@@ -130,9 +139,11 @@ def play(job):
     return {"seed": seed, "policy": spec["name"], "seat": hero_seat, "place": result.placements.get(hero_seat),
             "finished": result.finished, "fallbacks": result.fallbacks[hero_seat],
             "fallbacks_all_seats": sum(result.fallbacks.values()), "steps": result.steps,
-            "sim_commit": result.sim_commit,
+            "seconds": result.seconds, "sim_commit": result.sim_commit, "rules": result.rules, "sim": result.sim,
+            "sim_options": result.sim_options, "carousel_pickers": result.carousel_pickers,
             "rows": [{**r, "actions": dict(r["actions"])} for r in tracer.rows],
-            "executor": dict(executor.stats) if executor is not None else {}}
+            "executor": dict(executor.stats) if executor is not None else {},
+            "carousel": list(getattr(executor, "carousel_log", [])) if executor is not None else []}
 
 
 def _mean(vals):
@@ -177,8 +188,18 @@ def main():
     parser.add_argument("--window", nargs=2, default=["2-1", "2-6"])
     parser.add_argument("--at", nargs="*", default=["3-1", "4-1", "4-2", "4-3", "5-1"])
     parser.add_argument("--workers", type=int, default=2)
+    parser.add_argument("--rules", choices=["set4", "set18"], help="economy profile (default set4, or TFT_RULES)")
+    parser.add_argument("--sim", help="simulator profile: realistic (default) or default, optionally with overrides "
+                                      "such as realistic,rng_streams=shared (or TFT_SIM)")
     parser.add_argument("--out")
     args = parser.parse_args()
+    if args.rules:
+        os.environ["TFT_RULES"] = args.rules  # read by the runner in every worker
+    if args.sim:
+        from tfteval.runner import sim_options
+
+        sim_options(args.sim)  # fail early on a bad profile
+        os.environ["TFT_SIM"] = args.sim
 
     hero = {"policy": args.hero, "name": args.name or args.hero,
             "overlay": json.loads(args.overlay) if args.overlay else None}
@@ -194,7 +215,9 @@ def main():
     with ProcessPoolExecutor(max_workers=args.workers) as pool:
         games = list(pool.map(play, jobs))
     report = {"hero": hero, "control": control, "window": args.window,
-              "seeds": [args.seed, args.seed + args.games - 1]}
+              "seeds": [args.seed, args.seed + args.games - 1],
+              "rules": games[0]["rules"] if games else None, "sim": games[0]["sim"] if games else None,
+              "sim_options": games[0]["sim_options"] if games else None}
     for spec in specs:
         report[spec["name"]] = summarise([g for g in games if g["policy"] == spec["name"]], first, last, args.at)
     print(json.dumps(report, indent=1))

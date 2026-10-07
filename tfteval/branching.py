@@ -18,13 +18,18 @@ upstream rule bot picks its comp with it) and Python's `random` module. It is a 
 written to disk or sent to a worker. A worker must run with the same PYTHONHASHSEED (the simulator
 iterates sets of seat names) and gets the same simulator fixes installed on restore.
 
-Re-seeding (`reseed=k`) replaces every random stream a game reads: the env's Python and numpy
-generators (shops, carousel ties, loot orbs, matchmaking, combat), numpy's global generator, the
-`random` module, and every numpy / Python generator found inside the seat policies and the fallback
-policy. Seeds come from SeedSequence([game seed, branch round, k]), so branch k of a state is the same
-future whichever policy is switched in: branches with the same k share their random numbers until
-the policies' actions first differ (the env has one stream for all seats, so the first different
-action shifts everyone's later draws).
+Re-seeding (`reseed=k`) replaces every random stream a game reads: the env's streams through
+`env.unwrapped.reseed_rng` (shops, carousel, loot orbs, matchmaking, combat; with
+rng_streams="keyed" also every seat's rule-bot generator, re-derived by the env), numpy's global
+generator, the `random` module, and every numpy / Python generator found inside the seat policies
+and the fallback policy except the env's rule-bot generators (a plan executor draws from its seat's,
+see PlanExecutor.act), so each generator is re-seeded exactly once. Seeds come from
+SeedSequence([game seed, branch round, k]), so branch k of a state is the same future whichever
+policy is switched in. With rng_streams="shared" (one stream for the whole env) branches with the same
+k share their random numbers until the policies' actions first differ: the first different action
+shifts everyone's later draws. With "keyed" each event (a seat's shop refresh, a fight, the round's
+pairings, ...) has its own stream, so the same-k branches keep sharing the draws of every event they
+have in common.
 """
 
 from __future__ import annotations
@@ -122,23 +127,51 @@ def branch(snap: Snapshot, reseed: int | None = None, switch: dict | None = None
     game = restore(snap)
     for seat, new in (switch or {}).items():
         game.seat_policies[seat] = new(game.seat_policies[seat]) if callable(new) else new
+        _repick(game, seat)
     if reseed is not None:
         reseed_game(game, np.random.SeedSequence([snap.seed, snap.round, reseed]))
     return game
 
 
+def _repick(game: Game, seat: str) -> None:
+    """After a seat's policy is switched: its carousel picker is the new policy's (none: the default)."""
+    from tfteval.runner import seat_picker
+
+    if not getattr(game, "pickers_on", False):
+        return  # the game was played without pickers (TFT_PICKERS=0, or saved before they existed)
+    picker = seat_picker(game.seat_policies[seat])
+    game.env.unwrapped.set_carousel_picker(seat, picker)
+    game.carousel_pickers = sorted(set(game.carousel_pickers) - {seat} | ({seat} if picker else set()))
+
+
+def bot_generators(game: Game) -> list:
+    """The env's per-seat rule-bot generators (player.default_agent.rng; set with rng_streams="keyed")."""
+    players = game.env.unwrapped.player_manager.player_states.values()
+    gens = [getattr(getattr(p, "default_agent", None), "rng", None) for p in players if p is not None]
+    return [g for g in gens if g is not None]
+
+
 def reseed_game(game: Game, seq: np.random.SeedSequence) -> None:
-    env_py, env_np, np_global, py_global, policies = seq.spawn(5)
-    rng = game.env.unwrapped.rng  # the same EnvRNG object the combat context holds
-    if game.env.unwrapped.combat_ctx.rng is not rng:
-        raise RuntimeError("env.rng and combat_ctx.rng are different objects; re-seeding one would miss the other")
-    rng.py.seed(int(env_py.generate_state(1, np.uint64)[0]))
-    rng.np.bit_generator.state = np.random.default_rng(env_np).bit_generator.state  # np_api wraps this Generator
+    env_seq, np_global, py_global, policies = seq.spawn(4)
+    env = game.env.unwrapped
+    # The policies' generators are collected first, skipping the env's rule-bot generators (a plan
+    # executor holds its seat's): env.reseed_rng re-derives those, and they must not be seeded twice.
+    # The old ones stay referenced here until the walk is done, so no id can be reused meanwhile.
+    bots = bot_generators(game)
+    found = []
+    _collect_generators(game.seat_policies, found, {id(g) for g in bots})
+    _collect_generators(game.fallback_policy, found, {id(g) for g in bots})
+    if hasattr(env, "reseed_rng"):
+        env.reseed_rng(env_seq)  # shared: env.rng in place (np_api too); keyed: every stream and bot generator
+    else:  # simulators before the fork's reseed_rng: one EnvRNG, also held by the combat context
+        rng = env.rng
+        if env.combat_ctx.rng is not rng:
+            raise RuntimeError("env.rng and combat_ctx.rng are different objects; re-seeding one would miss the other")
+        env_py, env_np = env_seq.spawn(2)
+        rng.py.seed(int(env_py.generate_state(1, np.uint64)[0]))
+        rng.np.bit_generator.state = np.random.default_rng(env_np).bit_generator.state  # np_api wraps this Generator
     np.random.seed(env_seed32(np_global))
     random.seed(int(py_global.generate_state(1, np.uint64)[0]))
-    found = []
-    _collect_generators(game.seat_policies, found, set())
-    _collect_generators(game.fallback_policy, found, set())
     for child, gen in zip(policies.spawn(len(found)), found):
         if isinstance(gen, np.random.Generator):
             gen.bit_generator.state = np.random.default_rng(child).bit_generator.state
