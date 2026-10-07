@@ -157,9 +157,9 @@ def _rule_tables():
     return _RULE
 
 
-def board_score(units: list[dict]) -> int:
-    """Default_Agent.rank_comp on a board rebuilt from unit dicts, plus ITEM_SCORE per item."""
-    agent, origins, cost = _rule_tables()
+def _grid(units: list[dict]) -> tuple[list, int]:
+    """A 7x4 board of stand-in units for rank_comp, and the number of items on the units placed."""
+    _, origins, cost = _rule_tables()
     grid = [[None] * 4 for _ in range(7)]
     items, k = 0, 0
     for u in units:
@@ -169,7 +169,35 @@ def board_score(units: list[dict]) -> int:
                                               chosen=u.get("chosen") or False, origin=origins[u["name"]])
         items += len(u.get("items", ()))
         k += 1
-    return int(agent.rank_comp(grid)) + ITEM_SCORE * items
+    return grid, items
+
+
+def board_score(units: list[dict]) -> int:
+    """Default_Agent.rank_comp on a board rebuilt from unit dicts, plus ITEM_SCORE per item."""
+    grid, items = _grid(units)
+    return int(_rule_tables()[0].rank_comp(grid)) + ITEM_SCORE * items
+
+
+def board_parts(units: list[dict]) -> dict:
+    """board_score split into its parts: `value` (rank_comp's cost x star table), `traits` (rank_comp's
+    trait count x tier), `items` (items on the units scored), `active` (traits at tier 1 or more)."""
+    from Simulator.battle.stats import BASE_CHAMPION_LIST
+    from Simulator.game.pool_stats import cost_star_values
+
+    agent = _rule_tables()[0]
+    grid, items = _grid(units)
+    value, chosen = 0, ""
+    for x in range(7):  # rank_comp's own loop, so the same units and the same chosen trait count
+        for y in range(4):
+            u = grid[x][y]
+            if u and u.name in BASE_CHAMPION_LIST:
+                value += cost_star_values[u.cost - 1][u.stars - 1]
+                if u.chosen:
+                    chosen = u.chosen
+    rank = int(agent.rank_comp(grid))
+    _, tiers = agent.update_team_tiers(grid, chosen)
+    return {"score": rank + ITEM_SCORE * items, "value": int(value), "traits": rank - int(value), "items": items,
+            "active": sum(1 for t in tiers.values() if t > 0)}
 
 
 def copies(unit: dict) -> int:

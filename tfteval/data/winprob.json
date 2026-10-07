@@ -1,0 +1,379 @@
+{
+ "version": 1,
+ "data": {
+  "files": [
+   "results/fights/mixed_9600.jsonl.gz"
+  ],
+  "games": 60,
+  "fights": 4409,
+  "draws_left_out": 38,
+  "test_seeds": [
+   9602,
+   9604,
+   9608,
+   9610,
+   9616,
+   9620,
+   9627,
+   9634,
+   9642,
+   9651,
+   9652,
+   9657
+  ]
+ },
+ "models": {
+  "start": {
+   "terms": [
+    "value",
+    "traits",
+    "active",
+    "level",
+    "units",
+    "star2",
+    "star3",
+    "items",
+    "chosen",
+    "hp",
+    "win_streak",
+    "loss_streak",
+    "log_score"
+   ],
+   "coef": {
+    "value": -0.015649,
+    "traits": 0.073511,
+    "active": -0.005799,
+    "level": 0.395629,
+    "units": -0.223155,
+    "star2": 0.186481,
+    "star3": 0.472431,
+    "items": -0.026092,
+    "chosen": 0.019405,
+    "hp": 0.004586,
+    "win_streak": 0.108384,
+    "loss_streak": -0.107219,
+    "log_score": 2.531455
+   },
+   "side": -0.058425,
+   "chosen_by_cv": "all",
+   "cv_log_loss": {
+    "score": 0.6197,
+    "log_score": 0.5978,
+    "score+level": 0.6187,
+    "review": 0.6114,
+    "board": 0.6129,
+    "board+hp": 0.5929,
+    "log_board+hp": 0.5796,
+    "parts+hp": 0.5859,
+    "all": 0.5626
+   },
+   "held_out": {
+    "n": 878,
+    "log_loss": 0.5461,
+    "auc": 0.7998,
+    "brier": 0.1835,
+    "accuracy": 0.7312
+   },
+   "held_out_side_known": {
+    "n": 878,
+    "log_loss": 0.5469,
+    "auc": 0.7998,
+    "brier": 0.1839,
+    "accuracy": 0.7198
+   },
+   "held_out_baselines": {
+    "score": {
+     "n": 878,
+     "log_loss": 0.6202,
+     "auc": 0.7383,
+     "brier": 0.2124,
+     "accuracy": 0.6936
+    },
+    "log_score": {
+     "n": 878,
+     "log_loss": 0.5955,
+     "auc": 0.7487,
+     "brier": 0.2041,
+     "accuracy": 0.6936
+    }
+   },
+   "held_out_by_stage": {
+    "2": {
+     "n": 240,
+     "log_loss": 0.5934,
+     "auc": 0.7579,
+     "brier": 0.2021,
+     "accuracy": 0.7042
+    },
+    "3": {
+     "n": 240,
+     "log_loss": 0.5136,
+     "auc": 0.8326,
+     "brier": 0.1706,
+     "accuracy": 0.75
+    },
+    "4": {
+     "n": 230,
+     "log_loss": 0.5486,
+     "auc": 0.7864,
+     "brier": 0.1864,
+     "accuracy": 0.7261
+    },
+    "5": {
+     "n": 134,
+     "log_loss": 0.4969,
+     "auc": 0.841,
+     "brier": 0.1609,
+     "accuracy": 0.7761
+    },
+    "6": {
+     "n": 34,
+     "log_loss": 0.6185,
+     "auc": 0.7719,
+     "brier": 0.2132,
+     "accuracy": 0.6471
+    }
+   },
+   "calibration": [
+    {
+     "bin": "0.0-0.1",
+     "n": 48,
+     "p_mean": 0.062,
+     "win_rate": 0.062
+    },
+    {
+     "bin": "0.1-0.2",
+     "n": 67,
+     "p_mean": 0.15,
+     "win_rate": 0.209
+    },
+    {
+     "bin": "0.2-0.3",
+     "n": 104,
+     "p_mean": 0.253,
+     "win_rate": 0.173
+    },
+    {
+     "bin": "0.3-0.4",
+     "n": 113,
+     "p_mean": 0.348,
+     "win_rate": 0.345
+    },
+    {
+     "bin": "0.4-0.5",
+     "n": 115,
+     "p_mean": 0.45,
+     "win_rate": 0.435
+    },
+    {
+     "bin": "0.5-0.6",
+     "n": 119,
+     "p_mean": 0.547,
+     "win_rate": 0.613
+    },
+    {
+     "bin": "0.6-0.7",
+     "n": 105,
+     "p_mean": 0.651,
+     "win_rate": 0.667
+    },
+    {
+     "bin": "0.7-0.8",
+     "n": 87,
+     "p_mean": 0.751,
+     "win_rate": 0.782
+    },
+    {
+     "bin": "0.8-0.9",
+     "n": 68,
+     "p_mean": 0.847,
+     "win_rate": 0.897
+    },
+    {
+     "bin": "0.9-1.0",
+     "n": 52,
+     "p_mean": 0.932,
+     "win_rate": 0.904
+    }
+   ],
+   "train_fights": 3531,
+   "ridge": 1.0
+  },
+  "fight": {
+   "terms": [
+    "value",
+    "traits",
+    "active",
+    "level",
+    "units",
+    "star2",
+    "star3",
+    "items",
+    "chosen",
+    "hp",
+    "win_streak",
+    "loss_streak",
+    "log_score"
+   ],
+   "coef": {
+    "value": -0.045404,
+    "traits": 0.085558,
+    "active": 0.100559,
+    "level": 0.012493,
+    "units": 0.746627,
+    "star2": 0.452607,
+    "star3": 0.98753,
+    "items": -0.030676,
+    "chosen": 0.350746,
+    "hp": 0.007628,
+    "win_streak": 0.082111,
+    "loss_streak": -0.146556,
+    "log_score": 3.672284
+   },
+   "side": -0.078897,
+   "chosen_by_cv": "all",
+   "cv_log_loss": {
+    "score": 0.5886,
+    "log_score": 0.552,
+    "score+level": 0.5828,
+    "review": 0.5642,
+    "board": 0.5643,
+    "board+hp": 0.5373,
+    "log_board+hp": 0.5147,
+    "parts+hp": 0.5168,
+    "all": 0.4902
+   },
+   "held_out": {
+    "n": 878,
+    "log_loss": 0.4831,
+    "auc": 0.8466,
+    "brier": 0.1597,
+    "accuracy": 0.7677
+   },
+   "held_out_side_known": {
+    "n": 878,
+    "log_loss": 0.4841,
+    "auc": 0.8466,
+    "brier": 0.1601,
+    "accuracy": 0.7642
+   },
+   "held_out_baselines": {
+    "score": {
+     "n": 878,
+     "log_loss": 0.5955,
+     "auc": 0.7731,
+     "brier": 0.1992,
+     "accuracy": 0.7255
+    },
+    "log_score": {
+     "n": 878,
+     "log_loss": 0.5544,
+     "auc": 0.7877,
+     "brier": 0.1878,
+     "accuracy": 0.7255
+    }
+   },
+   "held_out_by_stage": {
+    "2": {
+     "n": 240,
+     "log_loss": 0.5051,
+     "auc": 0.8272,
+     "brier": 0.1704,
+     "accuracy": 0.7375
+    },
+    "3": {
+     "n": 240,
+     "log_loss": 0.4413,
+     "auc": 0.8749,
+     "brier": 0.1448,
+     "accuracy": 0.8083
+    },
+    "4": {
+     "n": 230,
+     "log_loss": 0.5143,
+     "auc": 0.8173,
+     "brier": 0.1738,
+     "accuracy": 0.7391
+    },
+    "5": {
+     "n": 134,
+     "log_loss": 0.4048,
+     "auc": 0.9006,
+     "brier": 0.1263,
+     "accuracy": 0.8134
+    },
+    "6": {
+     "n": 34,
+     "log_loss": 0.7216,
+     "auc": 0.7439,
+     "brier": 0.2266,
+     "accuracy": 0.7059
+    }
+   },
+   "calibration": [
+    {
+     "bin": "0.0-0.1",
+     "n": 106,
+     "p_mean": 0.05,
+     "win_rate": 0.066
+    },
+    {
+     "bin": "0.1-0.2",
+     "n": 89,
+     "p_mean": 0.148,
+     "win_rate": 0.124
+    },
+    {
+     "bin": "0.2-0.3",
+     "n": 87,
+     "p_mean": 0.248,
+     "win_rate": 0.218
+    },
+    {
+     "bin": "0.3-0.4",
+     "n": 77,
+     "p_mean": 0.35,
+     "win_rate": 0.494
+    },
+    {
+     "bin": "0.4-0.5",
+     "n": 82,
+     "p_mean": 0.449,
+     "win_rate": 0.366
+    },
+    {
+     "bin": "0.5-0.6",
+     "n": 84,
+     "p_mean": 0.553,
+     "win_rate": 0.631
+    },
+    {
+     "bin": "0.6-0.7",
+     "n": 80,
+     "p_mean": 0.653,
+     "win_rate": 0.588
+    },
+    {
+     "bin": "0.7-0.8",
+     "n": 81,
+     "p_mean": 0.751,
+     "win_rate": 0.778
+    },
+    {
+     "bin": "0.8-0.9",
+     "n": 86,
+     "p_mean": 0.854,
+     "win_rate": 0.86
+    },
+    {
+     "bin": "0.9-1.0",
+     "n": 106,
+     "p_mean": 0.951,
+     "win_rate": 0.953
+    }
+   ],
+   "train_fights": 3531,
+   "ridge": 1.0
+  }
+ }
+}
