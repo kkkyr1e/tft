@@ -10,6 +10,10 @@ own name so the seat under test can be told apart from identical opponents.
 damage, Fortune orbs, carousel fixes, hidden next opponent, keyed random streams) or `default` (the
 fork's options all off), optionally with overrides, e.g. `realistic,rng_streams=shared`. Every
 result records the profile and the exact options (`sim`, `sim_options`).
+
+`--record` keeps per-round trajectory rows (tfteval/record.py) of every seat in each result's `records`
+(`--record hero` only the seats of that policy name, or a comma list of seats); tfteval/rubric.py scores
+them. Recording does not change the games.
 """
 
 from __future__ import annotations
@@ -58,8 +62,12 @@ def main():
     parser.add_argument("--rules", choices=["set4", "set18"], help="economy profile (default set4, or TFT_RULES)")
     parser.add_argument("--sim", help="simulator profile: realistic (default) or default, optionally with overrides "
                                       "such as realistic,rng_streams=shared (or TFT_SIM)")
+    parser.add_argument("--record", nargs="?", const="all", metavar="WHO",
+                        help="record per-round rows: all seats (no value), or seats / policy names, comma separated")
     parser.add_argument("--out", required=True)
     args = parser.parse_args()
+    if args.record:
+        os.environ["TFT_RECORD"] = args.record  # read by the runner in every worker
     if args.rules:
         os.environ["TFT_RULES"] = args.rules  # read by play_game in every worker
     if args.sim:
