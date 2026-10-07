@@ -24,3 +24,8 @@ def test_parse_no_json():
 def test_mimic_levels_when_four_short_before_round_11():
     early = {**STATE, "round": 5, "level": 4, "xp": 6, "xp_needed": 10}
     assert MimicPlanner().plan(early, COMPS, None)["level_to"] == 5
+
+
+def test_field_comp_knob_only_when_set():
+    assert "field_comp" not in MimicPlanner().plan(STATE, COMPS, None)
+    assert MimicPlanner(field_comp=True).plan(STATE, COMPS, None)["field_comp"] is True

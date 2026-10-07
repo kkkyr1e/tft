@@ -167,15 +167,17 @@ class ParamPlanner:
     From round 11: level while below `max_level` and gold >= `level_gold`; at `max_level` reroll
     down to `top_floor`; below `desperate_hp` level and reroll down to `desperate_floor`.
     Optional: `fodder` = (first, last) stage labels for a fodder board, `survival` = threshold
-    for the survival override. Left at None they add nothing to the plan.
+    for the survival override, `field_comp` = swap comp units onto the board every round.
+    Left at None/False they add nothing to the plan.
     """
 
     def __init__(self, name="mimic", level_gold=54, max_level=8, top_floor=52, desperate_hp=30, desperate_floor=4,
-                 fodder=None, survival=None):
+                 fodder=None, survival=None, field_comp=False):
         self.name, self.level_gold, self.max_level = name, level_gold, max_level
         self.top_floor, self.desperate_hp, self.desperate_floor = top_floor, desperate_hp, desperate_floor
         self.fodder = tuple(stages.parse_label(x) for x in fodder) if fodder else None
         self.survival = survival
+        self.field_comp = field_comp
 
     def plan(self, state: dict, comps: dict, comp_now: str | None) -> dict:
         plan = self._economy(state)
@@ -183,6 +185,8 @@ class ParamPlanner:
             plan["fodder"] = self.fodder[0] <= state["round"] <= self.fodder[1]
         if self.survival is not None:
             plan["survival"] = self.survival
+        if self.field_comp:
+            plan["field_comp"] = True
         return plan
 
     def _economy(self, state: dict) -> dict:
@@ -233,6 +237,8 @@ VARIANTS = {
     "hp50": {"desperate_hp": 50},  # start the desperate roll-down earlier
     "fast8roll": {"level_gold": 34, "top_floor": 10},
     "fodder2": {"fodder": ("2-1", "2-6")},  # mimic, but field the weakest units from 2-1 to 2-6
+    "mimicfc": {"field_comp": True},  # mimic, plus swap comp units onto the board every round
+    "fast8fc": {"level_gold": 34, "field_comp": True},
 }
 
 
