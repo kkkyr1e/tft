@@ -13,6 +13,11 @@ The term set of each model is chosen by grouped CV_FOLDS-fold cross-validation o
 log-loss, AUC, Brier score, accuracy and a calibration table, with p averaged over the two sides as
 p_win does. Logistic regression by Newton's method with a small ridge (RIDGE, on standardized columns);
 numpy only.
+
+`--compare MODEL.json` also scores a saved model (e.g. the current tfteval/data/winprob.json, read
+before --out overwrites it) on the same held-out games, and on all games (it was fitted elsewhere);
+`--replace-if-better` writes --out only when the new fit's held-out log-loss is no worse than the
+compared model's for both `start` and `fight`.
 """
 
 from __future__ import annotations
@@ -171,11 +176,23 @@ def cv_loss(rows: list[dict], terms: list[str], when: str, train_seeds: list[int
     return losses / total
 
 
+def predict_spec(rows: list[dict], spec: dict, when: str) -> np.ndarray:
+    """P(blue wins) under a saved model spec (winprob.json's models[when]), averaged over sides."""
+    terms, side = spec["terms"], float(spec.get("side", 0.0))
+    coef = np.array([float(spec["coef"][t]) for t in terms])
+    z = np.array([[r[when][0][t] - r[when][1][t] for t in terms] for r in rows], dtype=float) @ coef
+    return 0.5 * (1.0 / (1.0 + np.exp(-(z + side))) + 1.0 / (1.0 + np.exp(-(z - side))))
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("data", nargs="+", help="fight records (.jsonl.gz) from scripts/collect_fights.py")
     parser.add_argument("--out", help="write the models here (tfteval/data/winprob.json)")
+    parser.add_argument("--compare", help="score this saved model on the same held-out games")
+    parser.add_argument("--replace-if-better", action="store_true",
+                        help="write --out only if the new held-out log-loss is <= the compared model's")
     args = parser.parse_args()
+    old = json.loads(Path(args.compare).read_text()) if args.compare else None
 
     rows, draws = load(args.data)
     seeds = sorted({r["seed"] for r in rows})
@@ -223,6 +240,19 @@ def main():
         print("  calibration (held out):")
         for c in cal:
             print(f"    p {c['bin']}  n={c['n']:4d}  mean p {c['p_mean']:.3f}  won {c['win_rate']:.3f}")
+        compared = None
+        if old is not None and when in old["models"]:
+            spec = old["models"][when]
+            y_all = np.array([r["y"] for r in rs], dtype=float)
+            compared = {"file": args.compare, "fitted_on": old.get("data", {}).get("files"), "terms": spec["terms"],
+                        "held_out": metrics(y, predict_spec(test, spec, when)),
+                        "all_games": metrics(y_all, predict_spec(rs, spec, when)),
+                        "held_out_calibration": calibration(y, predict_spec(test, spec, when))}
+            print(f"  compared model {args.compare}: held-out {compared['held_out']}")
+            print(f"    all {len(rs)} fights: {compared['all_games']}")
+            print("    calibration (held out): " + "; ".join(
+                f"{c['bin']} n={c['n']} p={c['p_mean']:.2f} won={c['win_rate']:.2f}"
+                for c in compared["held_out_calibration"]))
         coef = {t: float(c) for t, c in zip(terms, w[1:])}
         print("  coefficients: side " + f"{w[0]:+.4f}  " + "  ".join(f"{t} {c:+.4f}" for t, c in coef.items()))
         out["models"][when] = {
@@ -232,6 +262,14 @@ def main():
             "held_out_by_stage": by_stage, "calibration": cal,
             "train_fights": len(train), "ridge": RIDGE,
         }
+        if compared is not None:
+            out["models"][when]["compared"] = compared
+    if args.out and args.replace_if_better and old is not None:
+        worse = [w for w, m in out["models"].items() if "compared" in m
+                 and m["held_out"]["log_loss"] > m["compared"]["held_out"]["log_loss"]]
+        if worse:
+            print(f"\nnot written: the new fit is worse than {args.compare} on held-out log-loss ({', '.join(worse)})")
+            return
     if args.out:
         Path(args.out).parent.mkdir(parents=True, exist_ok=True)
         Path(args.out).write_text(json.dumps(out, indent=1) + "\n")
