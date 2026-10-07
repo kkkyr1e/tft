@@ -24,6 +24,11 @@ Optional plan fields (absent = the executor behaves exactly as before them):
   items; the round after it goes back to false the strongest units are fielded again.
 * `survival` N: when the expected losses to death (tfteval.stages.losses_to_death) are <= N, ignore
   the economy fields and fodder and roll for board strength.
+* `xp_buys` N: buy xp at least N times this round (on top of `level_to` and `level_by`), whether or
+  not that completes a level; used to spend the gold above a bank on xp.
+* `hold` true: keep units and items back, field the strongest: the rule bot's bench sales (unless the
+  bench is full) and item placements are dropped, the executor places no items, and the strongest
+  units are fielded every round (the fodder board's filters without the fodder).
 
 `compile_knobs` turns a plan into the per-round knobs the executor reads (`PlanExecutor.begin_round`).
 
@@ -54,7 +59,7 @@ from tfteval import public, stages
 from tfteval.policies import MASK_SHAPE
 
 PLAN_KEYS = ("comp", "level_to", "roll_floor", "carry")
-EXTRA_KEYS = ("level_by", "spend", "fodder", "field_comp", "survival")
+EXTRA_KEYS = ("level_by", "spend", "fodder", "field_comp", "survival", "xp_buys", "hold")
 
 LEVEL_COSTS = (0, 2, 2, 6, 10, 20, 36, 56, 80, 100)  # xp for the next level, Player.level_costs
 ACTIONS_PER_ROUND = 15
@@ -127,7 +132,7 @@ def compile_knobs(plan: dict, state: dict) -> dict:
     """
     knobs = {"comp": plan.get("comp"), "level_to": int(plan["level_to"]), "roll_floor": int(plan["roll_floor"]),
              "carry": plan.get("carry"), "xp_buys": 0, "xp_priority": False, "fodder": bool(plan.get("fodder")),
-             "field_comp": bool(plan.get("field_comp")), "survival": False}
+             "field_comp": bool(plan.get("field_comp")), "survival": False, "hold": bool(plan.get("hold"))}
     idx, gold, level, xp, hp = state["round"], state["gold"], state["level"], state["xp"], state["hp"]
 
     spec = plan.get("level_by")
@@ -141,6 +146,9 @@ def compile_knobs(plan: dict, state: dict) -> dict:
             buys = math.ceil(max(0, xp_to_level(level, xp, target) - 2 * later) / 4)  # +2 xp each round start
             knobs["xp_buys"] = max(0, buys - XP_BUY_CAP * later)
 
+    if plan.get("xp_buys"):
+        knobs["xp_buys"] = max(knobs["xp_buys"], int(plan["xp_buys"]))
+
     spec = plan.get("spend")
     if spec:
         target, deadline = int(spec["to"]), _deadline(spec, idx)
@@ -152,7 +160,7 @@ def compile_knobs(plan: dict, state: dict) -> dict:
 
     threshold = plan.get("survival")
     if threshold is not None and stages.losses_to_death(hp, idx) <= int(threshold):
-        knobs.update(survival=True, fodder=False, xp_buys=0, xp_priority=False, roll_floor=0)
+        knobs.update(survival=True, fodder=False, hold=False, xp_buys=0, xp_priority=False, roll_floor=0)
         cheap_level = level < 8 and xp_to_level(level, xp, level + 1) <= 8  # at most two buys
         knobs["level_to"] = level + 1 if cheap_level else level
     return knobs

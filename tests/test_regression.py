@@ -26,7 +26,8 @@ def test_mimic_and_variants_replay_the_reference():
     reference = json.loads((ROOT / "tests/data/executor_reference.json").read_text())
     seeds = [str(g["seed"]) for g in reference["games"]]
     env = {**os.environ, "PYTHONHASHSEED": "0"}
-    out = subprocess.run([sys.executable, str(ROOT / "tests/replay_lobby.py"), "--seeds", *seeds, "--workers", "2"],
+    workers = os.environ.get("TFT_TEST_WORKERS", "2")  # 1 on a machine that is busy with other runs
+    out = subprocess.run([sys.executable, str(ROOT / "tests/replay_lobby.py"), "--seeds", *seeds, "--workers", workers],
                          capture_output=True, text=True, env=env, cwd=ROOT, timeout=900)
     assert out.returncode == 0, out.stderr[-2000:]
     now = json.loads(out.stdout)

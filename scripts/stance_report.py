@@ -6,7 +6,9 @@
 
 Prints the share of planning rounds in each stance by stage, the games each stance fired in and its
 logged reasons, and with --results the seats' placements, overall and split by whether a stance
-fired in the game (descriptive only: which games a stance fires in is not random).
+fired in the game (descriptive only: which games a stance fires in is not random). Logs from version 2
+(and stance1 since then) also carry the seat's units owned, pairs and 2-star units, and the strength
+class against the candidate opponents: means by round from 2-1 to 4-2 and the classes by stage.
 """
 
 from __future__ import annotations
@@ -71,6 +73,24 @@ def main():
         ends = Counter(r["features"][field].split(": ")[-1] for r in rows if field in r["features"])
         if ends:
             print(f"{label}: " + ", ".join(f"{k} x{n}" for k, n in ends.most_common()))
+
+    with_units = [r for r in rows if "units_owned" in r["features"]]
+    if with_units:
+        print("\nround   seats  units  pairs  2-star   level   gold     hp   (means at the start of the round)")
+        for idx in range(3, 17):
+            here = [r["features"] for r in with_units if r["round"] == idx]
+            if here:
+                m = {k: statistics.mean(f[k] for f in here)
+                     for k in ("units_owned", "pairs", "two_stars", "level", "gold", "hp")}
+                print(f"{stages.label(idx):<7} {len(here):5d}  {m['units_owned']:5.1f}  {m['pairs']:5.2f}  "
+                      f"{m['two_stars']:6.2f}  {m['level']:6.2f}  {m['gold']:5.1f}  {m['hp']:5.1f}")
+    with_class = [r for r in rows if r["features"].get("strength")]
+    if with_class:
+        print("\nstage   stronger   close  weaker   (strength against the candidate opponents)")
+        for label in order:
+            here = Counter(r["features"]["strength"] for r in with_class if key(r) == label)
+            total = sum(here.values())
+            print(f"{label:<7} " + "  ".join(f"{_pct(here[c], total):>7}" for c in ("stronger", "close", "weaker")))
 
     if args.results:
         place = {}

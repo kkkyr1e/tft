@@ -179,6 +179,18 @@ class PlanExecutor(Default_Agent):
                 return "4_" + str(spare[0][2]) if spare else command
         return command
 
+    # ---- hold (plan field `hold`): the fodder board's filters, with the strongest units fielded
+    @staticmethod
+    def hold_filter(command: str, player) -> str:
+        """Drop rule-bot item placements, and bench sales while the bench has room (the sales for
+        interest); a sale that makes room on a full bench goes through."""
+        kind, *args = command.split("_")
+        if kind == "6":
+            return "0"
+        if kind == "4" and args and int(args[0]) >= 28 and not player.bench_full():
+            return "0"
+        return command
+
     # ---- economy
     def _xp_owed(self, player) -> int:
         need = 0
@@ -214,6 +226,11 @@ class PlanExecutor(Default_Agent):
             if command:
                 self.stats["fodder_buys"] += 1
                 return command
+        if knobs.get("hold") and not knobs["fodder"]:
+            command = self.arrange(player, weakest=False)
+            if command:
+                self.stats["hold_moves"] += 1
+                return command
         if knobs["field_comp"] and not knobs["fodder"] and game_round >= 11 and self.comp_number >= 0:
             command = self.field_comp_swap(player)
             if command:
@@ -242,6 +259,11 @@ class PlanExecutor(Default_Agent):
             if filtered != command:
                 self.stats["filtered"] += 1
                 command = filtered
+        elif knobs.get("hold"):
+            filtered = self.hold_filter(command, player)
+            if filtered != command:
+                self.stats["hold_filtered"] += 1
+                command = filtered
         if command not in ("0", "1", "2"):
             return command
         item = self.place_item(player, mask) if game_round > 2 and not knobs["fodder"] else None
@@ -259,6 +281,8 @@ class PlanExecutor(Default_Agent):
         return "0"
 
     def place_item(self, player, mask):
+        if self.knobs.get("hold"):
+            return None  # hold: the items wait until the hold ends
         items = [(i, it) for i, it in enumerate(player.item_bench)
                  if it is not None and it not in ("champion_duplicator", "spatula")]
         if not items:

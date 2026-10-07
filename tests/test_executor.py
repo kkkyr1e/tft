@@ -17,7 +17,7 @@ def state(idx, gold=50, level=5, xp=0, hp=100):
 def test_plain_plan_compiles_to_itself():
     knobs = compile_knobs({**BASE, "roll_floor": 20, "carry": "ahri", "comp": "mage"}, state(12))
     assert knobs == {"comp": "mage", "level_to": 5, "roll_floor": 20, "carry": "ahri", "xp_buys": 0,
-                     "xp_priority": False, "fodder": False, "field_comp": False, "survival": False}
+                     "xp_priority": False, "fodder": False, "field_comp": False, "survival": False, "hold": False}
 
 
 def test_level_by_buys_as_late_as_the_action_cap_allows():
