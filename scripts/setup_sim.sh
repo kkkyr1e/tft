@@ -5,7 +5,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 SIM_REPO=https://github.com/kkkyr1e/TFTMuZeroAgent
-SIM_COMMIT=91496569a94d3d41b487e89b088a4045df3c0efb  # develop
+SIM_COMMIT=a2840a1dabbec0847075e1f159286657f71012b2  # develop
 mkdir -p third_party
 if [ ! -d third_party/TFTMuZeroAgent ]; then
   git clone "$SIM_REPO" third_party/TFTMuZeroAgent
