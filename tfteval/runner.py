@@ -24,7 +24,8 @@ class GameResult:
     actions: dict = field(default_factory=dict)  # seat -> number of actions the policy chose
     fallbacks: dict = field(default_factory=dict)  # seat -> actions replaced because the policy raised
     reproducible: bool = False  # True only when PYTHONHASHSEED was pinned for this process
-    sim_fixes: list = field(default_factory=list)  # tfteval.simfixes active in this game; [] = upstream simulator
+    sim_fixes: list = field(default_factory=list)  # tfteval.simfixes patched in at runtime; [] = simulator as checked out
+    sim_commit: str | None = None  # git commit of the simulator checkout (scripts/setup_sim.sh pins it)
 
     def to_json(self) -> dict:
         return asdict(self)
@@ -119,6 +120,7 @@ def play_game(seat_policies: dict[str, Policy], seed: int, max_steps: int = 2000
         fallbacks=fallbacks,
         reproducible=os.environ.get("PYTHONHASHSEED", "random").isdigit(),
         sim_fixes=active,
+        sim_commit=simfixes.sim_commit(),
     )
 
 

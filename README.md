@@ -1,6 +1,6 @@
 # 云顶调优
 
-云顶之弈调优项目：agent 的评测与调优框架，跑在开源的 S4 模拟器 [TFTMuZeroAgent](https://github.com/silverlight6/TFTMuZeroAgent) 上。
+云顶之弈调优项目：agent 的评测与调优框架，跑在开源的 S4 模拟器 [TFTMuZeroAgent](https://github.com/silverlight6/TFTMuZeroAgent) 上，用的是我们修过 bug 的 fork：[kkkyr1e/TFTMuZeroAgent](https://github.com/kkkyr1e/TFTMuZeroAgent) 的 `develop` 分支。
 
 整体方针见 [docs/PLAN.md](docs/PLAN.md)。当前状态是 M0：环境可跑、种子可复现、有两条基线；被测的 LLM agent 还没有实现。
 
@@ -48,11 +48,25 @@ python scripts/compare.py results/hero_rule.json results/hero_noisy20.json --pol
 
 ## 对模拟器的修正
 
-模拟器固定在一个提交上，不改 `third_party/` 里的文件；修正写在 `tfteval/simfixes.py`，由 `play_game` 在运行时装上，结果里的 `sim_fixes` 字段记录当局用了哪些修正（空列表表示原版模拟器）。设 `TFT_SIM_FIXES=0` 可以关掉，用来重放修正之前的运行。修正前后的结果不能混在一起比。
+模拟器用我们的 fork [kkkyr1e/TFTMuZeroAgent](https://github.com/kkkyr1e/TFTMuZeroAgent)，`scripts/setup_sim.sh` 固定在 `develop` 的一个提交上。bug 修在 fork 里，每个修正是一个单独的分支、带一个单元测试，可以单独给上游提 PR；`develop` 合并了全部修正。清单、出处和测试见 fork 里的 `FORK_NOTES.md`。
 
 | 修正 | 原版的问题 | 修正后 |
 |---|---|---|
-| `carousel_order` | 选秀顺序的循环只把"血量不高于当前队首"的玩家插到队首，其余玩家拿不到选秀单位。实测 3 局：第一次选秀 8 人里只有 1 人拿到，之后每次 1～5 人 | 每个活着的玩家都拿一次。第一次选秀所有人同时放出，之后从血量最低起两人一组放出，同血量随机。每人仍拿费用最高的单位，与原版相同 |
+| 选秀顺序 | 只有血量不高于队首的玩家能拿到单位，第一次选秀 8 人里只有 1 人拿到 | 人人有份；第一次所有人同时，之后从低血起两人一组 |
+| 阶段伤害 | 每档伤害提前一个阶段生效，第 2 阶段就有基础伤害 | 按 10.24 版本的 S4 表：第 1～7 阶段基础伤害 0/0/2/3/5/8/15 |
+| 6-7 野怪 | 被跳过 | 正常打 |
+| 前期收入 | 1-2、1-3 没有收入，金币和经验晚两回合 | 1-2/1-3/1-4/2-1 给 2/2/3/4 金，每回合 2 经验 |
+| 匹配 | 加权抽签会抽到不该遇到的对手 | 只在可遇到的对手里按权重抽 |
+| 买牌 | 每次刷新只能买一张 | 商店里剩下的都能买 |
+| 座位顺序 | 座位放在 set 里，同一个种子在不同进程里是不同的对局 | 固定顺序；实测同一种子在 `PYTHONHASHSEED` 为 0 和 1 时名次完全一致 |
+| 规则 bot | Katarina 拼错；备战席换上场的逻辑是死代码 | 修好 |
+| 天选价格 | 2～5 费天选比正式游戏便宜 1 金 | 1 星价格的 3 倍 |
+
+另外 fork 里加了一个选项（默认关）：跳过就结束本回合，并可调高每回合的动作上限。
+
+**这次换模拟器以后，之前所有的结果都不能再拿来比**：伤害、收入、买牌、匹配和规则 bot 都变了。结果里的 `sim_commit` 字段记录当局用的是哪个模拟器提交。
+
+`tfteval/simfixes.py` 是换 fork 之前在运行时打的补丁，现在模拟器自带修正，它就什么都不装（`sim_fixes` 为空列表）；只有用原版上游模拟器时才会装上。
 
 ## 目录
 
