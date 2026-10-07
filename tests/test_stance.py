@@ -142,7 +142,7 @@ def test_stage_one_and_a_quiet_round_are_standard_econ():
 
 
 def test_stabilize_when_three_losses_from_death():
-    state = make_state(idx=16, hp=40, level=6, xp=30, gold=45)  # 4-2: ~13.9 a loss
+    state = make_state(idx=16, hp=30, level=6, xp=30, gold=45)  # 4-2: ~11.7 a loss (set4)
     assert state["losses_to_death"] == 3
     plan = run(v1(), state)
     assert plan["stance"] == "stabilize" and plan["why"].startswith("dying")
@@ -509,7 +509,7 @@ def test_fast8_v2_does_not_start(change):
 
 @pytest.mark.parametrize("gold, fires", [(20, False), (21, True), (35, True), (36, True)])
 def test_stabilize_v2_fires_when_the_gold_cannot_be_spent_in_time(gold, fires):
-    state = make_state(idx=16, hp=40, level=6, xp=0, gold=gold)  # 4-2: 3 losses to death
+    state = make_state(idx=16, hp=30, level=6, xp=0, gold=gold)  # 4-2: 3 losses to death (set4)
     assert state["losses_to_death"] == 3  # within reach: 2 + ceil((gold - 20) / 15) >= 3 from 21 gold
     plan = run(v2(), state)
     assert (plan["stance"] == "stabilize") == fires

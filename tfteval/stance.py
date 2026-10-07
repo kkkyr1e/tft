@@ -106,7 +106,7 @@ STABILIZE_LTD = 3              # [doc] losses to death (stages.losses_to_death) 
 STABILIZE_HARD_FLOOR = 10      # [doc] roll to 0-10 only when life is at stake
 STABILIZE_SOFT_FLOOR = 20      # [guess] losing heavily but not dying: roll down to 20, keep 2 interest
 SURVIVAL_LTD = 2               # [guess] plan field `survival`: roll to 0 at <= 2 losses to death
-STABILIZE_HEAVY_FROM = "3-1"   # [sim] a stage-2 loss costs ~8 HP: losing streaks there are not "heavy"
+STABILIZE_HEAVY_FROM = "3-1"   # [sim] a stage-2 loss costs ~8 HP upstream, ~5.4 on the fork: not "heavy"
 STABILIZE_LOSS_STREAK = 3      # [guess] "losing heavily" = this many losses in a row ...
 STABILIZE_WEAK_RATIO = 0.85    # [guess] ... with board score < 0.85 x the candidates' mean (v1)
 
@@ -125,8 +125,9 @@ LOSSSTREAK_STAGE = 2           # [doc] only in stage 2, and only its PvP rounds 
 LOSSSTREAK_MIN_HP = 80         # [doc] HP >= 80 to start and to go on
 LOSSSTREAK_MIN_LOSSES = 1      # [guess] "already losing": lost at least the last fight ...
 LOSSSTREAK_WEAK_RATIO = 0.85   # [guess] ... or own board < 0.85 x the candidates' mean (start only; v1)
-                               # the doc's "<= 6 HP a loss" is left out: the measured stage-2 loss costs 8.0
-                               # (stages.DAMAGE_PER_LOSS), so it would never hold
+                               # the doc's "<= 6 HP a loss" is left out: a stage-2 loss cost 8.0 on the
+                               # upstream simulator, so it never held there (stages.damage_per_loss now
+                               # follows the fork's rules profile; not re-tuned)
 
 SLOWROLL_COPIES = 4            # [sim] the doc says ~6; the mimic seat never holds 5 copies of a 1-3 cost comp
                                # unit before stage 5 (64 games, results/smoke_*.json); 4 = a 2-star + 1

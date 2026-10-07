@@ -92,6 +92,7 @@ def describe(player, shop, game_round: int, env=None, seat: str | None = None,
     """What a human player can see at the start of a round, as plain data: everything about
     yourself, and only the public part of the others (tfteval.public)."""
     hp, idx = int(player.health), int(game_round)
+    rules = getattr(player, "rules", None)  # the env's economy profile (fork); None: TFT_RULES, as the runner
     sched = stages.schedule(idx)
     traits = {k: int(v) for k, v in getattr(player, "team_tiers", {}).items() if v}
     state = {
@@ -105,8 +106,8 @@ def describe(player, shop, game_round: int, env=None, seat: str | None = None,
         "xp": int(player.exp),
         "xp_needed": int(player.level_costs[player.level]) if player.level < len(player.level_costs) else 0,
         "streak": public.streak(player),
-        "dmg_per_loss": stages.damage_per_loss(idx),
-        "losses_to_death": stages.losses_to_death(hp, idx),
+        "dmg_per_loss": stages.damage_per_loss(idx, rules),
+        "losses_to_death": stages.losses_to_death(hp, idx, rules),
         "board": [_unit(u) for u in public.board_units(player)],
         "bench": [_unit(c) for c in player.bench if c],
         "item_bench": [i for i in player.item_bench if i],
@@ -167,7 +168,10 @@ def compile_knobs(plan: dict, state: dict) -> dict:
             knobs["roll_floor"] = min(knobs["roll_floor"], max(target, gold - share))
 
     threshold = plan.get("survival")
-    if threshold is not None and stages.losses_to_death(hp, idx) <= int(threshold):
+    ltd = state.get("losses_to_death")  # describe() computed it under the game's rules profile
+    if ltd is None:
+        ltd = stages.losses_to_death(hp, idx)
+    if threshold is not None and ltd <= int(threshold):
         knobs.update(survival=True, fodder=False, hold=False, xp_buys=0, xp_priority=False, roll_floor=0)
         cheap_level = level < 8 and xp_to_level(level, xp, level + 1) <= 8  # at most two buys
         knobs["level_to"] = level + 1 if cheap_level else level

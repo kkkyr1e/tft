@@ -1,6 +1,11 @@
+import json
+from pathlib import Path
+
 import pytest
 
 from tfteval import stages
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_labels_follow_the_simulator_schedule():
@@ -39,19 +44,114 @@ def test_rounds_until_next_events():
     assert stages.schedule(6)["carousel"] and stages.schedule(6)["to_carousel"] == 0
 
 
-def test_damage_table_matches_simulator_constants():
+# --------------------------------------------------------------------------- damage
+
+PROFILES = ("set4", "set18")
+
+
+def _game_round(monkeypatch, name):
+    from Simulator import config
+    from Simulator.game import pool
+    from Simulator.game.game_round import Game_Round
+
+    monkeypatch.setattr(config, "LOGMESSAGES", False)
+    return Game_Round({}, pool.pool(rules=name), None)
+
+
+@pytest.mark.parametrize("name", PROFILES)
+def test_base_damage_is_the_simulators_table(monkeypatch, name):
+    rounds = _game_round(monkeypatch, name)  # the table combat_phase charges, for a game on this profile
+    assert rounds.rules.name == name
+    for idx in range(0, 60):
+        tier = next(d for last, d in rounds.ROUND_DAMAGE if idx <= last)  # combat_phase's own lookup
+        assert stages.base_damage(idx, name) == tier, idx
+
+
+def test_base_damage_by_stage():
+    first = [stages.parse_label(f"{s}-1") for s in range(2, 9)]  # 2-1 .. 8-1
+    assert [stages.base_damage(i, "set4") for i in first] == [0, 2, 3, 5, 8, 15, 15]  # patch 10.24
+    assert [stages.base_damage(i, "set18") for i in first] == [2, 6, 7, 10, 12, 17, 150]
+    # the old simulator charged each tier a stage early (2 from 2-2); the fork charges 0 all of stage 2
+    assert {stages.base_damage(i, "set4") for i in range(3, 9)} == {0}
+
+
+def test_unit_damage_is_the_profiles_table():
     from Simulator.battle.stats import DAMAGE_PER_UNIT
 
-    assert tuple(DAMAGE_PER_UNIT) == stages.DAMAGE_PER_UNIT
-    assert [stages.base_damage(i) for i in (3, 4, 9, 10, 16, 22, 28)] == [0, 2, 2, 3, 5, 8, 15]
-    assert stages.damage_per_loss(8) == 0  # PvE: no HP lost
-    assert stages.max_damage(19, 6) == 5 + 11 and stages.max_damage(20, 6) == 0
+    assert [stages.unit_damage(n, "set4") for n in range(len(DAMAGE_PER_UNIT))] == list(DAMAGE_PER_UNIT)
+    assert [stages.unit_damage(n, "set18") for n in range(12)] == list(range(12))
+    assert stages.max_damage(19, 6, "set4") == 3 + 11 and stages.max_damage(19, 6, "set18") == 7 + 6  # 4-6
+    assert stages.max_damage(20, 6) == 0  # PvE
+
+
+def test_profile_comes_from_tft_rules_like_the_runner(monkeypatch):
+    from Simulator.game.rules import SET4, SET18
+
+    monkeypatch.delenv("TFT_RULES", raising=False)
+    assert stages.rules_profile() is SET4
+    monkeypatch.setenv("TFT_RULES", "set18")
+    assert stages.rules_profile() is SET18 and stages.base_damage(3) == 2
+    assert stages.rules_profile(SET4) is SET4 and stages.rules_profile("SET4") is SET4  # explicit wins
+    with pytest.raises(ValueError):
+        stages.rules_profile("set99")
+
+
+@pytest.mark.parametrize("name", PROFILES)
+def test_damage_per_loss_is_base_plus_priced_survivors(name):
+    for idx in range(3, 44):
+        if stages.is_pve(idx):
+            assert stages.damage_per_loss(idx, name) == 0
+            continue
+        counts = stages.survivors_hist(idx)
+        unit = sum(c * stages.unit_damage(n, name) for n, c in enumerate(counts)) / sum(counts)
+        assert stages.damage_per_loss(idx, name) == pytest.approx(stages.base_damage(idx, name) + unit, abs=0.01)
+    # the same survivors cost more per unit under set4 (2 each up to 5) than under set18 (1 each)
+    assert stages.expected_unit_damage(3, "set4") > stages.expected_unit_damage(3, "set18")
+
+
+@pytest.mark.parametrize("name", PROFILES)
+def test_damage_per_loss_matches_the_measurement(name):
+    """scripts/measure_damage.py on the fork (8 rule bots): per stage, the model's expected damage per
+    loss, averaged over the measured losses, is within 1 HP (and 10%) of the measured mean."""
+    path = ROOT / "results" / "damage" / f"{name}.json"
+    measured = json.loads(path.read_text())
+    assert measured["rules"] == name
+    checked = 0
+    for stage, row in measured["by_stage"].items():
+        if row["n"] < 50:
+            continue
+        raw = [(i, d) for i, d, _ in measured["raw"] if stages.stage_round(i)[0] == int(stage)]
+        model = sum(stages.damage_per_loss(i, name) for i, _ in raw) / len(raw)
+        assert model == pytest.approx(row["mean"], abs=max(1.0, 0.1 * row["mean"])), (stage, model, row)
+        checked += 1
+    assert checked >= 4
 
 
 def test_losses_to_death_walks_the_upcoming_pvp_rounds():
-    assert stages.losses_to_death(4, 3) == 1  # 2-1 costs ~4.4
-    assert stages.losses_to_death(13, 6) == 2  # 2-5, 2-6 cost ~8 each
-    # 2-6 (8.0), 2-7 is PvE, 3-1 (8.0), 3-2 (10.6): 20 HP survive two losses, not three
-    assert stages.losses_to_death(20, 7) == 3
-    assert stages.losses_to_death(100, 3) > stages.losses_to_death(100, 20)
-    assert stages.losses_to_death(0, 10) == 0
+    for name in PROFILES:
+        d = [stages.damage_per_loss(i, name) for i in range(44)]
+        assert stages.losses_to_death(d[3] / 2, 3, name) == 1
+        # 2-6 then 2-7 (PvE, free) then 3-1
+        assert stages.losses_to_death(d[7] + d[9] - 0.5, 7, name) == 2
+        assert stages.losses_to_death(100, 3, name) > stages.losses_to_death(100, 20, name)
+        assert stages.losses_to_death(0, 10, name) == 0
+    # set18's stage 8 (150 base) ends any game
+    assert stages.losses_to_death(1000, stages.parse_label("8-1"), "set18") == 7
+
+
+def test_describe_uses_the_players_profile(monkeypatch):
+    from Simulator.game import pool
+    from Simulator.game.player import Player
+
+    from tfteval.planner import compile_knobs, describe
+
+    monkeypatch.delenv("TFT_RULES", raising=False)
+    for name in PROFILES:
+        p = Player(pool.pool(rules=name), 0)
+        p.health = 30
+        state = describe(p, [None] * 5, 10)
+        assert state["dmg_per_loss"] == stages.damage_per_loss(10, name)
+        assert state["losses_to_death"] == stages.losses_to_death(30, 10, name)
+        knobs = compile_knobs({"comp": None, "level_to": 1, "roll_floor": 999, "carry": None,
+                               "survival": state["losses_to_death"]}, state)
+        assert knobs["survival"]  # compile_knobs reads describe's losses_to_death

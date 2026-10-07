@@ -11,7 +11,7 @@ from Simulator.battle.champion import champion  # noqa: E402
 from Simulator.game import pool  # noqa: E402
 from Simulator.game.player import Player  # noqa: E402
 
-from tfteval import public  # noqa: E402
+from tfteval import public, stages  # noqa: E402
 from tfteval.planner import describe  # noqa: E402
 
 
@@ -98,7 +98,8 @@ def test_describe_adds_stage_features_and_stays_compact(lobby):
 
     state = describe(me, ["zed", None], 10, Env, seat="player_0", comps={"mage": ["ahri"]}, comp="mage")
     assert state["stage"] == "3-2" and state["next"] == {"carousel": 2, "pve": 4, "stage": 5}
-    assert state["streak"] == 0 and state["losses_to_death"] == 9 and state["dmg_per_loss"] == 10.6
+    assert state["streak"] == 0 and state["dmg_per_loss"] == stages.damage_per_loss(10, me.rules)
+    assert state["losses_to_death"] == stages.losses_to_death(me.health, 10, me.rules)
     assert state["shop"] == ["zed"] and [u["name"] for u in state["bench"]] == ["nami"]
     assert state["contested"] == {"ahri": 3}
     assert len(json.dumps(state, separators=(",", ":"))) < 1200

@@ -66,10 +66,12 @@ def test_survival_override():
             "spend": {"to": 40, "rounds": 3}, "level_by": {"level": 8, "rounds": 3}}
     calm = compile_knobs(plan, state(16, hp=60, level=6, xp=30))
     assert not calm["survival"] and calm["fodder"]
-    knobs = compile_knobs(plan, state(16, hp=25, level=6, xp=30))  # 4-2 losses cost ~13.9: 2 to death
+    knobs = compile_knobs(plan, state(16, hp=20, level=6, xp=30))  # 4-2 losses cost ~11.7 (set4): 2 to death
     assert knobs["survival"] and not knobs["fodder"] and knobs["roll_floor"] == 0 and knobs["xp_buys"] == 0
     assert knobs["level_to"] == 7  # 6 xp short: two buys, cheap enough
-    assert compile_knobs(plan, state(16, hp=25, level=6, xp=0))["level_to"] == 6  # 36 xp short: roll instead
+    assert compile_knobs(plan, state(16, hp=20, level=6, xp=0))["level_to"] == 6  # 36 xp short: roll instead
+    # describe()'s losses_to_death (the game's rules profile) wins over the default profile's
+    assert not compile_knobs(plan, {**state(16, hp=20, level=6, xp=30), "losses_to_death": 3})["survival"]
     assert not compile_knobs({**plan, "survival": None}, state(16, hp=5))["survival"]
 
 
