@@ -1,12 +1,17 @@
-"""mimic and the economy variants play exactly as before the stance-executor changes.
+"""mimic and the economy variants play exactly as when the reference was recorded.
 
-tests/data/executor_reference.json was generated on commit 57ef4d7, before tfteval/stages.py,
-tfteval/public.py and the new plan fields existed:
+tests/data/executor_reference.json holds the placements and a hash of every seat's full action
+sequence for three seeds:
 
-    PYTHONHASHSEED=0 python tests/replay_lobby.py --seeds 7100 7101 7102 --workers 2
+    PYTHONHASHSEED=0 python tests/replay_lobby.py --seeds 7100 7101 7102 --workers 2 \
+        > tests/data/executor_reference.json
 
-It holds the placements and a hash of every seat's full action sequence. Replaying the same seeds
-now must give the same numbers: the new code paths may only act when a plan uses the new fields.
+It was first generated on commit 57ef4d7, before tfteval/stages.py, tfteval/public.py and the
+optional plan fields existed, on the upstream simulator; the stance-executor changes replayed it
+exactly. It was regenerated once, when the project moved to the simulator fork (README,
+"对模拟器的修正"), because the simulator changed every game; each game records the simulator commit
+it was played on (sim_commit). Replaying the same seeds must give the same numbers: executor code
+paths for the optional plan fields may only act when a plan uses them.
 """
 
 import json
@@ -33,5 +38,6 @@ def test_mimic_and_variants_replay_the_reference():
     now = json.loads(out.stdout)
     assert now["lobby"] == reference["lobby"]
     for old, new in zip(reference["games"], now["games"]):
-        assert new["placements"] == old["placements"], old["seed"]
-        assert new["digest"] == old["digest"], old["seed"]
+        where = (old["seed"], "reference simulator", old.get("sim_commit"), "now", new.get("sim_commit"))
+        assert new["placements"] == old["placements"], where
+        assert new["digest"] == old["digest"], where

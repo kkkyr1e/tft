@@ -23,37 +23,36 @@
     "player_7": "rule"
    },
    "placements": {
-    "player_0": 1,
-    "player_1": 5,
-    "player_2": 3,
-    "player_3": 6,
-    "player_4": 2,
-    "player_5": 8,
-    "player_6": 4,
-    "player_7": 7
+    "player_0": 7,
+    "player_1": 6,
+    "player_2": 1,
+    "player_3": 8,
+    "player_4": 5,
+    "player_5": 4,
+    "player_6": 2,
+    "player_7": 3
    },
    "actions": {
-    "player_0": 420,
-    "player_1": 315,
-    "player_2": 405,
-    "player_3": 285,
-    "player_4": 420,
-    "player_5": 240,
-    "player_6": 375,
-    "player_7": 270
+    "player_0": 285,
+    "player_1": 345,
+    "player_2": 435,
+    "player_3": 240,
+    "player_4": 405,
+    "player_5": 420,
+    "player_6": 435,
+    "player_7": 435
    },
-   "sim_fixes": [
-    "carousel_order"
-   ],
+   "sim_fixes": [],
+   "sim_commit": "a2840a1dabbec0847075e1f159286657f71012b2",
    "digest": {
-    "player_0": "3ecc817891c4b1ed",
-    "player_1": "4e3259f0b6d7fa9f",
-    "player_2": "db068b69092d9db2",
-    "player_3": "da0551d336c6f546",
-    "player_4": "d09bcf58118c3e4b",
-    "player_5": "e3223f85efa8c7dc",
-    "player_6": "ad2d5fbe3d783b10",
-    "player_7": "11744721632083c9"
+    "player_0": "77335e2670efae74",
+    "player_1": "8112f8841a87cdfb",
+    "player_2": "295d26a6c504c63b",
+    "player_3": "74eb10995d6d82ac",
+    "player_4": "1d2d994f2c58bd8a",
+    "player_5": "2a4eb1a438d306d5",
+    "player_6": "145c31dfc8359769",
+    "player_7": "4ffc8eb720df4e83"
    }
   },
   {
@@ -70,36 +69,35 @@
    },
    "placements": {
     "player_0": 7,
-    "player_1": 4,
-    "player_2": 1,
-    "player_3": 8,
-    "player_4": 2,
-    "player_5": 5,
-    "player_6": 3,
+    "player_1": 1,
+    "player_2": 2,
+    "player_3": 5,
+    "player_4": 4,
+    "player_5": 3,
+    "player_6": 8,
     "player_7": 6
    },
    "actions": {
-    "player_0": 270,
-    "player_1": 315,
-    "player_2": 375,
-    "player_3": 270,
-    "player_4": 375,
-    "player_5": 270,
-    "player_6": 330,
-    "player_7": 270
+    "player_0": 285,
+    "player_1": 435,
+    "player_2": 435,
+    "player_3": 375,
+    "player_4": 405,
+    "player_5": 420,
+    "player_6": 270,
+    "player_7": 360
    },
-   "sim_fixes": [
-    "carousel_order"
-   ],
+   "sim_fixes": [],
+   "sim_commit": "a2840a1dabbec0847075e1f159286657f71012b2",
    "digest": {
-    "player_0": "2022e45e8ec1feaf",
-    "player_1": "18db5a5e4f47b2dc",
-    "player_2": "f223d28e05d6775b",
-    "player_3": "b775f5ce8ed8c385",
-    "player_4": "b294d755ce6750e6",
-    "player_5": "fb55b3a3bfd1d920",
-    "player_6": "860f20a66dc8b992",
-    "player_7": "a1f0166184e6efb6"
+    "player_0": "44d65c2cd78fd0ff",
+    "player_1": "cbdf9a2293772100",
+    "player_2": "d18924c48e5de055",
+    "player_3": "0d5ee6b9faf783bb",
+    "player_4": "196a9dc1edf7bea3",
+    "player_5": "5ca9d389a80c4a0d",
+    "player_6": "4206cf9dd2b1cca3",
+    "player_7": "f206d617a5090bca"
    }
   },
   {
@@ -115,37 +113,36 @@
     "player_7": "rule"
    },
    "placements": {
-    "player_0": 1,
-    "player_1": 6,
-    "player_2": 8,
-    "player_3": 7,
-    "player_4": 3,
+    "player_0": 7,
+    "player_1": 3,
+    "player_2": 4,
+    "player_3": 1,
+    "player_4": 6,
     "player_5": 2,
-    "player_6": 4,
-    "player_7": 5
+    "player_6": 5,
+    "player_7": 8
    },
    "actions": {
-    "player_0": 435,
-    "player_1": 315,
-    "player_2": 240,
-    "player_3": 255,
-    "player_4": 420,
-    "player_5": 435,
-    "player_6": 360,
-    "player_7": 330
+    "player_0": 285,
+    "player_1": 405,
+    "player_2": 405,
+    "player_3": 450,
+    "player_4": 285,
+    "player_5": 450,
+    "player_6": 330,
+    "player_7": 255
    },
-   "sim_fixes": [
-    "carousel_order"
-   ],
+   "sim_fixes": [],
+   "sim_commit": "a2840a1dabbec0847075e1f159286657f71012b2",
    "digest": {
-    "player_0": "93e0a77efbc8d50b",
-    "player_1": "bd8d949894febf57",
-    "player_2": "c537411cace8338b",
-    "player_3": "f1bf87537a755bec",
-    "player_4": "27b3295977aa55c1",
-    "player_5": "acd373d0dfd5a3e0",
-    "player_6": "325fe52162a87a35",
-    "player_7": "3f5cc25ae8983f31"
+    "player_0": "1e81d587c4dce45d",
+    "player_1": "41634321c79a7d25",
+    "player_2": "43147197deefb833",
+    "player_3": "db4b5135ce6210fc",
+    "player_4": "24c69649e6e1f04a",
+    "player_5": "d30783083a8bc20c",
+    "player_6": "6e75a3dca81a44e0",
+    "player_7": "7e2196ce8b99c918"
    }
   }
  ]

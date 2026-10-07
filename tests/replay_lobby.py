@@ -39,7 +39,7 @@ def play(seed: int) -> dict:
     seats = {f"player_{i}": Recording(make_policy(name)) for i, name in enumerate(LOBBY)}
     result = play_game(seats, seed)
     return {"seed": seed, "lobby": result.lobby, "placements": dict(sorted(result.placements.items())),
-            "actions": result.actions, "sim_fixes": result.sim_fixes,
+            "actions": result.actions, "sim_fixes": result.sim_fixes, "sim_commit": result.sim_commit,
             "digest": {seat: p.trace.hexdigest()[:16] for seat, p in seats.items()}}
 
 
