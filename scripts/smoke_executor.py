@@ -15,7 +15,7 @@ control policy there; the other seven seats are rule bots. Reported per policy (
   idx >= 5 adds a bonus for the streak standing after the previous fight; PvE leaves streaks alone);
 * HP, gold, level, share of games at level >= 8 and share of fielded units that belong to the
   executor's target comp, at the start of each --at round;
-* the executor's counters (fodder moves and buys, pivots, xp taken from the rule bot, ...);
+* the executor's counters (fodder moves, pivots, xp taken from the rule bot, ...);
 * final placement (noisy at these sample sizes).
 """
 

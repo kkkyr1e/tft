@@ -20,8 +20,10 @@ Optional plan fields (absent = the executor behaves exactly as before them):
   deadline round, where the executor takes action slots from the rule bot if it has to).
 * `spend` {"to": G, "by": "4-2"} (or "rounds": K, counted from the round the plan is issued):
   reroll down to G gold, spread evenly over the rounds up to the deadline.
-* `fodder` true: field the weakest units up to max_units, keep the strongest on the bench, place no
-  items; the round after it goes back to false the strongest units are fielded again.
+* `fodder` true: field the weakest units it owns (board and bench) up to max_units, keep the strongest
+  on the bench, place no items; the round after it goes back to false the strongest units are fielded
+  again. It buys nothing for the fodder board: the rule bot keeps deciding its buys, sales and
+  levels as if its strongest units were fielded (PlanExecutor.strong_view).
 * `survival` N: when the expected losses to death (tfteval.stages.losses_to_death) are <= N, ignore
   the economy fields and fodder and roll for board strength.
 
@@ -60,7 +62,6 @@ LEVEL_COSTS = (0, 2, 2, 6, 10, 20, 36, 56, 80, 100)  # xp for the next level, Pl
 ACTIONS_PER_ROUND = 15
 XP_BUY_CAP = 10  # buy-xp actions scheduled in a round before the deadline round
 SPEND_CAP = 30  # gold one round can spend on rerolls and the units they find
-FODDER_STRENGTH = 1  # a fodder board is made of units this weak: 1-star 1-costs without items
 
 
 # --------------------------------------------------------------------------- state
