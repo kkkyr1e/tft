@@ -559,3 +559,10 @@ def test_component_on_a_fielded_unit_wants_its_partner():
     assert "needlessly_large_rod" in wanted and "tear_of_the_goddess" in wanted  # Deathcap, Shojin
     assert "spatula" not in wanted
 
+
+def test_xp_table_follows_the_rules_profile():
+    assert xp_to_level(8, 0, 9, "set4") == 80 and xp_to_level(8, 0, 9, "set18") == 68
+    assert xp_to_level(9, 0, 10, "set18") == 68  # set18 goes to level 10
+    from Simulator.game.rules import get_rules
+
+    assert xp_to_level(7, 6, 9, get_rules("set18")) == 56 + 68 - 6

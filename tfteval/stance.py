@@ -92,7 +92,7 @@ from statistics import mean, median
 from types import SimpleNamespace
 
 from tfteval import stages, winprob
-from tfteval.planner import LEVEL_COSTS, ParamPlanner, PlanPolicy, xp_to_level
+from tfteval.planner import ParamPlanner, PlanPolicy, level_costs, xp_to_level
 
 # --------------------------------------------------------------------------- thresholds
 # [doc] the trigger suggested in the stance table of docs/STRATEGY.md section 3; [sim] chosen from a
@@ -294,27 +294,32 @@ def copies(unit: dict) -> int:
 
 # --------------------------------------------------------------------------- features
 
-def streak_bonus(n: int) -> int:
+# Economy numbers (streak gold, income, interest, xp table) come from the simulator's rules profile
+# (Simulator/game/rules.py via tfteval.stages.rules_profile): `rules` is describe()'s state["rules"]
+# (the game's profile), a profile object, or None for TFT_RULES (default set4).
+
+def streak_bonus(n: int, rules=None) -> int:
     """Streak gold in the next income for an n-game streak (Player.gold_income)."""
-    return 0 if n < 2 else 1 if n <= 3 else 2 if n == 4 else 3
+    return int(stages.rules_profile(rules).streak_bonus(max(0, n)))
 
 
-def projected_gold(gold: int, rounds: int) -> int:
-    """Gold after `rounds` incomes of 5 + interest, spending nothing (streaks left out)."""
+def projected_gold(gold: int, rounds: int, rules=None) -> int:
+    """Gold after `rounds` incomes of base income + interest, spending nothing (streaks left out)."""
+    profile = stages.rules_profile(rules)
     for _ in range(max(0, rounds)):
-        gold += 5 + min(gold // 10, 5)
+        gold += profile.base_income + profile.interest(gold)
     return gold
 
 
-def xp_gold(level: int, xp: int, target: int, rounds: int = 0) -> int:
+def xp_gold(level: int, xp: int, target: int, rounds: int = 0, rules=None) -> int:
     """Gold for the xp buys still missing to reach `target` after `rounds` passive +2 xp."""
-    need = xp_to_level(level, xp, target) - 2 * max(0, rounds)
+    need = xp_to_level(level, xp, target, rules) - 2 * max(0, rounds)
     return 4 * math.ceil(max(0, need) / 4)
 
 
-def xp_total(level: int, xp: int) -> int:
+def xp_total(level: int, xp: int, rules=None) -> int:
     """Xp gathered since level 1 (to tell bought xp from the passive +2 a round)."""
-    return sum(LEVEL_COSTS[:level]) + xp
+    return sum(level_costs(rules)[:level]) + xp
 
 
 def level_curve(idx: int) -> int:
@@ -352,6 +357,7 @@ def features(state: dict, comps: dict, comp_now: str | None, hp_seen: dict | Non
     """Everything a stance decision reads, from the describe() state only. With a win-probability
     `model`, also p_win against each candidate opponent (p_mean, p_min against the strongest)."""
     idx, hp, gold, level, streak = state["round"], state["hp"], state["gold"], state["level"], state["streak"]
+    rules = state.get("rules")
     opponents = state.get("opponents", [])
     views = {o["seat"]: winprob.view_features(o) for o in opponents}
     scores = {s: v["score"] for s, v in views.items()}
@@ -369,8 +375,8 @@ def features(state: dict, comps: dict, comp_now: str | None, hp_seen: dict | Non
         "hp": hp, "hp_rank": state.get("hp_rank"), "alive": state.get("alive"),
         "ltd": state["losses_to_death"], "dmg": state["dmg_per_loss"],
         "gold": gold, "level": level, "xp": state["xp"], "streak": streak,
-        "streak_gold_win": 1 + streak_bonus(max(streak, 0) + 1),  # +1 for the win itself
-        "streak_gold_loss": streak_bonus(max(-streak, 0) + 1),
+        "streak_gold_win": stages.rules_profile(rules).pvp_win_gold + streak_bonus(max(streak, 0) + 1, rules),
+        "streak_gold_loss": streak_bonus(max(-streak, 0) + 1, rules),
         "score": mine, "cand_score": round(cand_mean, 1), "cand_max": max(cand, default=0),
         "ratio": round(mine / max(cand_mean, 1.0), 2),
         "score_rank": 1 + sum(s > mine for s in scores.values()),
@@ -388,7 +394,7 @@ def features(state: dict, comps: dict, comp_now: str | None, hp_seen: dict | Non
     if level < 8:
         by = stages.parse_label(FAST8_BY)
         rounds = max(0, by - idx)
-        out["fast8_left"] = projected_gold(gold, rounds) - xp_gold(level, state["xp"], 8, rounds)
+        out["fast8_left"] = projected_gold(gold, rounds, rules) - xp_gold(level, state["xp"], 8, rounds, rules)
     return out
 
 
@@ -457,6 +463,7 @@ class StancePlanner:
         self.comp: str | None = None  # comp a slow roll picked before the executor had one
         self.fast8: dict | None = None  # {"by": idx, "landed": idx or None, "xp0": xp_total at the start, "idx0"}
         self.loss = None  # None: not started this game; True: on; False: over for this game
+        self.fodder_rounds: set[int] = set()  # rounds whose fight the loss_streak stance lost on purpose
 
     def on(self, stance: str) -> bool:
         if stance in OFF_BY_DEFAULT and stance not in self.enabled:
@@ -470,9 +477,21 @@ class StancePlanner:
     def _late(self, f: dict) -> bool:
         return self.opts["hp_rank"] and f["alive"] is not None and 1 < f["alive"] <= LATE_ALIVE
 
+    def own_losses(self, idx: int, streak: int) -> int:
+        """Losses in the current loss streak that were not lost on purpose: the streak counts the
+        last -streak PvP fights (PvE rounds leave streaks alone), and the fights after a
+        loss_streak (fodder) round are left out."""
+        left, count, r = max(0, -streak), 0, idx - 1
+        while left > 0 and r >= 0:
+            if stages.is_pvp(r):
+                left -= 1
+                count += r not in self.fodder_rounds
+            r -= 1
+        return count
+
     # ---- choice
     def choose(self, state: dict, f: dict, comps: dict) -> tuple[str, str]:
-        idx, level = state["round"], state["level"]
+        idx, level, rules = state["round"], state["level"], state.get("rules")
         if idx < STANCE_FROM:
             return "standard", "stage 1: PvE only"
 
@@ -527,7 +546,7 @@ class StancePlanner:
                     return "fast8", f"roll: at 8 since {stages.label(landed)}"
                 f["fast8_end"] = "stronger at 8"
             elif landed is None and idx <= self.fast8["by"] + FAST8_GRACE:
-                bought = v2 and xp_total(level, f["xp"]) - self.fast8["xp0"] > 2 * (idx - self.fast8["idx0"])
+                bought = v2 and xp_total(level, f["xp"], rules) - self.fast8["xp0"] > 2 * (idx - self.fast8["idx0"])
                 if f["hp"] >= FAST8_KEEP_HP or bought:
                     return "fast8", f"keep: level 8 by {stages.label(self.fast8['by'])}"
                 f["fast8_end"] = f"hp {f['hp']}"
@@ -540,10 +559,10 @@ class StancePlanner:
             else:
                 early = stages.parse_label(FAST8_EARLY_BY)
                 by = early if f["opp_near8"] >= FAST8_RACE and idx <= early else stages.parse_label(FAST8_BY)
-            left = projected_gold(f["gold"], by - idx) - xp_gold(level, f["xp"], 8, by - idx)
+            left = projected_gold(f["gold"], by - idx, rules) - xp_gold(level, f["xp"], 8, by - idx, rules)
             board_ok = f["strength"] != "weaker" if self.opts["winprob"] else f["ratio"] >= FAST8_MIN_RATIO
             if idx <= by and f["hp"] >= FAST8_MIN_HP and board_ok and left >= FAST8_GOLD_LEFT:
-                self.fast8 = {"by": by, "landed": None, "xp0": xp_total(level, f["xp"]), "idx0": idx}
+                self.fast8 = {"by": by, "landed": None, "xp0": xp_total(level, f["xp"], rules), "idx0": idx}
                 return "fast8", f"start: 8 by {stages.label(by)}, {left} gold left, {f['opp_near8']} near 8"
 
         if self.on("keep_streak") and f["streak"] >= STREAK_MIN:
@@ -565,9 +584,10 @@ class StancePlanner:
                 return f"in reach: {f['ltd']} losses to death <= {reach} at {f['gold']} gold, {f['strength']}"
         elif f["ltd"] <= STABILIZE_LTD:
             return f"dying: {f['ltd']} losses to death"
-        if (idx >= stages.parse_label(STABILIZE_HEAVY_FROM) and f["streak"] <= -STABILIZE_LOSS_STREAK
+        losses = f["own_losses"] = self.own_losses(idx, f["streak"])  # a fodder board's losses were the plan
+        if (idx >= stages.parse_label(STABILIZE_HEAVY_FROM) and losses >= STABILIZE_LOSS_STREAK
                 and self._weak(f, STABILIZE_WEAK_RATIO)):
-            return f"heavy: loss streak {-f['streak']}, board {f['ratio']} of candidates' mean"
+            return f"heavy: loss streak {losses}, board {f['ratio']} of candidates' mean"
         if self._late(f) and f["hp_rank"] == f["alive"]:
             return f"last: lowest HP of {f['alive']} alive"
         return None
@@ -625,7 +645,7 @@ class StancePlanner:
     # ---- compile
     def compile(self, stance: str, state: dict, f: dict, comps: dict, comp_now: str | None) -> dict:
         plan = self.standard.plan(state, comps, comp_now)  # comp/level_to/roll_floor/carry + field_comp
-        idx, level, xp, gold = state["round"], state["level"], state["xp"], state["gold"]
+        idx, level, xp, gold, rules = state["round"], state["level"], state["xp"], state["gold"], state.get("rules")
         if comp_now is None and self.comp:
             plan["comp"] = self.comp
         if stance == "stabilize":
@@ -634,7 +654,7 @@ class StancePlanner:
             else:
                 floor = STABILIZE_HARD_FLOOR if f["ltd"] <= STABILIZE_LTD else STABILIZE_SOFT_FLOOR
                 plan["roll_floor"] = min(plan["roll_floor"], floor)
-                if level < 8 and xp_to_level(level, xp, level + 1) <= CHEAP_XP:
+                if level < 8 and xp_to_level(level, xp, level + 1, rules) <= CHEAP_XP:
                     plan["level_to"] = max(plan["level_to"], level + 1)
                 plan["survival"] = SURVIVAL_LTD
         elif stance == "loss_streak":
@@ -645,14 +665,14 @@ class StancePlanner:
             plan["carry"] = self.slow["unit"]
         elif stance == "cap_out":
             plan.update(level_to=level, roll_floor=999)
-            buys = min(math.ceil(xp_to_level(level, xp, 9) / 4), max(0, (gold - CAPOUT_KEEP) // 4))
+            buys = min(math.ceil(xp_to_level(level, xp, 9, rules) / 4), max(0, (gold - CAPOUT_KEEP) // 4))
             if buys:
                 plan["xp_buys"] = buys
         elif stance == "fast8":
             if level < 8:
                 plan.update(level_to=level, roll_floor=999, level_by={"level": 8, "by": stages.label(self.fast8["by"])})
                 if self.opts["fast8_v2"]:
-                    buys = min(math.ceil(xp_to_level(level, xp, 8) / 4), max(0, (gold - FAST8_BANK) // 4))
+                    buys = min(math.ceil(xp_to_level(level, xp, 8, rules) / 4), max(0, (gold - FAST8_BANK) // 4))
                     if buys:
                         plan["xp_buys"] = buys
             else:
@@ -660,13 +680,13 @@ class StancePlanner:
                 plan["spend"] = {"to": roll_to, "by": stages.label(self.fast8["landed"] + FAST8_ROLL_ROUNDS - 1)}
         elif stance == "keep_streak":
             cap = STREAK_LEVEL_CAP.get(int(state["stage"].split("-")[0]), 8)
-            if level < cap and gold - xp_gold(level, xp, level + 1) >= STREAK_KEEP_GOLD:
+            if level < cap and gold - xp_gold(level, xp, level + 1, rules=rules) >= STREAK_KEEP_GOLD:
                 plan["level_to"] = max(plan["level_to"], level + 1)
             plan["roll_floor"] = min(plan["roll_floor"], STREAK_ROLL_FLOOR)
         elif stance == "standard" and self.opts["lobby_level"] and idx >= STANCE_FROM:
             target = min(LEVEL_CURVE_MAX, max(math.ceil(f["opp_level_median"] or 0), level_curve(idx)))
             for to in range(target, level, -1):
-                if gold - xp_gold(level, xp, to) >= LEVEL_RESERVE:
+                if gold - xp_gold(level, xp, to, rules=rules) >= LEVEL_RESERVE:
                     plan["level_to"] = max(plan["level_to"], to)
                     break
         if (self.opts["hold"] and stance not in ("stabilize", "loss_streak")
@@ -675,17 +695,17 @@ class StancePlanner:
         return plan
 
     def _stabilize_v2(self, plan: dict, state: dict, f: dict) -> None:
-        idx, level, xp, gold = state["round"], state["level"], state["xp"], state["gold"]
+        idx, level, xp, gold, rules = state["round"], state["level"], state["xp"], state["gold"], state.get("rules")
         floor = {"weaker": STABILIZE_WEAK_FLOOR, "close": STABILIZE_CLOSE_FLOOR}.get(f["strength"])
         if floor is not None:  # clearly stronger: no roll
             plan["roll_floor"] = min(plan["roll_floor"], floor)
             plan["survival"] = SURVIVAL_LTD
-            if f["strength"] == "close" and level < 9 and gold - xp_gold(level, xp, level + 1) >= floor:
+            if f["strength"] == "close" and level < 9 and gold - xp_gold(level, xp, level + 1, rules=rules) >= floor:
                 plan["level_to"] = max(plan["level_to"], level + 1)  # the executor buys xp before it rolls
-        if level < 8 and xp_to_level(level, xp, level + 1) <= CHEAP_XP:
+        if level < 8 and xp_to_level(level, xp, level + 1, rules) <= CHEAP_XP:
             plan["level_to"] = max(plan["level_to"], level + 1)
         if (idx >= stages.parse_label(STABILIZE_XP8_FROM) and level < 8
-                and math.ceil(xp_to_level(level, xp, 8) / 4) <= STABILIZE_XP8_BUYS):
+                and math.ceil(xp_to_level(level, xp, 8, rules) / 4) <= STABILIZE_XP8_BUYS):
             plan["level_to"] = max(plan["level_to"], 8)
 
     # ---- entry point
@@ -700,6 +720,8 @@ class StancePlanner:
         f["strength"] = classify(f, self.opts["winprob"])
         self.hp_seen[idx] = state["hp"]
         stance, why = self.choose(state, f, comps)
+        if stance == "loss_streak":
+            self.fodder_rounds.add(idx)
         plan = self.compile(stance, state, f, comps, comp_now)
         plan.update(stance=stance, why=why, features=f)
         if self.log_path:

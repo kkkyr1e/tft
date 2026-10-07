@@ -71,7 +71,6 @@ from tfteval.policies import MASK_SHAPE
 PLAN_KEYS = ("comp", "level_to", "roll_floor", "carry")
 EXTRA_KEYS = ("level_by", "spend", "fodder", "field_comp", "survival", "xp_buys", "hold")
 
-LEVEL_COSTS = (0, 2, 2, 6, 10, 20, 36, 56, 80, 100)  # xp for the next level, Player.level_costs
 ACTIONS_PER_ROUND = 15
 XP_BUY_CAP = 10  # buy-xp actions scheduled in a round before the deadline round
 SPEND_CAP = 30  # gold one round can spend on rerolls and the units they find
@@ -100,6 +99,7 @@ def describe(player, shop, game_round: int, env=None, seat: str | None = None,
     traits = {k: int(v) for k, v in getattr(player, "team_tiers", {}).items() if v}
     state = {
         "round": idx,
+        "rules": stages.rules_profile(rules).name,
         "stage": sched["stage"],
         "pve": sched["pve"],
         "next": {"carousel": sched["to_carousel"], "pve": sched["to_pve"], "stage": sched["to_stage"]},
@@ -132,9 +132,16 @@ def _deadline(spec: dict, idx: int) -> int:
     return idx + max(1, int(spec.get("rounds", 1))) - 1
 
 
-def xp_to_level(level: int, xp: int, target: int) -> int:
-    """Xp still missing to go from (level, xp) to `target`."""
-    return max(0, sum(LEVEL_COSTS[lv] for lv in range(level, min(target, len(LEVEL_COSTS)))) - xp)
+def level_costs(rules=None) -> tuple:
+    """Xp for the next level by current level (Player.level_costs) under the rules profile: a profile
+    object, a name such as describe()'s state["rules"], or None for TFT_RULES (tfteval.stages)."""
+    return tuple(stages.rules_profile(rules).level_costs)
+
+
+def xp_to_level(level: int, xp: int, target: int, rules=None) -> int:
+    """Xp still missing to go from (level, xp) to `target` under the rules profile (see level_costs)."""
+    costs = level_costs(rules)
+    return max(0, sum(costs[lv] for lv in range(level, min(target, len(costs)))) - xp)
 
 
 def compile_knobs(plan: dict, state: dict) -> dict:
@@ -146,6 +153,7 @@ def compile_knobs(plan: dict, state: dict) -> dict:
              "carry": plan.get("carry"), "xp_buys": 0, "xp_priority": False, "fodder": bool(plan.get("fodder")),
              "field_comp": bool(plan.get("field_comp")), "survival": False, "hold": bool(plan.get("hold"))}
     idx, gold, level, xp, hp = state["round"], state["gold"], state["level"], state["xp"], state["hp"]
+    rules = state.get("rules")  # describe() names the game's profile; None: TFT_RULES
 
     spec = plan.get("level_by")
     if spec and level < int(spec["level"]):
@@ -155,7 +163,7 @@ def compile_knobs(plan: dict, state: dict) -> dict:
             knobs["level_to"] = max(knobs["level_to"], target)
         else:
             later = deadline - idx  # planning phases after this one, up to the deadline
-            buys = math.ceil(max(0, xp_to_level(level, xp, target) - 2 * later) / 4)  # +2 xp each round start
+            buys = math.ceil(max(0, xp_to_level(level, xp, target, rules) - 2 * later) / 4)  # +2 xp each round start
             knobs["xp_buys"] = max(0, buys - XP_BUY_CAP * later)
 
     if plan.get("xp_buys"):
@@ -173,10 +181,10 @@ def compile_knobs(plan: dict, state: dict) -> dict:
     threshold = plan.get("survival")
     ltd = state.get("losses_to_death")  # describe() computed it under the game's rules profile
     if ltd is None:
-        ltd = stages.losses_to_death(hp, idx)
+        ltd = stages.losses_to_death(hp, idx, rules)
     if threshold is not None and ltd <= int(threshold):
         knobs.update(survival=True, fodder=False, hold=False, xp_buys=0, xp_priority=False, roll_floor=0)
-        cheap_level = level < 8 and xp_to_level(level, xp, level + 1) <= 8  # at most two buys
+        cheap_level = level < 8 and xp_to_level(level, xp, level + 1, rules) <= 8  # at most two buys
         knobs["level_to"] = level + 1 if cheap_level else level
     return knobs
 

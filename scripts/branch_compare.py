@@ -229,9 +229,9 @@ def run_job(job):
 
 # --------------------------------------------------------------------------- summary
 
-def streak_bonus(win: int, loss: int) -> int:
-    s = max(win, loss)
-    return 0 if s < 2 else 1 if s <= 3 else 2 if s == 4 else 3
+def streak_bonus(win: int, loss: int, rules=None) -> int:
+    """Streak gold for the streak standing (Player.gold_income) under the rules profile."""
+    return int(stages.rules_profile(rules).streak_bonus(max(win, loss)))
 
 
 def window_stats(row: dict, first: int, last: int) -> dict | None:
@@ -245,7 +245,8 @@ def window_stats(row: dict, first: int, last: int) -> dict | None:
     won = sum(by[i + 1]["win_streak"] > by[i]["win_streak"] for i in fights)
     stop = next((i for i in range(last + 1, last + 8) if stages.is_pvp(i)), last + 1)
     incomes = [i for i in range(first + 1, stop + 1) if i >= 5 and i in by]
-    streak_gold = sum(streak_bonus(by[i]["win_streak"], by[i]["loss_streak"]) for i in incomes)
+    rules = row["config"].get("rules", "set4")
+    streak_gold = sum(streak_bonus(by[i]["win_streak"], by[i]["loss_streak"], rules) for i in incomes)
     return {"fights": len(fights), "lost": lost, "won": won, "hp_lost": by[first]["hp"] - by[last + 1]["hp"],
             "streak_gold": streak_gold, "fight_gold": streak_gold + won}
 

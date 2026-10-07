@@ -23,7 +23,7 @@ from Simulator.generators.default_agent_stats import TEAM_COMP_TRAITS, TEAM_COMP
 
 from tfteval import make_policy, public, stages, winprob  # noqa: E402
 from tfteval import stance as st  # noqa: E402
-from tfteval.planner import LEVEL_COSTS, ParamPlanner, PlanPolicy, compile_knobs, describe  # noqa: E402
+from tfteval.planner import ParamPlanner, PlanPolicy, compile_knobs, describe, level_costs  # noqa: E402
 
 COMPS = dict(zip(TEAM_COMP_TRAITS, TEAM_COMPS))
 EVEN = ["ahri*1", "annie*1", "lulu*1", "veigar*1", "thresh*1", "jax*1"]  # a middling 6-unit board
@@ -42,15 +42,15 @@ def opp(seat: str, board=EVEN, hp=80, level=6, streak=0, interest=3) -> dict:
 
 
 def make_state(idx=12, hp=80, gold=50, level=6, xp=0, streak=0, board=EVEN, bench=(), opponents=None,
-               next_from=None, comp=None) -> dict:
+               next_from=None, comp=None, rules="set4") -> dict:
     """A synthetic describe() state (test_synthetic_state_has_the_describe_keys checks the keys)."""
     sched = stages.schedule(idx)
     opponents = [opp(f"player_{i}") for i in range(1, 8)] if opponents is None else opponents
     state = {
-        "round": idx, "stage": sched["stage"], "pve": sched["pve"],
+        "round": idx, "rules": rules, "stage": sched["stage"], "pve": sched["pve"],
         "next": {"carousel": sched["to_carousel"], "pve": sched["to_pve"], "stage": sched["to_stage"]},
-        "hp": hp, "gold": gold, "level": level, "xp": xp, "xp_needed": LEVEL_COSTS[level], "streak": streak,
-        "dmg_per_loss": stages.damage_per_loss(idx), "losses_to_death": stages.losses_to_death(hp, idx),
+        "hp": hp, "gold": gold, "level": level, "xp": xp, "xp_needed": level_costs(rules)[level], "streak": streak,
+        "dmg_per_loss": stages.damage_per_loss(idx, rules), "losses_to_death": stages.losses_to_death(hp, idx, rules),
         "board": [own(t) for t in board], "bench": [own(t) for t in bench], "item_bench": [], "shop": [],
         "active_traits": {},
         "hp_rank": 1 + sum(o["hp"] > hp for o in opponents), "alive": len(opponents) + 1,
@@ -348,6 +348,38 @@ def test_loss_streak_starts_on_a_weak_board_and_ends_when_the_streak_breaks():
 @pytest.mark.parametrize("change", [{"hp": 78}, {"streak": 0}, {"streak": 2}, {"idx": 8}, {"idx": 9}])
 def test_loss_streak_does_not_start(change):
     assert run(loss_planner(), make_state(**{**LOSS, **change}))["stance"] != "loss_streak"
+
+
+def test_losses_on_purpose_do_not_count_for_the_heavy_loss_stabilize():
+    """stance+lossstreak loses stage 2 on purpose; the streak it carries into stage 3 must not trigger
+    stabilize's "heavy: loss streak" (which would roll away the gold the streak was for). Losses after
+    the fodder board count again."""
+    planner = v2("stance+lossstreak")
+    strong = [opp(f"player_{i}", STRONG) for i in range(1, 8)]
+    for idx, hp, streak in ((3, 100, 0), (4, 96, -1), (5, 92, -2), (6, 88, -3), (7, 84, -4)):  # 2-1 .. 2-6
+        plan = run(planner, make_state(idx=idx, hp=hp, gold=20, level=4, streak=streak, opponents=strong))
+        assert plan["stance"] == "loss_streak" and plan["fodder"] is True, (idx, plan["why"])
+    run(planner, make_state(idx=8, hp=84, gold=30, level=5, streak=-5, opponents=strong))  # 2-7 PvE: over
+    assert planner.fodder_rounds == {3, 4, 5, 6, 7}
+    for idx, streak in ((9, -5), (10, -6), (11, -7)):  # 3-1: all five on purpose; then 1 and 2 real losses
+        plan = run(planner, make_state(idx=idx, hp=84, gold=30, level=5, streak=streak, opponents=strong))
+        assert plan["stance"] != "stabilize", (idx, plan["why"])
+    plan = run(planner, make_state(idx=12, hp=84, gold=30, level=5, streak=-8, opponents=strong))
+    assert plan["stance"] == "stabilize" and plan["why"].startswith("heavy: loss streak 3")
+    # the same streak without a fodder board behind it is heavy at once
+    assert run(v2(), make_state(idx=9, hp=84, gold=30, level=5, streak=-5, opponents=strong))["why"].startswith(
+        "heavy: loss streak 5")
+
+
+def test_economy_numbers_follow_the_rules_profile():
+    assert [st.streak_bonus(n, "set4") for n in range(2, 7)] == [1, 1, 2, 3, 3]
+    assert [st.streak_bonus(n, "set18") for n in range(2, 7)] == [1, 1, 1, 2, 3]
+    assert st.projected_gold(20, 2, "set4") == st.projected_gold(20, 2, "set18") == 20 + 7 + 7
+    assert st.xp_gold(8, 0, 9, rules="set18") == 68 and st.xp_gold(8, 0, 9, rules="set4") == 80
+    assert st.xp_total(9, 0, "set18") == 200 and st.xp_total(9, 0, "set4") == 212
+    f = st.features(make_state(streak=4, rules="set18"), COMPS, None)
+    assert f["streak_gold_win"] == 1 + 2  # a fifth win: 2 under set18, 3 under set4
+    assert st.features(make_state(streak=4), COMPS, None)["streak_gold_win"] == 1 + 3
 
 
 def test_loss_streak_ends_with_stage_two():

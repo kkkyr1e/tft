@@ -28,6 +28,8 @@ policy (means over games):
   picks by reason, ...); every carousel pick of the hero (round, options, choice) is in the output
   file's games[].carousel;
 * final placement (noisy at these sample sizes), unfinished games and policy errors.
+
+Streak gold follows the game's economy rules profile (Simulator/game/rules.py).
 """
 
 from __future__ import annotations
@@ -50,9 +52,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from tfteval import stages  # noqa: E402
 
 
-def streak_bonus(win: int, loss: int) -> int:
-    s = max(win, loss)
-    return 0 if s < 2 else 1 if s <= 3 else 2 if s == 4 else 3
+def streak_bonus(win: int, loss: int, rules=None) -> int:
+    """Streak gold for the streak standing (Player.gold_income) under the rules profile (None: TFT_RULES)."""
+    return int(stages.rules_profile(rules).streak_bonus(max(win, loss)))
 
 
 ACTION_KINDS = ("pass", "xp", "roll", "buy", "sell", "move", "item")  # action type 0..6
@@ -97,7 +99,7 @@ class Tracer:
         return action
 
 
-def window_stats(rows: list, first: int, last: int) -> dict:
+def window_stats(rows: list, first: int, last: int, rules=None) -> dict:
     """Fights first..last (PvP only). Each row is the state at the start of planning phase row['idx']."""
     by_idx = {r["idx"]: r for r in rows}
     fights = [i for i in range(first, last + 1) if stages.is_pvp(i) and i in by_idx and i + 1 in by_idx]
@@ -111,7 +113,7 @@ def window_stats(rows: list, first: int, last: int) -> dict:
     hp_lost = by_idx[first]["hp"] - by_idx[last + 1]["hp"] if first in by_idx and last + 1 in by_idx else None
     stop = next((i for i in range(last + 1, last + 8) if stages.is_pvp(i)), last + 1)
     incomes = [i for i in range(first + 1, stop + 1) if i >= 5 and i in by_idx]
-    streak_gold = sum(streak_bonus(by_idx[i]["win"], by_idx[i]["loss"]) for i in incomes)
+    streak_gold = sum(streak_bonus(by_idx[i]["win"], by_idx[i]["loss"], rules) for i in incomes)
     return {"fights": len(fights), "lost": lost, "won": won, "hp_lost": hp_lost, "streak_gold": streak_gold,
             "win_gold": won, "gold_from_fights": streak_gold + won}
 
@@ -152,7 +154,7 @@ def _mean(vals):
 
 
 def summarise(games, first, last, checkpoints):
-    windows = [window_stats(g["rows"], first, last) for g in games]
+    windows = [window_stats(g["rows"], first, last, g.get("rules")) for g in games]
     out = {"n": len(games), "place": _mean([g["place"] for g in games]),
            "unfinished": sum(not g.get("finished", True) for g in games),
            "policy_errors": sum(g.get("fallbacks", 0) for g in games),

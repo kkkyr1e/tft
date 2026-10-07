@@ -454,7 +454,8 @@ class PlanExecutor(Default_Agent):
     def _xp_owed(self, player) -> int:
         need = 0
         if player.level < min(self.knobs["level_to"], player.max_level):
-            need = math.ceil(xp_to_level(player.level, player.exp, self.knobs["level_to"]) / 4)
+            need = math.ceil(xp_to_level(player.level, player.exp, self.knobs["level_to"],
+                                         getattr(player, "rules", None)) / 4)
         return max(need, self.knobs["xp_buys"] - self.xp_bought)
 
     def wants_xp(self, player, mask) -> bool:
