@@ -98,13 +98,17 @@ _REGISTRY = {"random": RandomPolicy, "rule": RuleBotPolicy}
 
 def make_policy(spec: str) -> Policy:
     """Build a policy from a spec: `random`, `rule`, `noisy20` (rule bot with 20% random
-    actions), `mimic` (plan executor with the rule bot's economy) or `llm` (plan executor with a
-    model planner, see tfteval/planner.py). Prefix `alias=` to report a seat under its own name, e.g. `hero=rule`."""
+    actions), `mimic` (plan executor with the rule bot's economy), `llm` (plan executor with a
+    model planner, see tfteval/planner.py) or `stance` and its ablations (rule stance planner, see
+    tfteval/stance.py). Prefix `alias=` to report a seat under its own name, e.g. `hero=rule`."""
     alias, _, kind = spec.rpartition("=")
     from tfteval.planner import VARIANTS, make_plan_policy
+    from tfteval.stance import STANCE_KINDS, make_stance_policy
 
     if kind in VARIANTS or kind == "llm":
         policy = make_plan_policy(kind)
+    elif kind in STANCE_KINDS:
+        policy = make_stance_policy(kind)
     elif kind.startswith("noisy") and kind[5:].isdigit():
         policy = NoisyRulePolicy(int(kind[5:]) / 100)
     elif kind in _REGISTRY:
