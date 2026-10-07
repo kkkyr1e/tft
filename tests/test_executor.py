@@ -180,16 +180,17 @@ def test_fodder_fields_the_weakest_and_reverts():
     ex = PlanExecutor()
     run_round(ex, p, 5, {**BASE, "level_to": 3, "fodder": True})
     assert board_names(p) == sorted(WEAK) and bench_names(p) == sorted(STRONG)
-    # the rule bot's swap check would field a strong unit again: dropped once, then done for the round
-    assert ex.stats["swaps_dropped"] == 1
+    # the rule bot decides on its own board (strong_view), where its swap check finds nothing to do
+    assert ex.stats["swaps_dropped"] == 0
     p.end_turn_actions()  # autofill only tops up to max_units: nothing moves
     assert board_names(p) == sorted(WEAK)
     run_round(ex, p, 6, {**BASE, "level_to": 3})
-    assert ex.stats["restore_moves"] == 3  # the strongest units go back on ...
+    # the rule bot's own board goes back on: its swap check prefers a third mage (nami, already on
+    # the fodder board) to jinx, so two moves bring back ahri and annie ...
+    assert ex.stats["restore_moves"] == 2
     plain = make_player(board=STRONG, bench=WEAK)
     run_round(PlanExecutor(), plain, 6, {**BASE, "level_to": 3})
-    # ... and the rule bot plays on as a seat that never fielded fodder: its swap check prefers a
-    # third mage (nami) to jinx
+    # ... the board of a seat that never fielded fodder
     assert board_names(p) == board_names(plain) == ["ahri", "annie", "nami"]
 
 
@@ -205,10 +206,12 @@ def weakest_fielded(p):
     return fielded == sorted(strength(u) for u in units)[:len(fielded)]
 
 
-# 1-costs with no trait in common with STRONG. The rule bot decides on the strong view, which fields
-# the strongest units by strength(); on the simulator fork the base economy's own swap check fields by
-# its comp score, so a weak unit that completes a trait (nami: a third mage, vayne: a second
-# sharpshooter) goes onto the base board and the two boards, and the decisions after, part ways.
+# 1-costs with no trait in common with STRONG. The rule bot decides on the strong view, the board its
+# own swap check settles on (bot_board), so a weak unit that completes a trait (nami: a third mage)
+# is on that board as it would be on the base board. One timing difference is left: within a round
+# the base rule bot buys before it swaps (its shop check runs before its swap check), so it can buy
+# for a board it is about to change, while the strong view already shows the board after the swaps
+# (last case below).
 WEAK_NO_TRAIT = ["fiora", "garen", "maokai"]
 
 
@@ -221,8 +224,8 @@ WEAK_NO_TRAIT = ["fiora", "garen", "maokai"]
     # nothing the base economy wants: a rule bot looking at the fodder board would buy the pair of
     # the fodder fiora
     (STRONG, WEAK, ["fiora"] * 5, 20, ()),
-    # no weak units at all: the fodder board is the weakest of what is owned, nothing is bought for it
-    (STRONG, (), ["vayne", "fiora", "nami", "fiora", "nami"], 6, ()),
+    # a weak unit that completes a trait: on the base board and on the strong view alike
+    (STRONG, ["nami", "fiora", "garen"], ["nami", "garen", "maokai", "garen", "fiora"], 10, ()),
 ])
 def test_fodder_plays_the_base_economy(board, bench, shop, gold, items):
     def play(fodder):
@@ -243,6 +246,105 @@ def test_fodder_plays_the_base_economy(board, bench, shop, gold, items):
         assert not [i for i in base.item_bench if i]
 
 
+def test_fodder_strong_view_shows_the_board_after_the_rule_bots_swaps():
+    # no weak units at all: the fodder board is the weakest of what is owned. The base rule bot buys
+    # vayne, nami and nami for its board of ahri, jinx and annie (a third mage would improve it), and
+    # only then its swap check puts vayne in for annie (a second sharpshooter). The strong view
+    # shows that board as soon as vayne is bought, and nami no longer improves it.
+    def play(fodder):
+        p = make_player(board=STRONG, gold=6)
+        set_shop(p, ["vayne", "fiora", "nami", "fiora", "nami"])
+        commands = run_round(PlanExecutor(), p, 4, {**BASE, "level_to": 3, "fodder": fodder})
+        return p, [c for c in commands if c.startswith("3_")]
+
+    (base, base_buys), (p, buys) = play(False), play(True)
+    assert base_buys == ["3_0", "3_2", "3_4"] and board_names(base) == ["ahri", "jinx", "vayne"]
+    assert buys == ["3_0"] and owned(p) == ["ahri", "annie", "jinx", "vayne"] and weakest_fielded(p)
+
+
+def test_bot_board_is_the_rule_bots_own_choice():
+    from tfteval.executor import strength
+
+    p = make_player(board=WEAK, bench=STRONG)
+    ex = PlanExecutor()
+    names = lambda locs: sorted(ex._unit_at(p, loc).name for loc in locs)  # noqa: E731
+    by_strength = sorted(STRONG)  # ahri, annie, jinx: the three strongest by strength()
+    assert sorted(strength(u) for u in p.bench if u)[-3:] == [2, 3, 4]
+    assert names(ex.bot_board(p, 5)) == ["ahri", "annie", "nami"] != by_strength  # a third mage beats jinx
+    # from round 11 the comp counts too (round_11_end): any comp unit goes in for an off-comp one
+    ex.comp_number = TRAITS.index("fortune")  # annie, jinx
+    assert {"annie", "jinx"} <= set(names(ex.bot_board(p, 13)))
+    # a fixed point of the rule bot's swap check: shown this board, it proposes no bench-to-board swap
+    for idx in (5, 13):
+        ex.round_11_clean_up = idx < 11
+        view, _ = ex.strong_view(p, idx)
+        ex.next_round = idx
+        for _ in range(6):
+            command = ex.policy(view, p.shop, idx, mask_of(p))
+            kind, *args = command.split("_")
+            assert not (kind == "5" and int(args[0]) < 28 <= int(args[1])), (idx, command)
+            if command in ("0", "1", "2"):
+                break
+
+
+def test_bot_board_does_not_depend_on_where_units_stand():
+    # many 1- and 2-costs of equal strength: a walk in location order reached another fixed point
+    # after every move, and the restore after a fodder board swapped units for whole rounds
+    names = ["nami", "vayne", "fiora", "garen", "maokai", "diana", "elise", "lissandra", "nidalee", "jax", "lulu",
+             "annie"]
+
+    def types(p, locs):
+        return sorted((ex._unit_at(p, loc).name, ex._unit_at(p, loc).stars) for loc in locs)
+
+    for rnd, comp in ((5, None), (13, "mage")):
+        boards = []
+        for shift in range(4):  # the same units, different ones on the board
+            order = names[shift:] + names[:shift]
+            p = make_player(board=order[:5], bench=order[5:], level=5)
+            ex = PlanExecutor()
+            if comp:
+                ex.comp_number = TRAITS.index(comp)
+            target = types(p, ex.bot_board(p, rnd))
+            boards.append(target)
+            for moves in range(6):  # restore: arrange fields the target and then stops
+                command = ex.arrange(p, weakest=False, game_round=rnd)
+                if command is None:
+                    break
+                perform(p, command)
+            assert command is None and moves <= 5
+            assert sorted((u.name, u.stars) for col in p.board for u in col if u) == target
+            assert types(p, ex.bot_board(p, rnd)) == target
+        assert all(b == boards[0] for b in boards), (rnd, boards)
+
+
+def test_bot_board_fields_the_board_copy_of_a_unit():
+    # a 2-star nami on the board and one on the bench: the walk dropped the board copy and kept the
+    # bench one, and the restore swapped the two identical units on every action for three rounds
+    p = make_player(board=["janna", "irelia", "kennen", "talon", "nami"],
+                    bench=["nidalee", "nami", "nidalee", "wukong", "wukong", "lissandra", "twistedfate", "vayne"],
+                    level=5)
+    p.board[4][0].stars = p.bench[1].stars = 2
+    ex = PlanExecutor()
+    assert 16 in ex.bot_board(p, 8) and 29 not in ex.bot_board(p, 8)  # 16 = board[4][0]
+    for moves in range(6):
+        command = ex.arrange(p, weakest=False, game_round=8)
+        if command is None:
+            break
+        perform(p, command)
+    assert command is None and moves <= 5
+
+
+def test_fodder_and_restore_moves_are_capped_per_round(monkeypatch):
+    p = make_player(board=STRONG, bench=WEAK, level=3)
+    ex = PlanExecutor()
+    monkeypatch.setattr(ex, "arrange", lambda *a, **k: "5_0_28")  # a move that never settles
+    ex.restore_pending = True
+    commands = run_round(ex, p, 5, BASE)
+    assert commands.count("5_0_28") <= PlanExecutor.MAX_ARRANGE_MOVES  # moves the units back and forth
+    assert ex.stats["restore_moves"] == PlanExecutor.MAX_ARRANGE_MOVES and ex.stats["arrange_capped"] == 1
+    assert not ex.restore_pending  # the restore gives up; the rule bot fields its own board
+
+
 def test_fodder_board_without_weak_units_stays_as_it_is():
     p = make_player(board=STRONG, gold=0)
     set_shop(p, ["vayne", "fiora", "nami", "fiora", "nami"])
@@ -256,15 +358,16 @@ def test_strong_view_and_translation():
     p = make_player(board=WEAK, bench=STRONG)
     ex = PlanExecutor()
     view, swaps = ex.strong_view(p)
-    assert sorted(u.name for col in view.board for u in col if u) == sorted(STRONG)
-    assert sorted(u.name for u in view.bench if u) == sorted(WEAK) and not view.bench_full()
+    # the rule bot's own board: the two strongest mages and nami (a third mage) rather than jinx
+    assert sorted(u.name for col in view.board for u in col if u) == ["ahri", "annie", "nami"]
+    assert sorted(u.name for u in view.bench if u) == ["fiora", "jinx", "vayne"] and not view.bench_full()
     assert view.gold == p.gold and view.num_units_in_play == 3  # the rest comes from the player
-    assert len(swaps) == 6 and all(swaps[swaps[loc]] == loc for loc in swaps)
+    assert len(swaps) == 4 and all(swaps[swaps[loc]] == loc for loc in swaps)
     assert board_names(p) == sorted(WEAK)  # the player itself is untouched
-    slot = 28 + next(i for i, u in enumerate(view.bench) if u and u.name == "nami")
-    cell = swaps[slot]  # where nami really stands: on the fodder board
+    slot = 28 + next(i for i, u in enumerate(view.bench) if u and u.name == "vayne")
+    cell = swaps[slot]  # where vayne really stands: on the fodder board
     x, y = cell // 4, cell % 4
-    assert p.board[x][y].name == "nami" and ex.translate("4_" + str(slot), swaps) == "4_" + str(cell)
+    assert p.board[x][y].name == "vayne" and ex.translate("4_" + str(slot), swaps) == "4_" + str(cell)
     assert ex.translate("3_2", swaps) == "3_2" and ex.translate("1", swaps) == "1"
 
 
@@ -342,7 +445,7 @@ def test_owns_swap():
     for plan, idx, command, owned in (
             ({**BASE}, 13, f"5_0_{nami}", False),  # no knob: the rule bot's swap goes through
             ({**BASE, "fodder": True}, 5, f"5_0_{nami}", True),
-            ({**BASE, "hold": True}, 5, f"5_4_{fiora}", True),
+            ({**BASE, "hold": True}, 5, f"5_4_{fiora}", False),  # hold leaves the fielding to the rule bot
             ({**BASE, "hold": True}, 5, "5_4_8", False),  # board to board
             ({**BASE, "hold": True}, 5, f"5_{nami}_9", False),  # a bench unit into an empty slot
             ({**BASE, "field_comp": True}, 13, f"5_0_{nami}", True),  # comp unit in for an off-comp one

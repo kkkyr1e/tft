@@ -8,6 +8,7 @@ from __future__ import annotations
 import math
 from collections import Counter
 
+from Simulator.battle.stats import BASE_CHAMPION_LIST
 from Simulator.game.pool_stats import cost_star_values
 from Simulator.generators.default_agent import Default_Agent
 from Simulator.generators.default_agent_stats import TEAM_COMP_TRAITS, TEAM_COMPS
@@ -22,6 +23,10 @@ def strength(unit) -> int:
 
 
 class PlanExecutor(Default_Agent):
+    # Fodder or restore moves per round at most (a full board of 9 needs at most 9 swaps; a move
+    # that does not settle would otherwise take every action of every round).
+    MAX_ARRANGE_MOVES = 10
+
     def __init__(self):
         super().__init__()
         self.plan = {"comp": None, "level_to": 1, "roll_floor": 999, "carry": None}
@@ -30,6 +35,7 @@ class PlanExecutor(Default_Agent):
         self.restore_pending = False
         self.xp_bought = 0
         self.rule_calls, self.took_over = 0, False  # this round: rule-bot calls, executor-only actions
+        self.arrange_moves = 0  # this round: fodder or restore moves
         self.stats = Counter()
 
     def begin_round(self, plan: dict, knobs: dict, game_round: int | None = None) -> None:
@@ -38,7 +44,7 @@ class PlanExecutor(Default_Agent):
             # The executor used every action of the last round, so the rule bot never saw it and
             # would not notice that this one is new (it resets its checks on current == next).
             self.next_round = game_round
-        self.rule_calls, self.took_over = 0, False
+        self.rule_calls, self.took_over, self.arrange_moves = 0, False, 0
         was_fodder = self.knobs["fodder"]
         self.plan, self.knobs, self.xp_bought = plan, knobs, 0
         if was_fodder and not self.knobs["fodder"]:
@@ -116,16 +122,103 @@ class PlanExecutor(Default_Agent):
                 out.append((strength(unit), 1, 28 + i))
         return out
 
-    def _wanted(self, player, weakest: bool):
-        """Locations of the units that should be on the board: the weakest (or strongest)
-        max_units, preferring units already on the board on ties."""
+    def _wanted(self, player, weakest: bool, game_round: int | None = None):
+        """Locations of the units that should be on the board: the weakest max_units by strength()
+        (preferring units already on the board on ties), or the rule bot's own board (bot_board)."""
         units = self._units(player)
+        if not weakest:
+            return units, self.bot_board(player, game_round)
         k = min(player.max_units, len(units))
-        order = sorted(units, key=lambda t: (t[0] if weakest else -t[0], t[1], t[2]))
+        order = sorted(units, key=lambda t: (t[0], t[1], t[2]))
         return units, {loc for _, _, loc in order[:k]}
 
-    def arrange(self, player, weakest: bool):
-        units, want = self._wanted(player, weakest)
+    @staticmethod
+    def _unit_at(player, loc: int):
+        if loc >= 28:
+            return player.bench[loc - 28]
+        x, y = coord_to_x_y(loc)
+        return player.board[x][y]
+
+    def bot_board(self, player, game_round: int | None = None) -> set:
+        """Locations (board cells and bench slots) of the units the rule bot would field, its own
+        trait-aware choice: start from the strongest max_units by strength() (cost, stars, items),
+        then apply the rule bot's own bench-to-board swap check until it finds nothing. Before round
+        11 that check (round_3_10) swaps a bench unit in when that raises rank_comp (cost and stars
+        plus trait count x tier); from round 11 (round_11_end) it also swaps in any comp unit for an
+        off-comp one. Each swap the check accepts raises (comp units fielded, rank_comp), so the
+        walk ends. The result is a fixed point of that check, so a rule bot shown this board
+        proposes no swap.
+
+        Units are walked in an order that does not depend on where they stand (strength, then name,
+        stars, chosen trait and items; copies of the same unit board first), so moving units around
+        does not change the choice: once arrange has fielded it, it stays (a location-dependent walk
+        can reach another fixed point after every move and never settle). Of two copies of the same
+        unit (name, stars, chosen trait, items) the one on the board is fielded. Cached on the
+        arrangement (one rule-bot call per action asks for it several times)."""
+        game_round = self.current_round if game_round is None else game_round
+        units = self._units(player)
+        objs = {loc: self._unit_at(player, loc) for _, _, loc in units}
+        key = (game_round >= 11, self.comp_number if game_round >= 11 else None, player.max_units,
+               tuple((loc, u.name, u.stars, tuple(u.items), u.chosen) for loc, u in sorted(objs.items())))
+        cached = getattr(self, "_bot_board_cache", None)
+        if cached is not None and cached[0] == key:
+            return set(cached[1])
+
+        def canonical(t):
+            u = objs[t[2]]
+            return (-t[0], u.name, u.stars, str(u.chosen or ""), tuple(sorted(map(str, u.items))), t[1], t[2])
+
+        order = [loc for _, _, loc in sorted(units, key=canonical)]
+        rank = {loc: n for n, loc in enumerate(order)}
+        k = min(player.max_units, len(units))
+        field, rest = order[:k], order[k:]
+        comp = TEAM_COMPS[self.comp_number] if game_round >= 11 else None
+
+        def score(locs):
+            grid = [[None] * 4 for _ in range(7)]
+            for n, loc in enumerate(sorted(locs, key=rank.get)):
+                grid[n % 7][n // 7] = objs[loc]
+            return self.rank_comp(grid)
+
+        def accepts(out, into, better):  # round_3_10 / round_11_end check 2 (default_agent.py)
+            if comp is None:
+                return better
+            a, b = into.name in comp, out.name in comp
+            return (better and a) or (not b and a) or (better and not a and not b)
+
+        base = score(field)
+        for _ in range(200):
+            found = None
+            for into in rest:
+                for i, out in enumerate(field):
+                    if objs[out].name not in BASE_CHAMPION_LIST:
+                        continue
+                    s = score(field[:i] + [into] + field[i + 1:])
+                    if accepts(objs[out], objs[into], s > base):
+                        found = (i, out, into, s)
+                        break
+                if found:
+                    break
+            if not found:
+                break
+            i, out, into, base = found
+            field = sorted(field[:i] + [into] + field[i + 1:], key=rank.get)
+            rest = sorted([loc for loc in rest if loc != into] + [out], key=rank.get)
+        # Copies of the same unit are interchangeable: field the copies on the board first. (The walk
+        # can drop the board copy and keep the bench one; swapping the two changes nothing, and
+        # arrange would repeat that swap on every action.)
+        wanted = Counter(canonical(next(t for t in units if t[2] == loc))[:5] for loc in field)
+        field = []
+        for t in sorted(units, key=lambda t: (t[1], t[2])):
+            ident = canonical(t)[:5]
+            if wanted[ident] > 0:
+                wanted[ident] -= 1
+                field.append(t[2])
+        self._bot_board_cache = (key, tuple(field))
+        return set(field)
+
+    def arrange(self, player, weakest: bool, game_round: int | None = None):
+        units, want = self._wanted(player, weakest, game_round)
         sign = 1 if weakest else -1
         out = sorted((t for t in units if t[2] < 28 and t[2] not in want), key=lambda t: -sign * t[0])
         into = sorted((t for t in units if t[2] >= 28 and t[2] in want), key=lambda t: sign * t[0])
@@ -142,15 +235,16 @@ class PlanExecutor(Default_Agent):
                         return "5_" + str(x_y_to_1d_coord(x, y)) + "_" + str(loc)
         return None
 
-    def strong_view(self, player):
-        """The player as the rule bot would see it with its strongest units fielded, and the
-        location swaps that turn the real arrangement into that one (a dict, both directions).
+    def strong_view(self, player, game_round: int | None = None):
+        """The player as the rule bot would see it with its own board fielded (bot_board: the
+        board its trait-aware swap check settles on), and the location swaps that turn the real
+        arrangement into that one (a dict, both directions).
 
         In fodder mode the rule bot decides on this view, so it buys, sells and levels as it would
         with its normal board: it does not buy pairs of fodder units or units that only improve
         the fodder board, and its interest sales take the units it would have on its bench."""
         units = self._units(player)
-        _, keep = self._wanted(player, weakest=False)
+        _, keep = self._wanted(player, weakest=False, game_round=game_round)
         out = sorted((t for t in units if t[2] < 28 and t[2] not in keep), key=lambda t: (t[0], t[2]))
         into = sorted((t for t in units if t[2] >= 28 and t[2] in keep), key=lambda t: (-t[0], t[2]))
         board, bench, swaps = [list(col) for col in player.board], list(player.bench), {}
@@ -190,44 +284,80 @@ class PlanExecutor(Default_Agent):
     def fodder_rule_command(self, player, shop, game_round, mask) -> str:
         """The rule bot's command in fodder mode: decided on the strong view, translated, filtered.
         When a command is dropped, the rule bot's step that produced it (swapping a bench unit in,
-        placing items, fixing positions) is marked done for the round, as if it had been carried
-        out, and the rule bot is asked again, so the economy steps after it (interest sales) still
-        run. The swap is caught before translation: on the strong view it can translate into a
-        board-to-board move that would pass the filter and repeat on every action."""
+        placing items, fixing positions) is marked done for the round (skip_check), as if it had
+        been carried out, and the rule bot is asked again, so the economy steps after it (interest
+        sales) still run. The swap is caught before translation: on the strong view it can
+        translate into a board-to-board move that would pass the filter and repeat on every action.
+        (The strong view is the rule bot's own board, so its swap check rarely proposes anything.)"""
+        command = "0"
         for _ in range(5):
             command = "0"
-            view, swaps = self.strong_view(player)
+            view, swaps = self.strong_view(player, game_round)
             raw = self.policy(view, shop, game_round, mask)
             if self.owns_swap(raw, view, game_round):
                 self.stats["swaps_dropped"] += 1
-                self.round_3_10_checks[2] = self.round_11_end_checks[2] = False
+                self.skip_check(raw, game_round)
                 continue
             command = self.fodder_filter(self.translate(raw, swaps), player)
             if command != "0" or raw in ("0", "1", "2"):
                 return command
             self.stats["filtered"] += 1
-            if raw.startswith("6_") and len(self.round_3_10_checks) > 5:
-                self.round_3_10_checks[5] = False
-            elif raw.startswith("5_"):
-                self.round_3_10_checks[3] = self.round_11_end_checks[3] = False
-            else:
-                break
+            self.skip_check(raw, game_round)
         return command
+
+    def rule_command(self, player, shop, game_round, mask) -> str:
+        """The rule bot's command outside fodder mode. A bench-to-board swap that a knob owns
+        (owns_swap) and, with `hold`, a bench sale while the bench has room (hold_filter) are
+        dropped; the check that proposed it is marked done for the round (skip_check) and the rule
+        bot is asked again, so the checks after it still run (they would otherwise wait behind the
+        same proposal on every action)."""
+        for _ in range(5):
+            command = self.policy(player, shop, game_round, mask)
+            if self.owns_swap(command, player, game_round):
+                self.stats["swaps_dropped"] += 1
+            elif self.knobs.get("hold") and self.hold_filter(command, player) != command:
+                self.stats["hold_filtered"] += 1
+            else:
+                return command
+            self.skip_check(command, game_round)
+        return "0"
+
+    def skip_check(self, command: str, game_round: int) -> None:
+        """Mark the rule-bot check that proposed a dropped `command` as done for this round, as if
+        it had been carried out (a roll re-opens every check, as it does for the rule bot): a
+        bench-to-board swap is check 2 of round_3_10 / round_11_end, any other move check 3
+        (positions), an item placement round_3_10's check 5, a bench sale the interest sale (check 4)
+        or, on round 11 before the clean-up is over, decide_comp's clean-up. Both rounds' lists are
+        marked; each is reset when its next round starts."""
+        kind, *args = command.split("_")
+        if kind == "5" and len(args) == 2 and int(args[0]) < 28 <= int(args[1]):
+            self.round_3_10_checks[2] = self.round_11_end_checks[2] = False
+        elif kind == "5":
+            self.round_3_10_checks[3] = self.round_11_end_checks[3] = False
+        elif kind == "6":
+            if len(self.round_3_10_checks) > 5:
+                self.round_3_10_checks[5] = False
+        elif kind == "4":
+            if game_round == 11 and self.round_11_clean_up:
+                self.round_11_clean_up = False
+            else:
+                self.round_3_10_checks[4] = self.round_11_end_checks[4] = False
 
     # ---- the rule bot's bench-to-board swap
     def owns_swap(self, command: str, player, game_round: int) -> bool:
         """Whether `command` is a rule-bot swap of a bench unit onto the board ("5_<board>_<bench>",
-        its round_3_10 / round_11_end swap check) that a knob owns. fodder and hold field the units
-        themselves (arrange), so every such swap is theirs. field_comp owns the swaps of a comp unit
-        for an off-comp unit (field_comp_swap makes them, strongest first and never a weaker unit);
-        the rule bot's other swaps (better comp score, see rank_comp) stay its own."""
+        its round_3_10 / round_11_end swap check) that a knob owns. fodder fields the units itself
+        (arrange), so every such swap is its own. field_comp owns the swaps of a comp unit for an
+        off-comp unit (field_comp_swap makes them, strongest first and never a weaker unit); the rule
+        bot's other swaps (better comp score, see rank_comp) stay its own. hold owns none: the rule
+        bot fields its own board."""
         kind, *args = command.split("_")
         if kind != "5" or len(args) != 2:
             return False
         board, bench = int(args[0]), int(args[1])
         if not board < 28 <= bench:
             return False  # board to board, or a bench unit into an empty slot (bench first)
-        if self.knobs["fodder"] or self.knobs.get("hold"):
+        if self.knobs["fodder"]:
             return True
         if self.knobs["field_comp"] and game_round >= 11 and self.comp_number >= 0:
             units = TEAM_COMPS[self.comp_number]
@@ -236,15 +366,14 @@ class PlanExecutor(Default_Agent):
             return bool(out and into and into.name in units and out.name not in units)
         return False
 
-    # ---- hold (plan field `hold`): keep units and items back, field the strongest units
+    # ---- hold (plan field `hold`): keep the units the rule bot would sell for interest
     @staticmethod
     def hold_filter(command: str, player) -> str:
-        """Drop rule-bot item placements, and bench sales while the bench has room (the sales for
-        interest); a sale that makes room on a full bench goes through. (The rule bot's swaps are
-        dropped before this, in act(): hold fields the units itself, see owns_swap.)"""
+        """Drop rule-bot bench sales while the bench has room (the sales for interest, and round 11's
+        clean-up); a sale that makes room on a full bench goes through, and so does everything else:
+        the rule bot fields its own (trait-aware) board and places items. rule_command marks the
+        dropped sale's check done for the round."""
         kind, *args = command.split("_")
-        if kind == "6":
-            return "0"
         if kind == "4" and args and int(args[0]) >= 28 and not player.bench_full():
             return "0"
         return command
@@ -275,16 +404,15 @@ class PlanExecutor(Default_Agent):
                 return command
             self.pivot_pending = False
         if knobs["fodder"] or self.restore_pending:
-            command = self.arrange(player, weakest=knobs["fodder"])
+            command = self.arrange(player, weakest=knobs["fodder"], game_round=game_round)
+            if command and self.arrange_moves >= self.MAX_ARRANGE_MOVES:
+                self.stats["arrange_capped"] += 1  # a safety net: arrange should never need this many
+                command = None
             if command:
+                self.arrange_moves += 1
                 self.stats["fodder_moves" if knobs["fodder"] else "restore_moves"] += 1
                 return command
             self.restore_pending = False
-        if knobs.get("hold") and not knobs["fodder"]:
-            command = self.arrange(player, weakest=False)
-            if command:
-                self.stats["hold_moves"] += 1
-                return command
         if knobs["field_comp"] and not knobs["fodder"] and game_round >= 11 and self.comp_number >= 0:
             command = self.field_comp_swap(player)
             if command:
@@ -310,19 +438,7 @@ class PlanExecutor(Default_Agent):
         if knobs["fodder"]:
             command = self.fodder_rule_command(player, shop, game_round, mask)
         else:
-            command = self.policy(player, shop, game_round, mask)
-            if self.owns_swap(command, player, game_round):
-                # A knob owns this swap. The rule bot's swap check is done for this round, as if it
-                # had found nothing to swap (it would propose the same swap on every call), and the
-                # bot is asked again; a roll re-opens the check, as it re-opens every other check.
-                self.stats["swaps_dropped"] += 1
-                self.round_3_10_checks[2] = self.round_11_end_checks[2] = False
-                command = self.policy(player, shop, game_round, mask)
-            if knobs.get("hold"):
-                filtered = self.hold_filter(command, player)
-                if filtered != command:
-                    self.stats["hold_filtered"] += 1
-                    command = filtered
+            command = self.rule_command(player, shop, game_round, mask)
         if command not in ("0", "1", "2"):
             return command
         item = self.place_item(player, mask) if game_round > 2 and not knobs["fodder"] else None
@@ -340,8 +456,6 @@ class PlanExecutor(Default_Agent):
         return "0"
 
     def place_item(self, player, mask):
-        if self.knobs.get("hold"):
-            return None  # hold: the items wait until the hold ends
         items = [(i, it) for i, it in enumerate(player.item_bench)
                  if it is not None and it not in ("champion_duplicator", "spatula")]
         if not items:

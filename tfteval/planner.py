@@ -25,19 +25,20 @@ Optional plan fields (absent = the executor behaves exactly as before them):
 * `spend` {"to": G, "by": "4-2"} (or "rounds": K, counted from the round the plan is issued):
   reroll down to G gold, spread evenly over the rounds up to the deadline.
 * `fodder` true: field the weakest units it owns (board and bench) up to max_units, keep the strongest
-  on the bench, place no items; the round after it goes back to false the strongest units are fielded
-  again, then the rule bot plays on (its own swaps included). It buys nothing for the fodder board:
-  the rule bot keeps deciding its buys, sales and levels as if its strongest units were fielded
-  (PlanExecutor.strong_view); its bench-to-board swaps are dropped.
+  on the bench, place no items; the round after it goes back to false the rule bot's own board is
+  fielded again, then the rule bot plays on (its own swaps included). It buys nothing for the fodder
+  board: the rule bot keeps deciding its buys, sales and levels as if its own board were fielded
+  (PlanExecutor.strong_view: the board its trait-aware swap check settles on, bot_board); its
+  bench-to-board swaps are dropped.
 * `survival` N: when the expected losses to death (tfteval.stages.losses_to_death) are <= N, ignore
   the economy fields and fodder and roll for board strength.
 * `xp_buys` N: buy xp at least N times this round (on top of `level_to` and `level_by`), whether or
   not that completes a level; used to spend the gold above a bank on xp.
-* `hold` true: keep units and items back, field the strongest: the rule bot's bench sales (unless the
-  bench is full), item placements and bench-to-board swaps are dropped, the executor places no
-  items, and the strongest units (by strength(): cost, stars, items; not the rule bot's trait-aware
-  comp score) are fielded every round (what the first fodder board's filters did, without the
-  fodder).
+* `hold` true: keep units only: the rule bot's bench sales are dropped unless the bench is full (its
+  sales for interest), and the check that proposed one is marked done for the round. Everything
+  else is the rule bot's own play: it fields its own trait-aware board (its swap check by comp
+  score) and items are placed as usual. (The first version also held items back and fielded the
+  strongest units by strength(); on the fork that fielded weaker boards than the rule bot's own.)
 
 `compile_knobs` turns a plan into the per-round knobs the executor reads (`PlanExecutor.begin_round`).
 

@@ -65,9 +65,9 @@ the v1 stances keep their own ratio tests.
 
 `hold` (off by default; seat kind `stance+hold`): from HOLD_FROM to HOLD_UNTIL, outside stabilize
 and loss_streak, the plan carries the executor knob `hold`: the rule bot's bench sales (other than
-to make room on a full bench) and item placements are dropped, and the strongest units are fielded
+to make room on a full bench) are dropped; it fields its own board and places items
 (tfteval/executor.py). The second opinion's reading of the v1 loss-streak smoke is that its gain came
-from these filters, not from losing; this seat kind tests that.
+from the fodder board's filters (units kept), not from losing; this seat kind tests that.
 
 Information boundary: `plan()` gets the describe() state (tfteval.public) and nothing else. Every
 feature below comes from it: own state, opponents' boards / HP / level / streak / interest bracket,
