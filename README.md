@@ -576,6 +576,75 @@ python scripts/branch_compare.py --a mimic --b mimicfc --round 3-3 --seeds 25000
 - 两种随机流下效果都随存档变化（存档间标准差 0.7～0.9 名），所以要的是存档多、每个存档分叉少：每边 1 个分叉时约 150～190 个存档；每边 4 个分叉也要约 60 个存档，总续打次数反而更多。这些数是从 10 个存档估的，只能当量级。
 - 要定下 keyed 省多少，得加大样本，最好换一对晚一点才改动作的策略（比如 `fast8` 对 `mimic`），那时 keyed 才可能帮得上。同一批存档上直接比两种随机流，现在的代码做不到：随机流的结构在建 env 时定下。下一步的实验照旧用默认的 keyed。
 
+## 决策题库
+
+方针第 3 节的决策题库：`tfteval/bank.py`（题、候选、`CommitPlanner`、出题、标签、打分），`scripts/build_bank.py` 出题，`scripts/score_bank.py` 打分，单测在 `tests/test_bank.py`。一道题是某一局某个决策点上的 hero、3 个候选决定和它们的标签。
+
+- **题里存什么**：不存 4.7 MB 的存档，存重建它的配方：各座位的策略、局种子、hero 座位、回合、经济规则（`rules`）、模拟器配置（`sim`，见"模拟器配置"，连同改动，如 `realistic,rng_streams=shared`）和它实际传给 `TFTConfig` 的选项（`sim_options`）、计划座位是否自己选秀（`pickers`）以及哪些座位自己选了（`carousel_pickers`）、模拟器提交、本仓库提交、`PYTHONHASHSEED`。重建时按配方自己的设置开局；配置名现在解析出的选项和记下的不一样（配置改过定义）就拒绝重建。重建时用 `play_to` 打到该回合（确定性的），再核对状态指纹：hero 的血量、金币、等级、经验、连胜连败、场上（含位置和装备）、备战席、装备栏、商店，全场血量和步数；对不上就报错。另存 hero 当时的公开局面（`describe()` 的输出）。
+- **决策点**：3-2、3-5、4-1、4-5、5-1（回合序号 10、12、15、18、21），第 2 阶段不出题。
+- **候选是承诺，不是单个动作**。在 hero 续打用的计划者（默认 `stance`）出的计划上，换掉经济字段（`level_to`、`roll_floor`、`level_by`、`spend`、`xp_buys`、`survival`），保持 2～3 个备战阶段，之后交还给 `stance` 自己打；阵容、主 C、`field_comp` 等其余字段照旧，其余 7 个座位都是原来的策略。这是 `CommitPlanner`：承诺期间也每回合问一遍底下的计划者（它照常记它的历史，比如 `stance` 的血量记录和速 8 进度），只替换经济字段。`commit_switch` 经 `switch_planner` 换进 hero 座位，保留执行器的状态；hero 原本就是续打的那种计划者时，用的是它自己的计划者对象（带着这局的历史），否则换一个新的。可以 pickle，存档里带着它也能续打。
+- **候选表**（`bank.CANDIDATES`、`bank.POINTS`，一张表）。候选是几条规则，每个承诺回合按当时的局面算出计划字段；经验可以只买一部分（`xp_buys`），"保留 N 金"按回合开始时的金币算，规则 bot 同一回合先买棋子，所以实际剩下的可能少一些。
+
+| 候选 | 做什么 |
+|---|---|
+| `save` | 不 D；只朝房间等级曲线（`stance.LEVEL_CURVE`：3-2 时 6 级、3-5 时 7 级、4-2 起 8 级）买经验，而且只花 50 金以上的钱，保住满利息 |
+| `level` | 用 30 金以上的钱朝"决策时的等级 + 1"买经验（够就本回合升，不够下回合接着买），不 D |
+| `roll` | 每回合 D 到 15 金（止血），不买经验 |
+| `fast8` | 用 10 金以上的钱朝 8 级买经验（决策时已经 8 级则朝 9 级），到了之前不 D，到了以后 D 到 20 |
+| `cap_out` | 用 10 金以上的钱朝 9 级买经验，不 D |
+
+| 决策点 | 候选 | 承诺几个备战阶段 |
+|---|---|---|
+| 3-2、3-5 | `save` / `level` / `roll` | 2 |
+| 4-1 | `save` / `fast8` / `roll` | 3 |
+| 4-5 | `save` / `fast8` / `roll` | 2 |
+| 5-1 | `save` / `cap_out` / `roll` | 2 |
+
+- **标签**。每个候选都从同一个存档用重新播种 k = 0 … Kd+Kl−1 续打到 hero 出局，hero 的名次是标签；同一个 k 各候选共用随机数（hero 的动作分开之前完全相同）。前 Kd 个分叉（发现集）选出最优候选：平均名次最低的，平局取菜单里靠前的。后 Kl 个新分叉（标注集）估计每个候选的期望名次和遗憾值：同一 k 上该候选的名次减最优候选的名次，再对 k 平均。选和估用不同的分叉，避免赢家诅咒（在同一批分叉上挑最小值再报它，最优候选会显得比实际好）。遗憾值不截断：发现集选错时，别的候选在标注集上可能略低于 0；截断会把偏差带回来，不截断时 agent 的平均遗憾值是无偏的。每个分叉的名次和 hero 每回合动作的哈希都存着，标签可以重算（`bank.label_item`，打分时就是重算的）。
+- **明确题和模糊题**。其余每个（不重复的）候选都比最优候选差，而且差得超过配对差的 95% 区间，记为 `clear`，否则 `ambiguous`。两类都留，分开报告。区间的标准差由同一题各候选的配对差合并估计，下限 1 名（`SD_FLOOR`；Kl 只有 2～3 时样本标准差会碰巧为 0，而同一存档内一对分叉之差的标准差实测 1.4～3.0 名，见"分叉有没有信号"和"分叉对比"）。
+- **重复的候选**。两个候选在所有分叉里 hero 每回合的动作哈希都相同，就是同一局（同一个 k、同样的动作），记为重复，遗憾值相同；三个候选全部重复的题里没有决策，丢掉（照样写进文件，`dropped` 写明原因，续跑时跳过）。`--early-drop` 在发现集上三个就已全部相同时不再跑标注集（省时间，但严格说只看了发现集），默认关。
+- **开发集与保留集**：按种子的哈希把整局分到开发集（约 70%）或保留集（`bank.split`），同一局的所有题在同一边。
+
+**打分**。agent 拿到重建后的公开局面（`describe()`；对手只经过 `tfteval/public.py`）和候选的名字、说明、本回合对应的计划字段，选一个名字。
+
+- 仓库里的规则计划者（`stance`、`mimic`、`fast8` 等；`rule` 是规则 bot 的经济，`mimic` 就是它）：让它在这个局面上出自己的计划，再映射到最近的候选（`bank.nearest_candidate`）。比较的是两个数："本回合花在经验上的金币"和"本回合花在刷新上的金币"，距离取两项之差的绝对值之和。经验按计划要去的等级算（`level_to`、`level_by` 的目标、`xp_buys` 取大的），刷新按 `roll_floor`（有 `spend` 时取它的目标，生存模式为 0），一回合最多算 30 金（15 个动作大约花得掉的量），平局取菜单里靠前的。只比较第一回合，因为计划者只说本回合做什么。hero 本身就是这种计划者时，问的是 hero 计划者的副本（带着这局的历史）；`--stored` 不重建、直接用题里存的公开局面，这时有状态的计划者从头开始。
+- 任意可调用对象（`bank.CallableAgent`，以后接模型）；或 `cmd:<命令>`：从 stdin 读提示词（`bank.choice_prompt`），回答 `{"choice": ...}`。
+- 参照：`random`、`always:<候选>`、`noisy<N>:<agent>`（N% 的题改为随机选），以及读标签的 `oracle`（发现集最优，遗憾值恒为 0）和 `worst`。
+
+得分是所选候选遗憾值的平均，95% 区间按源对局聚类（同一局的几道题共享前面的整局）；另报所选候选落在最优候选标注区间之内的题占比、选中最优（或与它重复的）候选的占比。全部、明确题、模糊题、各决策点分别报，开发集、保留集也分别报。选了菜单里没有的名字按该题最大的遗憾值算，计入 `invalid`。
+
+**题库自检**（`score_bank.py --sanity`，是报告不是测试）：oracle ≤ stance ≤ noisy50:stance ≤ random ≤ worst，以及 stance ≤ mimic（fork 冒烟里 `stance` 的名次比 `mimic` 好）。每一对给出遗憾值之差和按源对局聚类的区间。顺序不对，说明题库没有量到决策好坏，先修题库（方针第 3 节）。
+
+```bash
+python scripts/build_bank.py --lineups stance@rule:7 --seeds 9101,9102 --points 3-2 4-1 --kd 2 --kl 2 \
+    --sim realistic --rules set4 --workers 2 --out results/bank/realistic.jsonl   # 可以随时停下再续跑
+python scripts/score_bank.py results/bank/pilot.jsonl --sanity
+python scripts/score_bank.py results/bank/pilot.jsonl --agent stance mimic --stored
+```
+
+源对局写成 `hero 的策略@其余 7 个座位`，例如 `stance@rule:7`、`mimic@rule:4,stance:3`；hero 在决策点之前用的策略必须是计划座位（续打要接着用它的执行器状态），座位按种子轮换。模拟器设置和 `run_lobby.py` 一样：`--sim` 选配置（默认 `realistic`，或 `TFT_SIM`），`--rules` 选经济规则（或 `TFT_RULES`），`TFT_PICKERS=0` 让计划座位用模拟器默认的选秀；都记进配方，工作进程从环境变量读同一套。`score_bank.py` 重建时用题目自己的设置，给了 `--sim`、`--rules` 只核对题库是不是用它们出的；混了几套设置的文件直接拒绝。出题以题为单位分给进程，每道题写完就追加一行；重跑时跳过文件里已有的题，参数（Kd、续打策略、经济规则、模拟器配置和选项、选秀）和已有的题不一致时拒绝续写，一个文件只放一套设置。给更大的 `--kl` 会给已有的题补标注分叉：按配方重建、核对指纹（要求同一个模拟器提交），补跑缺的 k，重算标签后再写一行，同一个 `id` 后一行覆盖前一行。
+
+**题目的字段**（JSONL 一行一题）：`id`（`lineup#seed@point`）、`game`、`lineup`、`seed`、`point`、`split`；`recipe`（`lobby` 各座位的策略、`seed`、`round`、`hero_seat`、`rules`、`sim`、`sim_options`、`pickers`、`carousel_pickers`、`sim_fixes`、`sim_commit`、`harness_commit`、`hashseed`）；`fingerprint` 和 `fingerprint_hash`；`public_state`、`comp_now`；`continuation`、`kd`、`kl`；`candidates`（`name`、`desc`、`spec`、`rounds`、`now`：决策回合对应的计划字段）；`branches`（每个分叉：`cand`、`k`、`set`、`place`、`actions` 每回合动作哈希、`applied`/`changed` 承诺生效及改变了执行器旋钮的回合、`steps`、`fallbacks`、`seconds`）；`label`（`duplicates`、`best`、`best_group`、`discovery_mean`、`label_mean`、`regret`、`ci95`、`sd`、`df`、`within_ci`、`kind`）；`dropped`（为空或原因）；`timing`。
+
+**试跑**（只为跑通流程，`results/bank/pilot.*`）：`stance@rule:7`，种子 9101（开发集）和 9102（保留集），决策点 3-2、4-1，每个候选 Kd=2、Kl=2，2 个进程，共 4 道题、48 次续打。机器上同时还有别的任务（4 核，负载约 3.5）。试跑时出题代码还没提交，题里的 `harness_commit` 记成了上一个提交 fc17761，实际代码与 64728dc（变基到 claude/m3 之后为 d450bb5）相同。试跑在模拟器配置出现之前（相当于 `default`、不挂选秀函数），它的配方里没有 `sim`，按 `default`、`pickers` 关读；之后 `stance` 改过（故意输的连败不再触发止血、经济按规则配置），这几道题在现在的代码上还能不能按指纹重建没有核对过（变基后没有跑对局），`--stored` 打分照常。
+
+| | 结果 |
+|---|---|
+| 耗时 | 全部 1532 秒。每次续打平均 60 秒（20～96）：从 3-2 起两局各 77、62 秒，从 4-1 起 63、38 秒；重建存档 8～9 秒（3-2）、17～19 秒（4-1）；一道题 12 次续打，单进程 476～930 秒，平均 734 秒 |
+| 题 | 4 道都可用，都是模糊题（Kl=2 时 t 分位数 4.3，区间 ±3.0～±9.0 名）；9102 号的 3-2 上 `save` 和 `level` 重复（都买同样 3 次经验，两回合动作完全相同）；没有丢掉的题 |
+| 承诺起没起作用 | 每个候选在承诺的每个回合都改了执行器旋钮（相对 `stance` 自己的计划），只有 9101 号 3-2 的 `level` 第二回合没改（hero 已到 6 级，和 `stance` 一样） |
+| 噪声 | 同一 k 上两个候选的名次之差，标准差 2.2 名：候选在分叉当回合就改动作，公共随机数几乎不起作用；同一候选内名次的标准差 1.5 名 |
+| 发现集选错 | 4 道题里有 2 道，标注集上别的候选比发现集选出的好（遗憾值 −0.5） |
+| 打分 | 重建 2 局、核对 4 个指纹共 37 秒（指纹在另一个进程里重建，全部对上）；`--stored` 与重建给 `mimic` 的选择相同。9102 号 4-1 上 hero 自己的 `stance`（正在速 8，`level_by` 8）和新的 `stance`（标准运营）出的计划不同，都映射到 `fast8` |
+| 自检 | 4 道题什么都分不出：`stance` 遗憾值 +0.62 ±11.1，`mimic` −0.12 ±1.6，`random` +0.88 ±14.3，`oracle` 0；`stance` − `mimic` +0.75 ±9.5（顺序反了，不显著）。`rule` 与 `mimic` 完全相同 |
+
+**正式出题的建议**（按试跑的噪声估计）：
+
+- 单道题要标成明确题，差 1 名就要 Kl≈20（1.96 × 2.2 / √Kl ≤ 1），每题 3 × (Kd + Kl) 次续打、每次约 1 分钟，一道题一小时 CPU，划不来。所以大部分题会是模糊题，题库的精度靠题数，不靠单题。
+- 比两个 agent 时，同一题上两者遗憾值之差就是两个候选在标注集上的平均名次之差，与发现集选了谁无关；Kd 只影响"最优"这个参照和明确、模糊的划分。
+- 建议 Kd=2、Kl=4（每题 18 次续打），先出约 60 局 × 3 个决策点（3-2、4-1、5-1）≈ 180 道题：约 3200 次续打，按试跑的每次 60 秒约 54 CPU 小时，2 个进程约 27 小时；claude/m3 让规则 bot 的棋盘拷贝变轻以后整局快了一倍多（`default` 85 秒到 36 秒，`realistic` 41 秒，见"模拟器配置"），续打大概也快一倍，没有重测。两个 agent 在约一半的题上选得不同时，遗憾值之差的区间到 ±0.2 名约需 100 道题、±0.15 名约 170 道（按每题配对差标准差 2.2/√4、题间真实差异约 0.8 名估计）。到 60 道题时先跑一次自检，顺序不对就先修题库；需要时用更大的 `--kl` 给已有的题补分叉。
+- 正式题库用 `realistic`（keyed 随机流）。claude/m3 的试点里 `mimicfc` 对 `mimic` 的配对差标准差 keyed 1.60、shared 1.99（区间很宽），本题库的候选也在分叉当回合就改动作，keyed 能保住的只是别的座位的随机数；出了头一批题先重测这个标准差，它明显低于 2.2 的话，同样的精度需要的 Kl 会少。
+
 ## 对模拟器的修正
 
 模拟器用我们的 fork [kkkyr1e/TFTMuZeroAgent](https://github.com/kkkyr1e/TFTMuZeroAgent)，`scripts/setup_sim.sh` 固定在 `develop` 的一个提交上。bug 修在 fork 里，每个修正是一个单独的分支、带一个单元测试，可以单独给上游提 PR；`develop` 合并了全部修正。清单、出处和测试见 fork 里的 `FORK_NOTES.md`。
@@ -618,6 +687,7 @@ fork 里另外加了几个选项，默认都关：
 | `tfteval/stages.py` | 回合序号与阶段标签、赛程、扣血（基础伤害和单位伤害从模拟器的经济规则读，加上按阶段实测的对面剩几个棋子）、"还能输几把" |
 | `tfteval/public.py` | 公开观察：对手能被看到的部分 |
 | `tfteval/stats.py` | 平均名次与区间、配对差、以存档为单位的区间、所需局数 |
+| `tfteval/bank.py` | 决策题库：配方与状态指纹、候选承诺（`CommitPlanner`）、出题、标签、打分；脚本是 `scripts/build_bank.py`、`scripts/score_bank.py`，题在 `results/bank/` |
 | `scripts/` | 批量对局、比较两次运行、安装模拟器、按经济规则测扣血（`measure_damage.py`）、执行器冒烟对比（`smoke_executor.py`）、分叉实验与分析（`branching_validity.py`、`analyze_branching.py`）、两个策略的分叉对比（`branch_compare.py`）、姿态分布统计（`stance_report.py`）、记录对战与拟合胜率模型（`collect_fights.py`、`fit_winprob.py`） |
 | `results/` | 原始对局结果；`results/branching/` 是分叉实验，`results/fork_smoke/` 是 fork 上的执行器冒烟（`results/fork_smoke2/` 是修正扣血表、改 `hold` 之后重跑的），`results/damage/` 是两套经济规则下的扣血实测，`results/fights/` 是记录下的对战（`mixed_9600` 旧模拟器，`fork_22000` 和 `fork_set18_23000` 在 fork 上），`results/crn_pilot/` 是 shared 对 keyed 随机流的分叉试点，`results/realistic_smoke/` 是 `realistic` 配置上的冒烟 |
 | `docs/PLAN.md` | 方针 |
