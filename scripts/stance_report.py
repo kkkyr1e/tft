@@ -8,7 +8,8 @@ Prints the share of planning rounds in each stance by stage, the games each stan
 logged reasons, and with --results the seats' placements, overall and split by whether a stance
 fired in the game (descriptive only: which games a stance fires in is not random). Logs from version 2
 (and stance1 since then) also carry the seat's units owned, pairs and 2-star units, and the strength
-class against the candidate opponents: means by round from 2-1 to 4-2 and the classes by stage.
+class from p_win against the candidate opponents: means by round from 2-1 to 4-2 and the classes by
+stage.
 """
 
 from __future__ import annotations
@@ -24,7 +25,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from tfteval import stages  # noqa: E402
 from tfteval.runner import _seat_seed  # noqa: E402
-from tfteval.stance import STANCES  # noqa: E402
+from tfteval.stance import STANCES, classify  # noqa: E402
 
 
 def load(path: str) -> dict:
@@ -84,11 +85,11 @@ def main():
                      for k in ("units_owned", "pairs", "two_stars", "level", "gold", "hp")}
                 print(f"{stages.label(idx):<7} {len(here):5d}  {m['units_owned']:5.1f}  {m['pairs']:5.2f}  "
                       f"{m['two_stars']:6.2f}  {m['level']:6.2f}  {m['gold']:5.1f}  {m['hp']:5.1f}")
-    with_class = [r for r in rows if r["features"].get("strength")]
+    with_class = [r for r in rows if r["features"].get("p_mean") is not None]
     if with_class:
-        print("\nstage   stronger   close  weaker   (strength against the candidate opponents)")
+        print("\nstage   stronger   close  weaker   (p_win classes against the candidate opponents, whatever test the seat itself used)")
         for label in order:
-            here = Counter(r["features"]["strength"] for r in with_class if key(r) == label)
+            here = Counter(classify(r["features"], True) for r in with_class if key(r) == label)
             total = sum(here.values())
             print(f"{label:<7} " + "  ".join(f"{_pct(here[c], total):>7}" for c in ("stronger", "close", "weaker")))
 
