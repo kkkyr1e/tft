@@ -14,7 +14,7 @@ python -m pytest tests        # 或者 python tests/test_stats.py
 
 需要 Python 3.10 以上。
 
-整套测试要打真实对局，单进程约 25 分钟（`tests/test_branching.py` 约 18 分钟，每个测试在两套模拟器配置下各跑一遍）；`TFT_TEST_WORKERS` 设 `tests/test_regression.py` 重放参考对局用几个进程（默认 2）。不打对局的部分（除 `test_branching.py`、`test_regression.py`、`test_sim_profiles.py` 和 `test_branch_compare.py` 的 A/A 之外）约 15 秒。
+整套测试要打真实对局，单进程约 25 分钟（`tests/test_branching.py` 约 18 分钟，每个测试在两套模拟器配置下各跑一遍）；`TFT_TEST_WORKERS` 设 `tests/test_regression.py` 重放参考对局用几个进程（默认 2）。不打对局的部分（除 `test_branching.py`、`test_regression.py`、`test_sim_profiles.py`、`test_branch_compare.py` 的 A/A 和 `test_record.py` 的两个对局测试（约 40 秒）之外）约 15 秒。
 
 ## 跑一组对局
 
@@ -576,6 +576,109 @@ python scripts/branch_compare.py --a mimic --b mimicfc --round 3-3 --seeds 25000
 - 两种随机流下效果都随存档变化（存档间标准差 0.7～0.9 名），所以要的是存档多、每个存档分叉少：每边 1 个分叉时约 150～190 个存档；每边 4 个分叉也要约 60 个存档，总续打次数反而更多。这些数是从 10 个存档估的，只能当量级。
 - 要定下 keyed 省多少，得加大样本，最好换一对晚一点才改动作的策略（比如 `fast8` 对 `mimic`），那时 keyed 才可能帮得上。同一批存档上直接比两种随机流，现在的代码做不到：随机流的结构在建 env 时定下。下一步的实验照旧用默认的 keyed。
 
+## Rubric v1 与 Benchmark v1
+
+方针第 2、4 节落地的第一版：rubric 回答"为什么输"，只用日志规则；benchmark 是整局评测的固定配置。两样都只做了冒烟，还没有大规模跑过（见本节末尾"还没做的"）。
+
+### 逐回合记录
+
+`Game(..., record=True)`（或座位名、策略名的列表）、`run_lobby.py --record`，或者设 `TFT_RECORD`（`1`/`all` 记全部座位；也可以是 `hero` 这样的策略名或 `player_3` 这样的座位，逗号分隔；每个工作进程都读它），runner 就给被记录的座位每个备战阶段写一行，放在结果的 `records[座位]` 里；出局在第几回合记在 `eliminated`（冠军不在里面），名次照旧在 `placements`。代码在 `tfteval/record.py`。
+
+| 字段 | 含义 |
+|---|---|
+| `round` | 备战阶段序号（9 = 3-1，15 = 4-1，见 `tfteval/stages.py`） |
+| `hp`、`gold`、`level`、`xp`、`streak` | 备战阶段开始时 |
+| `end` | 备战阶段结束、开打之前的 `gold`、`level`、`xp` |
+| `board`、`bench`、`items` | 备战阶段结束时的场上、备战席和装备栏，在模拟器自动补人之前。每个棋子写成 `[名字, 星级, 费用]`，带装备时加上 `[装备]`，天选再加它的羁绊 |
+| `actions` | 本回合各类动作的次数（pass、xp、roll、buy、sell、move、item），只记非零的 |
+| `illegal` | 动作掩码不允许的动作数 |
+| `fallbacks` | 策略报错、被换成随机动作的次数 |
+| `roll_low` | 本回合每次刷新之后剩下的最少金币 |
+| `fight`、`hp_lost` | 接下来那一场：`W`/`L`（平局算输，同模拟器）或 `pve`；这一回合掉的血 |
+| `comp` | 备战阶段结束时的目标阵容：计划座位取执行器的，其他座位取它自己那个规则 bot 的（3-3 之前没有） |
+| `contested` | 回合开始时各阵容的棋子在别人场上有几张（即 `contested_by_comp`），只记非零的 |
+| `plan`、`knobs` | 计划座位：本回合计划的字段，以及 `compile_knobs` 之后执行器拿到的 `level_to`、`roll_floor`、`xp_buys`、`survival` |
+| `stance`、`why` | 姿态座位：选了哪个姿态、理由 |
+
+每行约 0.7 KB，一个座位一局约 20 KB。备战阶段结束时的状态和战斗结果是这样读的：在一次 `env.step` 期间，给 env 的 `game_round` 对象挂一个包装，包住 `play_game_round`，开打前记一次、打完再记一次。包装只是这个对象上的一个属性，这一步结束前就去掉，存档里不会有它；模拟器一个文件都不改，记录也不抽随机数。`tests/test_record.py` 用同一个种子各打一整局开、关记录的对局（8 个座位里 6 个随机 bot，局短），逐座位核对名次、动作数、步数、出局回合和每个座位全部动作的哈希；另外核对记录能跟着存档走：存档后续打出来的行与一口气打的完全相同。
+
+### Rubric v1
+
+代码在 `tfteval/rubric.py`。阈值都是参数（`THRESHOLDS`；`benchmarks/v1.json` 的 `rubric` 照抄一份）。
+
+**硬门槛**：正确性检查，只报次数，不拿去和名次做关联。
+
+| 项 | 定义 |
+|---|---|
+| `fallbacks` | 策略报错、runner 换成随机动作的次数 |
+| `illegal` | 动作掩码不允许的动作数 |
+| `level_short` | 计划座位：回合结束时的等级低于执行器要升到的等级（`knobs.level_to`，封顶为规则的最高等级），而手里剩的钱够买差的经验。冒烟里这几乎都是 15 个动作用完了（规则 bot 的买、卖、换位排在前面）；其中这一回合还 pass 过的另计为 `level_short_idle`，那只能是执行器的 bug |
+| `roll_below_floor` | 计划座位：本回合有一次刷新之后剩的钱低于本回合的 `roll_floor`（`knobs` 里的值：计划给的，`spend`、`survival` 会把它压低） |
+
+**第一版的三项**：
+
+| 项 | 定义（默认阈值） |
+|---|---|
+| `died_with_gold` | 出局，而且送命那一回合的备战阶段结束时手里超过 20 金 |
+| `banked_without_leveling` | 连续 2 个以上回合，备战阶段结束时手里超过 50 金、等级低于规则的最高等级（set4 9 级，set18 10 级，从模拟器的规则读，同 `planner.level_costs`） |
+| `items_on_non_carries` | 4-1 起，某个回合结束时有成装在不是主力的场上棋子身上。计划座位有目标阵容时，主力是计划的 `carry` 和阵容里的棋子；其他座位（以及还没有阵容时）是场上费用×星级最高的 2 个（同分比费用，也就是执行器上装备的顺序）。按回合计数，标记为"至少一个回合"。成装指散件以外的装备，不算复制器、重铸器、磁吸器和凯隐的两种形态 |
+
+`score_seat` 给出一个座位一局的结果（三项的标记和明细，各门槛的次数；`from_round` 只看某回合以后），`score_result` 给出一局里所有被记录的座位，`rates` 按策略汇总（每项的发生率和 Wilson 95% 区间，门槛的总数和每座位均值）。
+
+一局冒烟（`stance`、`mimic`、`rule` 加 5 个随机 bot，种子 31001，只看能不能算）：5 个随机 bot 都 `died_with_gold`（165～221 金）也都 `banked_without_leveling`；`mimic` 得第 1，攒钱的回合有 16 个，`level_short` 2 次（都是 15 个动作用完）；`stance` 得第 2，`items_on_non_carries` 11 个回合。所有座位 `illegal`、`fallbacks`、`roll_below_floor` 都是 0。
+
+### 存档内验证：`scripts/validate_rubric.py`
+
+方针第 4 节要求每一项都要检验"这项分数好，名次是否真的更好"。直接在整局之间比"标记了的局"和"没标记的局"会混进局面本身的好坏（快输的局才会带着钱死），所以在存档内比：每个种子用 benchmark 的开发池房间（见下；`--opponents rule:7` 等可以换成固定对手），hero 记录逐回合；打到 `--rounds` 的每个回合存档，从每个存档续打 K 个重新播种的分叉，到 hero 出局为止；每个分叉只用分叉回合以后的行打分（`--whole-game` 从第一回合起），标签是 hero 的名次。
+
+```bash
+python scripts/validate_rubric.py --hero stance --seeds 36000:40 --rounds 3-1 4-1 --branches 4 --workers 3 \
+    --out results/rubric/validate_stance.jsonl
+python scripts/validate_rubric.py --summarize --out results/rubric/validate_stance.jsonl
+```
+
+每项报告：名次和标记都在存档内减去均值（存档固定效应）后，"标记了的分叉减没标记的分叉"的名次差 `fe_diff`（正数表示标记了的名次更差；等于各存档内差值按 n·p·(1−p) 加权的平均），它的 95% 区间按源对局聚类（同一局的几个存档共享前面的回合）；各存档内差值的简单平均 `mean_state_diff`；以及既有标记、又有没标记分叉的存档有几个（只有这些存档提供信息）。**这是存档内的关联，不是因果效应**：让某一项触发的东西（商店差、输了一场）本身就可能让名次变差。输出里每次都写着这一句。硬门槛只计数。默认种子从 36000 起，不和 benchmark 的开发种子（30000 起）、保留种子（39000 起）重叠。每个分叉一行 JSONL，重跑跳过已有的分叉，配置不同时拒绝续写。
+
+冒烟（1 个存档：种子 36000 的 4-1，2 个分叉，1 个进程，56 秒）：两个分叉分别第 3、第 1 名，第 3 名那个 `died_with_gold`、`banked_without_leveling` 都标记了；只说明脚本能跑通，不是结论。
+
+### Benchmark v1
+
+配置 `benchmarks/v1.json`（冻结），命令行 `scripts/benchmark.py`，逻辑在 `tfteval/benchmark.py`。
+
+- **房间**：1 个 hero（被测的 agent，结果里叫 `hero`）加 7 个对手。对手按种子从池子里有放回地抽，每局的组合都不同；抽法是 sha256("tft-bench-v1:种子:位置") 对池子大小取模，不受任何库的版本影响。hero 坐 `player_(种子 mod 8)`。第 i 局用种子 first_seed + i，所以不同的 agent 遇到的房间和座位完全一样，两个 agent 的结果可以按种子配对。
+- **对手池**：开发池 {`rule`, `mimic`, `mimicfc`, `fast8`, `stance`, `stance+hold`}，种子 30000 起；保留池 {`stance1`, `stance+lossstreak`, `noisy20`}，种子 39000 起，调优期间不用。保留池要用 `--heldout` 单独开，开跑前打出警告：只用于里程碑。
+- **模拟器**：配置固定为 `realistic`，经济规则看赛道：`set4`（默认）和第二赛道 `set18`；计划座位自己选秀。这些都从配置读，不看环境变量。结果里记着模拟器的提交和 harness 的提交（tfteval、scripts、benchmarks 有未提交的改动时加 `-dirty`）。
+- **配置哈希**：去掉以 `_` 开头的键后，配置的规范 JSON 的 sha256 前 16 位，v1 是 `3bc9bb108cc1c077`，`tests/test_benchmark.py` 把它钉住了：改配置就是新的 benchmark。续跑一个结果文件、或者把几个文件合起来出记分卡时，配置哈希、agent、赛道、池子、是否记录、模拟器提交只要有一个不同就拒绝；harness 提交不同只提示，每局各记各的。
+- **局数**：用 `tfteval.stats.games_needed` 按目标区间算，默认 ±0.25 名、每局标准差 2.25（方针第 1 节的单局标准差），即 312 局，开跑前打出来。`--sd` 换成实测的标准差；续跑时也会打出到目前为止实测的标准差和它对应的局数，但计划的局数不变。`--games` 可以覆盖（冒烟用，卡片上会显示没跑够）。结果每局写一次，中断后重跑接着跑。
+
+```bash
+# 开发池、set4，记录 hero 的逐回合（rubric 和多样性要用）
+python scripts/benchmark.py --agent stance --track set4 --record --workers 3 --out results/bench/v1_set4_dev_stance.json
+# 已有结果的记分卡（几个文件会先合并，要给 --out），附一个对照 agent
+python scripts/benchmark.py --scorecard results/bench/v1_set4_dev_stance.json --compare results/bench/v1_set4_dev_mimic.json
+# 只在里程碑跑：保留池
+python scripts/benchmark.py --agent stance --track set4 --heldout --record --out results/bench/v1_set4_heldout_stance.json
+```
+
+**记分卡**（Markdown 打到屏幕上，另写 `.scorecard.json` 和 `.scorecard.md` 放在结果旁边）：
+
+| 块 | 内容 | 怎么读 |
+|---|---|---|
+| 强度 | 平均名次 ±95% 区间（以局为单位）、前四率和吃鸡率（Wilson 区间）、名次分布、实测标准差 | 主指标。房间平均恒为 4.5，而对手是池子的混合，所以名次只在同一配置哈希、同一池子、同一赛道之内可比 |
+| 按姿态家族对手数 | 按房间里 `stance` 开头的对手有几个分组，各组的同样几项 | 看 agent 是不是在强对手多的房间里更吃亏；每组局数少，区间宽 |
+| 硬门槛 | hero 和全部座位的策略报错次数；有记录时还有 `illegal`、`level_short`（其中 `idle`）、`roll_below_floor` 的总数 | 应该都是 0（`level_short` 除外，它多半是动作数用完了）；不是 0 先查 bug，再看名次 |
+| Rubric v1 | 三项的发生率（每局一个 hero）和区间，要 `--record` | 失败归因。一项和名次有没有关系要看 `validate_rubric.py`；没验证过的项不能当成"越低越好" |
+| 决策题遗憾值 | 钩子：给了 `--bank`、`--bank-scorer`，而且有 `scripts/score_bank.py`（随决策题库那条分支来）时，按 `--bank-cmd` 的模板调用它，把它写出的 JSON 原样放进卡片 | 本分支不实现题库，也不 import 它 |
+| 打法多样性 | 和强度分开报告，从不加权到一起（"好玩"没有定义）。只看 hero 进前四的局，要 `--record`：(a) 最终阵容（最后一行的目标阵容；没有的话取最后的场上覆盖最多的阵容）的分布和熵（比特，附最大值和等效阵容数 2^H）；(b) 响应性：3-1 时的早期信号与最终阵容的互信息，信号三个，分开算：手里最多的散件、持有的天选的羁绊、别人场上最多的阵容（`contested_by_comp`）；附 Miller-Madow 修正值和打乱最终阵容的置换零分布（零分布均值和 p 值）；(c) 非劣：给了 `--compare`（另一个 agent 在同一配置、池子、赛道下的结果）时按种子配对算名次差，95% 上界不超过 0.25 名，多样性才算加分 | 几百局、8 个阵容时互信息的直接估计偏高，要和零分布比 |
+
+冒烟（`--agent stance --record --games 1`，种子 30000，房间里 1 个姿态家族对手，1 个进程）：第 6 名，31 秒，`items_on_non_carries` 标记，`level_short` 2 次，其余门槛 0，记分卡各块都出来了；重跑时跳过已有的局，换 agent 或换赛道续写同一个文件都被拒绝。
+
+**还没做的**：
+
+- 没有大规模跑过。三项都还没有用 `validate_rubric.py` 验证和名次的关系，阈值是第一版的猜测；按方针，验证后和名次无关的项要删掉。
+- 每局标准差 2.25 是旧模拟器上"1 个规则 bot 对 7 个规则 bot"测的，混合房间、`realistic` 下要实测（`--sd`）。
+- 多样性的三个信号是第一版，互信息在几百局上很粗；最终阵容对规则 bot 以外的打法（比如大模型）只能从场上推。
+
 ## 对模拟器的修正
 
 模拟器用我们的 fork [kkkyr1e/TFTMuZeroAgent](https://github.com/kkkyr1e/TFTMuZeroAgent)，`scripts/setup_sim.sh` 固定在 `develop` 的一个提交上。bug 修在 fork 里，每个修正是一个单独的分支、带一个单元测试，可以单独给上游提 PR；`develop` 合并了全部修正。清单、出处和测试见 fork 里的 `FORK_NOTES.md`。
@@ -608,6 +711,11 @@ fork 里另外加了几个选项，默认都关：
 | 路径 | 内容 |
 |---|---|
 | `tfteval/runner.py` | 打一整局并给出名次；模拟器配置（`SIM_PROFILES`）、挂选秀函数 |
+| `tfteval/record.py` | 逐回合记录（可选）：每个被记录的座位每个备战阶段一行 |
+| `tfteval/rubric.py` | Rubric v1：硬门槛和三项规则检查、按策略汇总、存档内关联的估计 |
+| `tfteval/variety.py` | 打法多样性：最终阵容的分布和熵、早期信号与最终阵容的互信息、非劣判断 |
+| `tfteval/benchmark.py` | Benchmark v1：抽房间、配置哈希、结果文件的合并与拒绝、记分卡 |
+| `benchmarks/v1.json` | Benchmark v1 的冻结配置 |
 | `tfteval/branching.py` | 存档、续打、分叉 |
 | `tfteval/policies.py` | 座位策略：随机、规则 bot、带噪声的规则 bot、计划座位 |
 | `tfteval/planner.py` | 计划者（规则经济、大模型）、计划编译 |
@@ -618,7 +726,7 @@ fork 里另外加了几个选项，默认都关：
 | `tfteval/stages.py` | 回合序号与阶段标签、赛程、扣血（基础伤害和单位伤害从模拟器的经济规则读，加上按阶段实测的对面剩几个棋子）、"还能输几把" |
 | `tfteval/public.py` | 公开观察：对手能被看到的部分 |
 | `tfteval/stats.py` | 平均名次与区间、配对差、以存档为单位的区间、所需局数 |
-| `scripts/` | 批量对局、比较两次运行、安装模拟器、按经济规则测扣血（`measure_damage.py`）、执行器冒烟对比（`smoke_executor.py`）、分叉实验与分析（`branching_validity.py`、`analyze_branching.py`）、两个策略的分叉对比（`branch_compare.py`）、姿态分布统计（`stance_report.py`）、记录对战与拟合胜率模型（`collect_fights.py`、`fit_winprob.py`） |
+| `scripts/` | 批量对局、比较两次运行、安装模拟器、按经济规则测扣血（`measure_damage.py`）、执行器冒烟对比（`smoke_executor.py`）、分叉实验与分析（`branching_validity.py`、`analyze_branching.py`）、两个策略的分叉对比（`branch_compare.py`）、姿态分布统计（`stance_report.py`）、记录对战与拟合胜率模型（`collect_fights.py`、`fit_winprob.py`）、benchmark（`benchmark.py`）、rubric 的存档内验证（`validate_rubric.py`） |
 | `results/` | 原始对局结果；`results/branching/` 是分叉实验，`results/fork_smoke/` 是 fork 上的执行器冒烟（`results/fork_smoke2/` 是修正扣血表、改 `hold` 之后重跑的），`results/damage/` 是两套经济规则下的扣血实测，`results/fights/` 是记录下的对战（`mixed_9600` 旧模拟器，`fork_22000` 和 `fork_set18_23000` 在 fork 上），`results/crn_pilot/` 是 shared 对 keyed 随机流的分叉试点，`results/realistic_smoke/` 是 `realistic` 配置上的冒烟 |
 | `docs/PLAN.md` | 方针 |
 | `docs/STRATEGY.md` | 策略层方案 |
