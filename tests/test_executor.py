@@ -17,7 +17,7 @@ def state(idx, gold=50, level=5, xp=0, hp=100):
 def test_plain_plan_compiles_to_itself():
     knobs = compile_knobs({**BASE, "roll_floor": 20, "carry": "ahri", "comp": "mage"}, state(12))
     assert knobs == {"comp": "mage", "level_to": 5, "roll_floor": 20, "carry": "ahri", "xp_buys": 0,
-                     "xp_priority": False, "fodder": False, "survival": False}
+                     "xp_priority": False, "fodder": False, "field_comp": False, "survival": False}
 
 
 def test_level_by_buys_as_late_as_the_action_cap_allows():
@@ -75,9 +75,9 @@ def test_param_planner_defaults_add_no_fields():
 
 def test_llm_parse_accepts_the_new_fields():
     text = ('{"comp": null, "level_to": 7, "roll_floor": 30, "carry": null, "fodder": true, "survival": 2,'
-            ' "level_by": {"level": 8, "by": "4-1"}, "spend": {"to": 20, "rounds": 2}}')
+            ' "field_comp": true, "level_by": {"level": 8, "by": "4-1"}, "spend": {"to": 20, "rounds": 2}}')
     plan = LLMPlanner.parse(text, {"board": []}, {})
-    assert plan["fodder"] is True and plan["survival"] == 2
+    assert plan["fodder"] is True and plan["survival"] == 2 and plan["field_comp"] is True
     assert plan["level_by"] == {"level": 8, "by": "4-1"} and plan["spend"] == {"to": 20, "rounds": 2}
     bad = LLMPlanner.parse('{"level_to": 7, "roll_floor": 30, "level_by": {"level": 8, "by": "9-9"}}',
                            {"board": []}, {})
@@ -210,6 +210,33 @@ def test_pivot_sells_off_comp_bench_units_and_keeps_playing():
     assert left.count("nami") == 2  # a pair is kept, as decide_comp does
     assert {"jax", "lux"} <= set(left) and set(divine) & set(board_names(p))  # divine units fielded
     assert not ex.pivot_pending
+
+
+def test_field_comp_swaps_comp_units_onto_a_full_board():
+    mage = COMPS["mage"]
+    off, bench = ["fiora", "vayne", "jax"], ["ahri", "veigar", "thresh"]  # costs 1, 1, 2 / 4, 3, 2
+    assert not set(off) & set(mage) and set(bench) <= set(mage)
+
+    def setup():
+        p = make_player(board=off, bench=bench, gold=0, level=3)
+        ex = PlanExecutor()
+        ex.comp_number, ex.round_11_clean_up = TRAITS.index("mage"), False
+        return p, ex
+
+    p, ex = setup()
+    run_round(ex, p, 13, {**BASE, "level_to": 3, "comp": "mage"})
+    assert board_names(p) == sorted(off)  # the rule bot alone never swaps a full board
+    p, ex = setup()
+    run_round(ex, p, 13, {**BASE, "level_to": 3, "comp": "mage", "field_comp": True})
+    assert board_names(p) == sorted(bench) and ex.stats["comp_swaps"] == 3
+
+
+def test_field_comp_does_not_field_a_weaker_comp_unit():
+    p = make_player(board=["jax"], bench=["nami"], gold=0, level=1)  # off-comp 2-cost / mage 1-cost
+    ex = PlanExecutor()
+    ex.comp_number, ex.round_11_clean_up = TRAITS.index("mage"), False
+    run_round(ex, p, 13, {**BASE, "level_to": 1, "comp": "mage", "field_comp": True})
+    assert board_names(p) == ["jax"] and ex.stats["comp_swaps"] == 0
 
 
 def test_level_by_preempts_the_rule_bot_on_the_deadline_round():

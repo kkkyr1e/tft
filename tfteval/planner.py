@@ -10,7 +10,11 @@ bot with these changes:
 
 Optional plan fields (absent = the executor behaves exactly as before them):
 
-* `comp` changed after the first choice pivots: off-comp bench units are sold as at round 11.
+* `comp` changed after the first choice pivots: off-comp bench units are sold as at round 11 and
+  comp units on the bench are swapped onto the board (once, when the pivot is made).
+* `field_comp` true: every round, swap the weakest off-comp board unit for the strongest comp unit
+  on the bench while that one is no weaker. The rule bot's own swap check never fires, so without
+  this its comp decides what it buys but not what it fields.
 * `level_by` {"level": N, "by": "4-1"} (or "rounds": K): reach level N by that round. Xp is bought
   as late as the action cap allows (at most XP_BUY_CAP buys in each earlier round, the rest on the
   deadline round, where the executor takes action slots from the rule bot if it has to).
@@ -51,7 +55,7 @@ from tfteval import public, stages
 from tfteval.policies import MASK_SHAPE
 
 PLAN_KEYS = ("comp", "level_to", "roll_floor", "carry")
-EXTRA_KEYS = ("level_by", "spend", "fodder", "survival")
+EXTRA_KEYS = ("level_by", "spend", "fodder", "field_comp", "survival")
 
 LEVEL_COSTS = (0, 2, 2, 6, 10, 20, 36, 56, 80, 100)  # xp for the next level, Player.level_costs
 ACTIONS_PER_ROUND = 15
@@ -124,7 +128,7 @@ def compile_knobs(plan: dict, state: dict) -> dict:
     """
     knobs = {"comp": plan.get("comp"), "level_to": int(plan["level_to"]), "roll_floor": int(plan["roll_floor"]),
              "carry": plan.get("carry"), "xp_buys": 0, "xp_priority": False, "fodder": bool(plan.get("fodder")),
-             "survival": False}
+             "field_comp": bool(plan.get("field_comp")), "survival": False}
     idx, gold, level, xp, hp = state["round"], state["gold"], state["level"], state["xp"], state["hp"]
 
     spec = plan.get("level_by")
@@ -260,6 +264,7 @@ Optional fields you may add:
   "level_by": {{"level": N, "by": "<stage-round>"}}  reach level N by that round, buying xp as late as the action cap allows
   "spend": {{"to": G, "by": "<stage-round>"}}  reroll down to G gold, spread evenly over the rounds up to that one
   "fodder": true  field your weakest units and keep the strongest on the bench (to lose on purpose); false fields the best again
+  "field_comp": true  swap comp units from the bench onto the board in place of weaker off-comp units, every round
   "survival": N  when you can afford at most N more losses, ignore the economy and roll for board strength"""
 
 
@@ -267,8 +272,9 @@ def _parse_extras(obj: dict) -> dict:
     """Validated optional fields; an invalid one is dropped, not the whole plan."""
     out = {}
     try:
-        if isinstance(obj.get("fodder"), bool):
-            out["fodder"] = obj["fodder"]
+        for key in ("fodder", "field_comp"):
+            if isinstance(obj.get(key), bool):
+                out[key] = obj[key]
         if obj.get("survival") is not None:
             out["survival"] = max(0, min(10, int(obj["survival"])))
         for key, field in (("level_by", "level"), ("spend", "to")):
@@ -420,28 +426,34 @@ def _make_executor():
                 self.stats["pivots"] += 1
 
         def pivot_cleanup(self, player):
-            """One action of the switch to the new comp, None when done.
-
-            1. decide_comp's clean-up: sell off-comp bench units that are not pairs, and chosen units
-               of another trait (decide_comp compares the chosen trait with the unit list, so it sells
-               every chosen unit; here only off-trait ones, and on the board only off-comp ones).
-            2. Field the new comp: swap the weakest off-comp board unit for the strongest comp unit on
-               the bench while that is no weaker. The rule bot's own bench-to-board swap never fires
-               (it tests `champion in BASE_CHAMPION_LIST`, an object against names), so without this
-               step a pivot would only change what it buys.
-            """
+            """One action of the switch to the new comp, None when done: decide_comp's clean-up
+            (sell off-comp bench units that are not pairs, and chosen units of another trait;
+            decide_comp compares the chosen trait with the unit list, so it sells every chosen unit,
+            here only off-trait ones and on the board only off-comp ones), then field_comp_swap."""
             units, trait = TEAM_COMPS[self.comp_number], TEAM_COMP_TRAITS[self.comp_number]
             for i, unit in enumerate(player.bench):
                 if unit and unit.name not in units and (unit.name + "_" + str(unit.stars)) not in self.pairs:
                     return "4_" + str(i + 28)
                 if unit and unit.chosen and unit.chosen != trait:
                     return "4_" + str(i + 28)
-            board = []
             for x in range(len(player.board)):
                 for y in range(len(player.board[x])):
                     unit = player.board[x][y]
                     if unit and unit.chosen and unit.chosen != trait and unit.name not in units:
                         return "4_" + str(x_y_to_1d_coord(x, y))
+            return self.field_comp_swap(player)
+
+        def field_comp_swap(self, player):
+            """Swap the weakest off-comp board unit for the strongest comp unit on the bench, if that
+            one is no weaker; None when there is nothing to swap. This is what the rule bot's own
+            bench-to-board check means to do; it never fires, because it tests
+            `champion in BASE_CHAMPION_LIST` (an object against names), so the rule bot fields units
+            only into empty slots and its comp decides what it buys, not what it fields."""
+            units = TEAM_COMPS[self.comp_number]
+            board = []
+            for x in range(len(player.board)):
+                for y in range(len(player.board[x])):
+                    unit = player.board[x][y]
                     if public.is_unit(unit) and unit.name not in units:
                         board.append((strength(unit), x_y_to_1d_coord(x, y)))
             bench = [(strength(u), 28 + i) for i, u in enumerate(player.bench) if public.is_unit(u) and u.name in units]
@@ -564,9 +576,15 @@ def _make_executor():
                 if command:
                     self.stats["fodder_buys"] += 1
                     return command
+            if knobs["field_comp"] and not knobs["fodder"] and game_round >= 11 and self.comp_number >= 0:
+                command = self.field_comp_swap(player)
+                if command:
+                    self.stats["comp_swaps"] += 1
+                    return command
             if knobs["xp_priority"] and self.wants_xp(player, mask) \
                     and self._xp_owed(player) >= getattr(player, "actions_remaining", ACTIONS_PER_ROUND):
                 self.xp_bought += 1
+                self.stats["xp"] += 1
                 self.stats["xp_preempt"] += 1
                 return "1"
             return None
@@ -593,8 +611,10 @@ def _make_executor():
                 return item
             if self.wants_xp(player, mask):
                 self.xp_bought += 1
+                self.stats["xp"] += 1
                 return "1"
             if player.gold - 2 >= knobs["roll_floor"] and mask[54][0]:
+                self.stats["rolls"] += 1
                 self.round_11_end_checks = [True for _ in range(5)]
                 self.round_3_10_checks = [True for _ in range(6)]
                 return "2"
