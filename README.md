@@ -580,7 +580,7 @@ python scripts/branch_compare.py --a mimic --b mimicfc --round 3-3 --seeds 25000
 
 方针第 3 节的决策题库：`tfteval/bank.py`（题、候选、`CommitPlanner`、出题、标签、打分），`scripts/build_bank.py` 出题，`scripts/score_bank.py` 打分，单测在 `tests/test_bank.py`。一道题是某一局某个决策点上的 hero、3 个候选决定和它们的标签。
 
-- **题里存什么**：不存 4.7 MB 的存档，存重建它的配方：各座位的策略、局种子、hero 座位、回合、经济规则（`rules`）和模拟器选项、模拟器提交、本仓库提交、`PYTHONHASHSEED`。重建时用 `play_to` 打到该回合（确定性的），再核对状态指纹：hero 的血量、金币、等级、经验、连胜连败、场上（含位置和装备）、备战席、装备栏、商店，全场血量和步数；对不上就报错。另存 hero 当时的公开局面（`describe()` 的输出）。
+- **题里存什么**：不存 4.7 MB 的存档，存重建它的配方：各座位的策略、局种子、hero 座位、回合、经济规则（`rules`）、模拟器配置（`sim`，见"模拟器配置"，连同改动，如 `realistic,rng_streams=shared`）和它实际传给 `TFTConfig` 的选项（`sim_options`）、计划座位是否自己选秀（`pickers`）以及哪些座位自己选了（`carousel_pickers`）、模拟器提交、本仓库提交、`PYTHONHASHSEED`。重建时按配方自己的设置开局；配置名现在解析出的选项和记下的不一样（配置改过定义）就拒绝重建。重建时用 `play_to` 打到该回合（确定性的），再核对状态指纹：hero 的血量、金币、等级、经验、连胜连败、场上（含位置和装备）、备战席、装备栏、商店，全场血量和步数；对不上就报错。另存 hero 当时的公开局面（`describe()` 的输出）。
 - **决策点**：3-2、3-5、4-1、4-5、5-1（回合序号 10、12、15、18、21），第 2 阶段不出题。
 - **候选是承诺，不是单个动作**。在 hero 续打用的计划者（默认 `stance`）出的计划上，换掉经济字段（`level_to`、`roll_floor`、`level_by`、`spend`、`xp_buys`、`survival`），保持 2～3 个备战阶段，之后交还给 `stance` 自己打；阵容、主 C、`field_comp` 等其余字段照旧，其余 7 个座位都是原来的策略。这是 `CommitPlanner`：承诺期间也每回合问一遍底下的计划者（它照常记它的历史，比如 `stance` 的血量记录和速 8 进度），只替换经济字段。`commit_switch` 经 `switch_planner` 换进 hero 座位，保留执行器的状态；hero 原本就是续打的那种计划者时，用的是它自己的计划者对象（带着这局的历史），否则换一个新的。可以 pickle，存档里带着它也能续打。
 - **候选表**（`bank.CANDIDATES`、`bank.POINTS`，一张表）。候选是几条规则，每个承诺回合按当时的局面算出计划字段；经验可以只买一部分（`xp_buys`），"保留 N 金"按回合开始时的金币算，规则 bot 同一回合先买棋子，所以实际剩下的可能少一些。
@@ -617,16 +617,16 @@ python scripts/branch_compare.py --a mimic --b mimicfc --round 3-3 --seeds 25000
 
 ```bash
 python scripts/build_bank.py --lineups stance@rule:7 --seeds 9101,9102 --points 3-2 4-1 --kd 2 --kl 2 \
-    --workers 2 --out results/bank/pilot.jsonl          # 可以随时停下再续跑
+    --sim realistic --rules set4 --workers 2 --out results/bank/realistic.jsonl   # 可以随时停下再续跑
 python scripts/score_bank.py results/bank/pilot.jsonl --sanity
 python scripts/score_bank.py results/bank/pilot.jsonl --agent stance mimic --stored
 ```
 
-源对局写成 `hero 的策略@其余 7 个座位`，例如 `stance@rule:7`、`mimic@rule:4,stance:3`；hero 在决策点之前用的策略必须是计划座位（续打要接着用它的执行器状态），座位按种子轮换。`--rules` 选经济规则，记进配方。出题以题为单位分给进程，每道题写完就追加一行；重跑时跳过文件里已有的题，参数（Kd、续打策略、经济规则、模拟器选项）和已有的题不一致时拒绝续写。给更大的 `--kl` 会给已有的题补标注分叉：按配方重建、核对指纹（要求同一个模拟器提交），补跑缺的 k，重算标签后再写一行，同一个 `id` 后一行覆盖前一行。
+源对局写成 `hero 的策略@其余 7 个座位`，例如 `stance@rule:7`、`mimic@rule:4,stance:3`；hero 在决策点之前用的策略必须是计划座位（续打要接着用它的执行器状态），座位按种子轮换。模拟器设置和 `run_lobby.py` 一样：`--sim` 选配置（默认 `realistic`，或 `TFT_SIM`），`--rules` 选经济规则（或 `TFT_RULES`），`TFT_PICKERS=0` 让计划座位用模拟器默认的选秀；都记进配方，工作进程从环境变量读同一套。`score_bank.py` 重建时用题目自己的设置，给了 `--sim`、`--rules` 只核对题库是不是用它们出的；混了几套设置的文件直接拒绝。出题以题为单位分给进程，每道题写完就追加一行；重跑时跳过文件里已有的题，参数（Kd、续打策略、经济规则、模拟器配置和选项、选秀）和已有的题不一致时拒绝续写，一个文件只放一套设置。给更大的 `--kl` 会给已有的题补标注分叉：按配方重建、核对指纹（要求同一个模拟器提交），补跑缺的 k，重算标签后再写一行，同一个 `id` 后一行覆盖前一行。
 
-**题目的字段**（JSONL 一行一题）：`id`（`lineup#seed@point`）、`game`、`lineup`、`seed`、`point`、`split`；`recipe`（`lobby` 各座位的策略、`seed`、`round`、`hero_seat`、`rules`、`sim_profile`、`sim_options`、`sim_fixes`、`sim_commit`、`harness_commit`、`hashseed`）；`fingerprint` 和 `fingerprint_hash`；`public_state`、`comp_now`；`continuation`、`kd`、`kl`；`candidates`（`name`、`desc`、`spec`、`rounds`、`now`：决策回合对应的计划字段）；`branches`（每个分叉：`cand`、`k`、`set`、`place`、`actions` 每回合动作哈希、`applied`/`changed` 承诺生效及改变了执行器旋钮的回合、`steps`、`fallbacks`、`seconds`）；`label`（`duplicates`、`best`、`best_group`、`discovery_mean`、`label_mean`、`regret`、`ci95`、`sd`、`df`、`within_ci`、`kind`）；`dropped`（为空或原因）；`timing`。
+**题目的字段**（JSONL 一行一题）：`id`（`lineup#seed@point`）、`game`、`lineup`、`seed`、`point`、`split`；`recipe`（`lobby` 各座位的策略、`seed`、`round`、`hero_seat`、`rules`、`sim`、`sim_options`、`pickers`、`carousel_pickers`、`sim_fixes`、`sim_commit`、`harness_commit`、`hashseed`）；`fingerprint` 和 `fingerprint_hash`；`public_state`、`comp_now`；`continuation`、`kd`、`kl`；`candidates`（`name`、`desc`、`spec`、`rounds`、`now`：决策回合对应的计划字段）；`branches`（每个分叉：`cand`、`k`、`set`、`place`、`actions` 每回合动作哈希、`applied`/`changed` 承诺生效及改变了执行器旋钮的回合、`steps`、`fallbacks`、`seconds`）；`label`（`duplicates`、`best`、`best_group`、`discovery_mean`、`label_mean`、`regret`、`ci95`、`sd`、`df`、`within_ci`、`kind`）；`dropped`（为空或原因）；`timing`。
 
-**试跑**（只为跑通流程，`results/bank/pilot.*`）：`stance@rule:7`，种子 9101（开发集）和 9102（保留集），决策点 3-2、4-1，每个候选 Kd=2、Kl=2，2 个进程，共 4 道题、48 次续打。机器上同时还有别的任务（4 核，负载约 3.5）。试跑时出题代码还没提交，题里的 `harness_commit` 记成了上一个提交 fc17761，实际代码与 64728dc 相同。
+**试跑**（只为跑通流程，`results/bank/pilot.*`）：`stance@rule:7`，种子 9101（开发集）和 9102（保留集），决策点 3-2、4-1，每个候选 Kd=2、Kl=2，2 个进程，共 4 道题、48 次续打。机器上同时还有别的任务（4 核，负载约 3.5）。试跑时出题代码还没提交，题里的 `harness_commit` 记成了上一个提交 fc17761，实际代码与 64728dc（变基到 claude/m3 之后为 d450bb5）相同。试跑在模拟器配置出现之前（相当于 `default`、不挂选秀函数），它的配方里没有 `sim`，按 `default`、`pickers` 关读；之后 `stance` 改过（故意输的连败不再触发止血、经济按规则配置），这几道题在现在的代码上还能不能按指纹重建没有核对过（变基后没有跑对局），`--stored` 打分照常。
 
 | | 结果 |
 |---|---|
@@ -642,8 +642,8 @@ python scripts/score_bank.py results/bank/pilot.jsonl --agent stance mimic --sto
 
 - 单道题要标成明确题，差 1 名就要 Kl≈20（1.96 × 2.2 / √Kl ≤ 1），每题 3 × (Kd + Kl) 次续打、每次约 1 分钟，一道题一小时 CPU，划不来。所以大部分题会是模糊题，题库的精度靠题数，不靠单题。
 - 比两个 agent 时，同一题上两者遗憾值之差就是两个候选在标注集上的平均名次之差，与发现集选了谁无关；Kd 只影响"最优"这个参照和明确、模糊的划分。
-- 建议 Kd=2、Kl=4（每题 18 次续打），先出约 60 局 × 3 个决策点（3-2、4-1、5-1）≈ 180 道题：约 3200 次续打，按每次 60 秒约 54 CPU 小时，2 个进程约 27 小时。两个 agent 在约一半的题上选得不同时，遗憾值之差的区间到 ±0.2 名约需 100 道题、±0.15 名约 170 道（按每题配对差标准差 2.2/√4、题间真实差异约 0.8 名估计）。到 60 道题时先跑一次自检，顺序不对就先修题库；需要时用更大的 `--kl` 给已有的题补分叉。
-- claude/m3 的模拟器选项（每个座位独立的随机流）落地后先重测这个标准差：公共随机数如果起作用，同样的精度需要的 Kl 会少很多。
+- 建议 Kd=2、Kl=4（每题 18 次续打），先出约 60 局 × 3 个决策点（3-2、4-1、5-1）≈ 180 道题：约 3200 次续打，按试跑的每次 60 秒约 54 CPU 小时，2 个进程约 27 小时；claude/m3 让规则 bot 的棋盘拷贝变轻以后整局快了一倍多（`default` 85 秒到 36 秒，`realistic` 41 秒，见"模拟器配置"），续打大概也快一倍，没有重测。两个 agent 在约一半的题上选得不同时，遗憾值之差的区间到 ±0.2 名约需 100 道题、±0.15 名约 170 道（按每题配对差标准差 2.2/√4、题间真实差异约 0.8 名估计）。到 60 道题时先跑一次自检，顺序不对就先修题库；需要时用更大的 `--kl` 给已有的题补分叉。
+- 正式题库用 `realistic`（keyed 随机流）。claude/m3 的试点里 `mimicfc` 对 `mimic` 的配对差标准差 keyed 1.60、shared 1.99（区间很宽），本题库的候选也在分叉当回合就改动作，keyed 能保住的只是别的座位的随机数；出了头一批题先重测这个标准差，它明显低于 2.2 的话，同样的精度需要的 Kl 会少。
 
 ## 对模拟器的修正
 

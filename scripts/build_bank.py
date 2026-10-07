@@ -14,6 +14,13 @@ schema is in tfteval/bank.py and README). A rerun skips the items already in --o
 stopped and resumed; items whose hero is out before the point, or whose candidates all played the same
 actions, are written too (with `dropped`) so they are not rebuilt.
 
+Simulator settings as in run_lobby.py: --sim picks the profile (tfteval.runner.SIM_PROFILES; default
+realistic: PvE damage, Fortune orbs, carousel fixes, hidden next opponent, keyed random streams; or
+default, all off), optionally with overrides such as realistic,rng_streams=shared (or TFT_SIM); --rules
+the economy (set4 or set18, or TFT_RULES); TFT_PICKERS=0 gives the plan seats the simulator's default
+carousel pick. Every recipe records rules, sim, sim_options, pickers and the seats that picked their own
+carousel unit (carousel_pickers); one file holds items of one setting only.
+
 A larger --kl than an existing item has extends it: its state is rebuilt from the recipe (checked against
 the fingerprint, on the same simulator commit), the missing label branches are played and the item is
 written again with new labels (a later line replaces an earlier one with the same id).
@@ -70,13 +77,17 @@ def main():
     parser.add_argument("--continuation", default="stance", help="the hero's planner after the commitment")
     parser.add_argument("--workers", type=int, default=2)
     parser.add_argument("--rules", choices=["set4", "set18"], help="economy profile (default set4, or TFT_RULES)")
+    parser.add_argument("--sim", help="simulator profile: realistic (default) or default, optionally with overrides "
+                                      "such as realistic,rng_streams=shared (or TFT_SIM); TFT_PICKERS=0 turns the "
+                                      "plan seats' carousel pickers off")
     parser.add_argument("--early-drop", action="store_true",
                         help="skip the label branches when every candidate repeated the same actions in all "
                              "discovery branches (the item is then dropped as all duplicates)")
     parser.add_argument("--out", required=True, help="bank JSONL, appended to")
     args = parser.parse_args()
-    if args.rules:
-        os.environ["TFT_RULES"] = args.rules  # inherited by the workers
+    settings = bank.sim_settings(args.sim, args.rules)  # fails early on a bad profile
+    os.environ["TFT_SIM"], os.environ["TFT_RULES"] = settings["sim"], settings["rules"]  # read in every worker
+    os.environ["TFT_PICKERS"] = "1" if settings["pickers"] else "0"
     if args.workers > 2:
         print("note: more than 2 workers; other jobs share this machine", flush=True)
 
@@ -87,13 +98,12 @@ def main():
 
     out = Path(args.out)
     items = bank.load_items(out) if out.exists() else []
-    settings = bank.sim_settings()
     config = {"kd": args.kd, "kl": args.kl, "continuation": args.continuation, "settings": settings,
               "harness": bank.harness_commit(), "early_drop": args.early_drop}
     for it in items:
         mismatch = [key for key, mine in (("kd", args.kd), ("continuation", args.continuation)) if it.get(key) != mine]
-        mismatch += [key for key in ("rules", "sim_profile", "sim_options")
-                     if (it["recipe"].get(key) or None) != (settings.get(key) or None)]
+        built = bank.recipe_settings(it["recipe"])
+        mismatch += [key for key in bank.SETTING_KEYS if built[key] != settings[key]]
         if mismatch:
             raise SystemExit(f"{out} holds {it['id']} built with other settings ({', '.join(mismatch)}); "
                              f"use another --out")
@@ -109,7 +119,8 @@ def main():
     branches += sum(len(it["candidates"]) * (args.kl - int(it["kl"])) for it in extend)
     print(f"{len(jobs) - len(extend)} items to build, {len(extend)} to extend to kl={args.kl} ({len(done)} already "
           f"in {out}), up to {branches} branches, {args.workers} workers; harness {config['harness']}, "
-          f"rules {settings['rules']}", flush=True)
+          f"rules {settings['rules']}, sim {settings['sim']} {settings['sim_options']}, "
+          f"pickers {'on' if settings['pickers'] else 'off'}", flush=True)
     out.parent.mkdir(parents=True, exist_ok=True)
     started = time.time()
     with ProcessPoolExecutor(max_workers=args.workers) as pool, out.open("a") as fh:

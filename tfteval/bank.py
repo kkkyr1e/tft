@@ -2,8 +2,10 @@
 
 An item is one hero seat at one decision point of one source game, three candidate decisions and their
 labels. The item does not hold the 4.7 MB snapshot; it holds the recipe that rebuilds the state (the
-lineup of seat policies, the game seed, the hero seat, the round, the simulator options and rules
-profile, the simulator and harness commits). `rebuild` plays the recipe with `branching.play_to`, which
+lineup of seat policies, the game seed, the hero seat, the round, the economy rules, the simulator
+profile (tfteval.runner.SIM_PROFILES, "realistic" by default, with any overrides) and the exact
+TFTConfig options it set, whether plan seats pick their own carousel unit, the simulator and harness
+commits). `rebuild` plays the recipe with `branching.play_to`, which
 is deterministic under PYTHONHASHSEED=0, and checks a fingerprint of the state (hero HP, gold, level,
 xp, board, bench, items, shop, everyone's HP, the step count) against the one stored at build time.
 
@@ -75,7 +77,6 @@ ROOT = Path(__file__).resolve().parents[1]
 # --------------------------------------------------------------------------- candidates
 
 ECONOMY_FIELDS = ("level_to", "roll_floor", "level_by", "spend", "xp_buys", "survival")
-MAX_LEVEL = 9  # set4; the executor also stops at the player's own max level
 
 CANDIDATES = {
     "save": {"level": "curve", "keep": 50, "roll_floor": 999,
@@ -113,6 +114,11 @@ def menu(point: str) -> list[dict]:
              "spec": {k: v for k, v in CANDIDATES[name].items() if k != "desc"}} for name in spec["menu"]]
 
 
+def max_level(state: dict) -> int:
+    """The highest level under the state's rules profile (describe() names it; None: TFT_RULES)."""
+    return int(stages.rules_profile(state.get("rules")).max_level)
+
+
 def target_level(spec: dict, state: dict, anchor_level: int) -> int:
     level = int(state["level"])
     want = spec.get("level", "hold")
@@ -128,7 +134,7 @@ def target_level(spec: dict, state: dict, anchor_level: int) -> int:
         target = 8 if anchor_level < 8 else anchor_level + 1
     else:
         target = int(want)
-    return min(target, MAX_LEVEL)
+    return min(target, max_level(state))
 
 
 def resolve(spec: dict, state: dict, anchor_level: int | None = None) -> dict:
@@ -137,7 +143,7 @@ def resolve(spec: dict, state: dict, anchor_level: int | None = None) -> dict:
     level, xp, gold = int(state["level"]), int(state["xp"]), int(state["gold"])
     target = target_level(spec, state, level if anchor_level is None else anchor_level)
     fields = {"level_to": level, "roll_floor": int(spec.get("roll_floor", 999))}
-    need = xp_to_level(level, xp, target)
+    need = xp_to_level(level, xp, target, state.get("rules"))
     if need > 0:
         buys = min(math.ceil(need / 4), max(0, (gold - int(spec.get("keep", 0))) // 4))
         if buys:
@@ -267,10 +273,30 @@ def harness_commit() -> str | None:
         return None
 
 
-def sim_settings() -> dict:
-    """The simulator settings a game of this process is played with (recorded in every recipe)."""
-    return {"rules": os.environ.get("TFT_RULES", "set4"), "sim_profile": os.environ.get("TFT_SIM_PROFILE") or None,
-            "sim_options": {}}
+SETTING_KEYS = ("rules", "sim", "sim_options", "pickers")
+
+
+def sim_settings(sim: str | None = None, rules: str | None = None, pickers: bool | None = None) -> dict:
+    """The simulator settings games are played with, as tfteval.runner.Game resolves them: the economy
+    rules (`rules`, else TFT_RULES, default set4), the simulator profile with any overrides (`sim`, e.g.
+    "realistic,rng_streams=shared", else TFT_SIM, default realistic) and the exact TFTConfig options it
+    sets, and whether plan seats pick their own carousel unit (else TFT_PICKERS, default on)."""
+    from tfteval.runner import sim_options
+
+    spec, options = sim_options(sim)
+    if pickers is None:
+        pickers = os.environ.get("TFT_PICKERS", "1") != "0"
+    return {"rules": rules or os.environ.get("TFT_RULES", "set4"), "sim": spec, "sim_options": options,
+            "pickers": bool(pickers)}
+
+
+def recipe_settings(recipe: dict) -> dict:
+    """A recipe's simulator settings (SETTING_KEYS). Recipes made before the simulator profiles (no
+    `sim` key) ran every fork option off and no carousel pickers: sim "default", pickers off."""
+    if "sim" not in recipe:
+        return {"rules": recipe.get("rules") or "set4", "sim": "default", "sim_options": {}, "pickers": False}
+    return {"rules": recipe.get("rules") or "set4", "sim": recipe["sim"], "sim_options": dict(recipe["sim_options"]),
+            "pickers": bool(recipe["pickers"])}
 
 
 def make_recipe(lineup: str, seed: int, point: str, settings: dict | None = None) -> dict:
@@ -278,26 +304,20 @@ def make_recipe(lineup: str, seed: int, point: str, settings: dict | None = None
     settings = settings or sim_settings()
     return {"lineup": lineup, "seed": int(seed), "point": point, "round": stages.parse_label(point),
             "hero_seat": hero_seat(seed), "lobby": lobby_specs(seed, hero, opponents),
-            "rules": settings.get("rules", "set4"), "sim_profile": settings.get("sim_profile"),
-            "sim_options": dict(settings.get("sim_options") or {}), "hashseed": os.environ.get("PYTHONHASHSEED")}
+            **{key: settings[key] for key in SETTING_KEYS}, "hashseed": os.environ.get("PYTHONHASHSEED")}
 
 
 def game_kwargs(recipe: dict) -> dict:
-    """Keyword arguments of runner.Game for a recipe. A recipe that needs simulator options this
-    harness cannot set is refused rather than rebuilt into a different game."""
-    import inspect
+    """Keyword arguments of runner.Game for a recipe. The profile's options are resolved again and must
+    equal the recorded ones (a profile redefined since the item was built would rebuild another game)."""
+    from tfteval.runner import sim_options
 
-    from tfteval.runner import Game
-
-    params = inspect.signature(Game.__init__).parameters
-    kwargs = {"rules": recipe.get("rules") or "set4"}
-    for key in ("sim_profile", "sim_options"):
-        value = recipe.get(key)
-        if value:
-            if key not in params:
-                raise RuntimeError(f"recipe needs {key}={value!r}; this harness's Game does not take it")
-            kwargs[key] = value
-    return kwargs
+    settings = recipe_settings(recipe)
+    _, options = sim_options(settings["sim"])
+    if options != settings["sim_options"]:
+        raise RuntimeError(f"simulator profile {settings['sim']!r} now sets {options}, the recipe recorded "
+                           f"{settings['sim_options']}")
+    return {"rules": settings["rules"], "sim": settings["sim"], "pickers": settings["pickers"]}
 
 
 def new_game(recipe: dict):
@@ -367,7 +387,8 @@ def hero_view(game, seat: str) -> tuple[dict, dict, str | None]:
     if executor is not None and executor.comp_number >= 0:
         comp_now = policy.traits[executor.comp_number]
     shop = info.get("shop", player.shop)
-    state = describe(player, shop, info.get("game_round", game.round), game.env, seat=seat, comps=comps, comp=comp_now)
+    state = describe(player, shop, info.get("game_round", game.round), game.env, seat=seat, comps=comps, comp=comp_now,
+                     candidates=info.get("opponent_candidates"))
     return state, comps, comp_now
 
 
@@ -446,6 +467,10 @@ def build_item(lineup: str, seed: int, point: str, kd: int, kl: int, continuatio
             "kd": kd, "kl": kl, "candidates": cands, "dropped": None}
     game = play_recipe(recipe)
     recipe["sim_commit"], recipe["sim_fixes"] = simfixes.sim_commit(), list(game.sim_fixes)
+    recipe["carousel_pickers"] = list(getattr(game, "carousel_pickers", []))
+    if (game.sim, game.sim_options, game.rules) != (recipe["sim"], recipe["sim_options"], recipe["rules"]):
+        raise RuntimeError(f"game played {game.sim} {game.sim_options} {game.rules}, the recipe says "
+                           f"{recipe['sim']} {recipe['sim_options']} {recipe['rules']}")
     rebuild_seconds = time.time() - started
     if not hero_alive(game, recipe):
         item["dropped"] = "hero out before the decision point"
@@ -588,7 +613,8 @@ def plan_signature(plan: dict, state: dict) -> tuple[int, int]:
     target = max(level, int(knobs["level_to"]))
     if plan.get("level_by"):
         target = max(target, int(plan["level_by"]["level"]))
-    buys = max(math.ceil(xp_to_level(level, xp, min(target, MAX_LEVEL)) / 4), int(knobs["xp_buys"]))
+    need = xp_to_level(level, xp, min(target, max_level(state)), state.get("rules"))
+    buys = max(math.ceil(need / 4), int(knobs["xp_buys"]))
     xp_gold = min(4 * buys, 4 * (gold // 4))
     floor = int(knobs["roll_floor"])
     if plan.get("spend") and not knobs["survival"]:

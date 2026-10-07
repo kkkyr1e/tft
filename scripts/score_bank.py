@@ -11,10 +11,13 @@ pick); `cmd:<shell command>` (reads a prompt on stdin, answers {"choice": ...});
 (any callable view -> name, e.g. a model planner later; bank.CallableAgent from Python); and the
 label-reading anchors `oracle` (the discovery-best candidate, regret 0) and `worst`.
 
-By default every state is rebuilt from its recipe (each source game played once through its decision
-points) and checked against the item's fingerprint; the agent then gets the rebuilt public state and,
-for a planner of the hero's own kind, a copy of the hero's planner with its history. --stored skips the
-rebuild and uses the public state stored in the item (fast; a stateful planner then starts fresh).
+Every state is rebuilt with its recipe's own simulator settings (rules, sim profile and options, carousel
+pickers); --sim and --rules (as in run_lobby.py) only check that the bank was built with them. A file
+mixing settings is refused. By default every state is rebuilt from its recipe (each source game played
+once through its decision points) and checked against the item's fingerprint; the agent then gets the
+rebuilt public state and, for a planner of the hero's own kind, a copy of the hero's planner with its
+history. --stored skips the rebuild and uses the public state stored in the item (fast; a stateful
+planner then starts fresh).
 
 Labels are recomputed from the stored branches (--sd-floor changes the interval). The scorecard JSON
 (--out, default next to the bank: <bank>.<agent>.score.json) has the regret with a 95% interval
@@ -75,6 +78,9 @@ def main():
     parser.add_argument("--sanity", action="store_true", help="score the sanity ladder and check its order")
     parser.add_argument("--stored", action="store_true", help="use the stored public states, no rebuild")
     parser.add_argument("--sd-floor", type=float, default=bank.SD_FLOOR, help="floor of the label interval's SD")
+    parser.add_argument("--sim", help="check the bank was built with this simulator profile (e.g. realistic, "
+                                      "default, realistic,rng_streams=shared)")
+    parser.add_argument("--rules", choices=["set4", "set18"], help="check the bank was built with this economy")
     parser.add_argument("--out", help="scorecard JSON (default <bank>.<agent>.score.json, or .sanity.json)")
     args = parser.parse_args()
     names = list(dict.fromkeys(args.agent + (SANITY_AGENTS if args.sanity else [])))
@@ -83,10 +89,19 @@ def main():
 
     path = Path(args.bank)
     items = bank.load_items(path)
+    found = {json.dumps(bank.recipe_settings(it["recipe"]), sort_keys=True) for it in items}
+    if len(found) > 1:
+        raise SystemExit(f"{path} mixes simulator settings: {sorted(found)}")
+    if found and (args.sim or args.rules):
+        built = json.loads(found.pop())
+        want = bank.sim_settings(args.sim or built["sim"], args.rules or built["rules"], built["pickers"])
+        if want != built:
+            raise SystemExit(f"{path} was built with {built}, not {want}")
     summary = bank.bank_summary(items)
     good = bank.usable(items, args.sd_floor)
     print(f"{path}: {summary['built']} items built, {summary['usable']} usable ({summary['clear']} clear) from "
-          f"{summary['games']} source games; items dev {summary['splits']['dev']}, held-out {summary['splits']['heldout']}; "
+          f"{summary['games']} source games; items dev {summary['splits']['dev']}, "
+          f"held-out {summary['splits']['heldout']}; "
           f"dropped {summary['dropped'] or 0}", flush=True)
     if not good:
         raise SystemExit("no usable items")

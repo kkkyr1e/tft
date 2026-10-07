@@ -237,6 +237,47 @@ def test_dev_heldout_split_is_by_seed_and_about_70_30():
     assert 0.65 < dev < 0.75 and bank.split(9100) == bank.split(9100)
 
 
+def test_recipes_record_the_simulator_settings(monkeypatch):
+    monkeypatch.setenv("TFT_SIM", "realistic,rng_streams=shared")
+    monkeypatch.setenv("TFT_RULES", "set18")
+    monkeypatch.setenv("TFT_PICKERS", "0")
+    st = bank.sim_settings()
+    assert st == {"rules": "set18", "sim": "realistic,rng_streams=shared", "pickers": False,
+                  "sim_options": {"pve_damage": True, "fortune_orbs": True, "carousel_fixes": True,
+                                  "hide_next_opponent": True, "rng_streams": "shared"}}
+    assert bank.sim_settings("default", "set4", True) == {"rules": "set4", "sim": "default", "sim_options": {},
+                                                           "pickers": True}
+    monkeypatch.delenv("TFT_SIM")
+    monkeypatch.delenv("TFT_PICKERS")
+    assert bank.sim_settings()["sim"] == "realistic" and bank.sim_settings()["pickers"]  # the defaults
+    with pytest.raises(ValueError):
+        bank.sim_settings("unreal")
+
+    recipe = bank.make_recipe("stance@rule:7", 9100, "3-2", bank.sim_settings("realistic", "set4"))
+    assert {k: recipe[k] for k in bank.SETTING_KEYS} == bank.sim_settings("realistic", "set4")
+    assert bank.game_kwargs(recipe) == {"rules": "set4", "sim": "realistic", "pickers": True}
+    stale = dict(recipe, sim_options={**recipe["sim_options"], "pve_damage": False})  # the profile changed since
+    with pytest.raises(RuntimeError):
+        bank.game_kwargs(stale)
+    # a recipe from before the profiles (the first pilot): every fork option off, no carousel pickers
+    legacy = {k: v for k, v in recipe.items() if k not in ("sim", "pickers")}
+    legacy.update(sim_profile=None, sim_options={})
+    assert bank.recipe_settings(legacy) == {"rules": "set4", "sim": "default", "sim_options": {}, "pickers": False}
+    assert bank.game_kwargs(legacy) == {"rules": "set4", "sim": "default", "pickers": False}
+
+
+def test_levels_follow_the_rules_profile():
+    pytest.importorskip("Simulator")  # the profiles live in the simulator's rules.py (no game is played)
+    s4 = state(round=21, level=8, xp=0, gold=100, rules="set4")
+    s18 = dict(s4, rules="set18")
+    assert bank.resolve(bank.CANDIDATES["cap_out"], s4)["xp_buys"] == 20  # 80 xp from 8 to 9
+    assert bank.resolve(bank.CANDIDATES["cap_out"], s18)["xp_buys"] == 17  # 68 under set18
+    assert bank.max_level(s4) == 9 and bank.max_level(s18) == 10
+    at9 = dict(s4, level=9)
+    assert "xp_buys" not in bank.resolve(bank.CANDIDATES["fast8"], at9)  # nothing above 9 under set4
+    assert bank.resolve(bank.CANDIDATES["fast8"], dict(at9, rules="set18"))["xp_buys"] == 17  # 68 xp, 9 -> 10
+
+
 # --------------------------------------------------------------------------- on the simulator
 
 def test_recipe_rebuild_matches_the_fingerprint():
