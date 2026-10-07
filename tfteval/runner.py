@@ -12,6 +12,7 @@ from dataclasses import asdict, dataclass, field
 import numpy as np
 
 from tfteval.policies import Policy, RandomPolicy
+from tfteval.record import Recorder, record_seats
 
 
 @dataclass
@@ -31,6 +32,8 @@ class GameResult:
     sim: str = "default"  # simulator profile (SIM_PROFILES, with any overrides), see sim_options()
     sim_options: dict = field(default_factory=dict)  # the exact TFTConfig options it set (besides rules)
     carousel_pickers: list = field(default_factory=list)  # seats that picked on the carousel with their own picker
+    eliminated: dict = field(default_factory=dict)  # seat -> round index of the fight that knocked it out
+    records: dict = field(default_factory=dict)  # seat -> per-round rows, recorded seats only (tfteval.record)
 
     def to_json(self) -> dict:
         return asdict(self)
@@ -98,7 +101,7 @@ class Game:
 
     def __init__(self, seat_policies: dict[str, Policy], seed: int, max_steps: int = 20000, quiet: bool = True,
                  sim_fixes: bool | None = None, rules: str | None = None, sim: str | None = None,
-                 pickers: bool | None = None):
+                 pickers: bool | None = None, record=None):
         from Simulator.simulators.tft_simulator import TFTConfig, parallel_env
 
         from tfteval import simfixes
@@ -120,6 +123,7 @@ class Game:
         self.seats = [f"player_{i}" for i in range(len(seat_policies))]  # TFT_Simulator.possible_agents
         if set(self.seats) != set(seat_policies):
             raise ValueError(f"lobby seats {sorted(seat_policies)} do not match env seats {self.seats}")
+        recorded = record_seats(record, seat_policies)  # tfteval.record; checked before the env is built
         self.fallback_policy = RandomPolicy()
         self.fallback_policy.reset(_seat_seed(seed, 10_000))
         for index, seat in enumerate(self.seats):
@@ -140,6 +144,8 @@ class Game:
             raise RuntimeError(f"env seats {self.env.possible_agents} differ from {self.seats}")
 
         self.placements: dict[str, int] = {}
+        self.eliminated: dict[str, int] = {}  # seat -> round of the fight that knocked it out (not the winner)
+        self.recorder = Recorder(recorded) if recorded else None
         self.actions = {seat: 0 for seat in self.seats}
         self.fallbacks = {seat: 0 for seat in self.seats}
         self.health = {seat: 100.0 for seat in self.seats}
@@ -170,20 +176,29 @@ class Game:
     def step(self) -> None:
         """One env step: every seat still in the game picks one action."""
         chosen = {}
+        recorder = getattr(self, "recorder", None)  # games saved before the recorder existed have none
         with light_board_copies(self.env):
             for seat in self.env.agents:
                 if seat in self.placements:
                     continue
                 obs, info = self.observations.get(seat), self.infos.get(seat, {})
+                watched = recorder is not None and seat in recorder.rows
+                if watched:
+                    recorder.observe(self, seat, info)
+                fallback = False
                 try:
                     chosen[seat] = self.seat_policies[seat].act(obs, info, seat, self.env)
                 except NotImplementedError:
                     raise
                 except Exception:
                     self.fallbacks[seat] += 1
+                    fallback = True
                     chosen[seat] = self.fallback_policy.act(obs, info, seat, self.env)
                 self.actions[seat] += 1
-        self.observations, _, terminated, _, self.infos = self.env.step(chosen)
+                if watched:
+                    recorder.acted(self, seat, chosen[seat], obs, fallback)
+        with recorder.combat(self) if recorder is not None else contextlib.nullcontext():
+            self.observations, _, terminated, _, self.infos = self.env.step(chosen)
 
         for seat in self.seats:
             player = self.infos.get(seat, {}).get("player")
@@ -195,6 +210,8 @@ class Game:
         )
         for seat in out_now:
             self.placements[seat] = self.next_place
+            if self.next_place > 1 and hasattr(self, "eliminated"):  # the winner is not eliminated
+                self.eliminated[seat] = self.round - 1  # the round was played in this step, then counted up
             self.next_place -= 1
         self.steps += 1
 
@@ -229,12 +246,14 @@ class Game:
             sim=getattr(self, "sim", "default"),  # games saved before the profiles existed ran the defaults
             sim_options=dict(getattr(self, "sim_options", {})),
             carousel_pickers=list(getattr(self, "carousel_pickers", [])),
+            eliminated=dict(getattr(self, "eliminated", {})),
+            records=self.recorder.records() if getattr(self, "recorder", None) is not None else {},
         )
 
 
 def play_game(seat_policies: dict[str, Policy], seed: int, max_steps: int = 20000, quiet: bool = True,
               sim_fixes: bool | None = None, rules: str | None = None, sim: str | None = None,
-              pickers: bool | None = None) -> GameResult:
+              pickers: bool | None = None, record=None) -> GameResult:
     """Run one game. `seat_policies` maps "player_0".."player_7" to a policy.
 
     The same seed replays the same game only if the interpreter was started with a fixed
@@ -261,8 +280,12 @@ def play_game(seat_policies: dict[str, Policy], seed: int, max_steps: int = 2000
     `pickers`: seats whose policy exposes a carousel picker (`carousel_picker()`, the plan-executor
     seats) pick their own carousel unit; the others take the most expensive. Default on;
     TFT_PICKERS=0 turns it off (e.g. to replay games made before the pickers).
+
+    `record`: per-round trajectory rows for some seats (tfteval.record), in the result's `records`:
+    True for every seat, a list (or comma string) of seats or policy names, False for none. Default
+    from TFT_RECORD (unset: none). Recording does not change the game.
     """
-    return Game(seat_policies, seed, max_steps, quiet, sim_fixes, rules, sim, pickers).run().result()
+    return Game(seat_policies, seed, max_steps, quiet, sim_fixes, rules, sim, pickers, record).run().result()
 
 
 def _share(obj, memo):
