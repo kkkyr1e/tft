@@ -1,0 +1,27 @@
+{
+  "_doc": "Benchmark v1, frozen. Top-level keys starting with _ are not hashed; any other edit changes the config hash and results made under the old hash are refused (tfteval/benchmark.py, README 'Benchmark v1').",
+  "name": "tft-bench",
+  "version": 1,
+  "sim": "realistic",
+  "carousel_pickers": true,
+  "tracks": {
+    "set4": {"rules": "set4"},
+    "set18": {"rules": "set18"}
+  },
+  "default_track": "set4",
+  "lobby": {
+    "hero_seats": 1,
+    "opponents": 7,
+    "draw": "uniform from the pool, with replacement, sha256(salt:seed:slot) mod pool size",
+    "hero_seat": "player_(seed mod 8)",
+    "salt": "tft-bench-v1"
+  },
+  "pools": {
+    "dev": {"policies": ["rule", "mimic", "mimicfc", "fast8", "stance", "stance+hold"], "first_seed": 30000},
+    "heldout": {"policies": ["stance1", "stance+lossstreak", "noisy20"], "first_seed": 39000}
+  },
+  "stance_family_prefix": "stance",
+  "sample_size": {"half_width": 0.25, "sd_per_game": 2.25},
+  "rubric": {"died_gold": 20, "bank_gold": 50, "bank_rounds": 2, "items_from": "4-1", "fallback_carries": 2},
+  "variety": {"signal_round": "3-1", "noninferiority_margin": 0.25, "permutations": 1000}
+}
