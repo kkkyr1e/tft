@@ -6,7 +6,7 @@ items against the Bayesian ceiling, per stratum and equal-weighted over strata.
 
 Agents (tfteval.bank2.make_agent): a plan-seat kind (`stance`, `mimic`, `fast8`, ...; `rule` = `mimic`)
 mapped to the nearest candidate (bank2.nearest_candidate: gold into xp and rerolls this round, fodder);
-`random`; `always:<candidate>` (a name not on an item's menu falls back to its first candidate);
+`random`; `always:<candidate>` (scored on the items whose menu has the candidate only);
 `noisy<N>:<agent>`; `cmd:<shell command>` (reads bank.choice_prompt on stdin, answers {"choice": ...});
 `py:<module>:<function>`. The cross-fit anchors `xfit:oracle` and `xfit:worst` are always reported
 (picked on half the branches, scored on the other half; tfteval/bank2.py). There is no label-reading
@@ -100,7 +100,10 @@ def main():
         name = f"xfit:{which}"
         cards[name] = bank2.scorecard(bank2.crossfit_rows(good, labels, which), name, str(path))
     for agent in agents:
-        rows = bank2.score_rows(good, labels, choices[agent.name])
+        part = good
+        if agent.name.startswith("always:"):  # only the strata whose menu has the candidate
+            part = [it for it in good if any(c["name"] == agent.target for c in it["candidates"])]
+        rows = bank2.score_rows(part, labels, choices[agent.name])
         for row in rows:
             row["notes"] = choices[agent.name][row["id"]].get("notes")
         cards[agent.name] = bank2.scorecard(rows, agent.name, str(path))
