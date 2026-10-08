@@ -34,7 +34,7 @@ python scripts/compare.py results/hero_rule.json results/hero_noisy20.json --pol
 
 ## 模拟器配置：`realistic` 和 `default`
 
-fork 的 `develop`（`scripts/setup_sim.sh` 固定在 2ba01d5）加了几个让对局更接近正式游戏的选项，在模拟器里默认都关（fork 的 `FORK_NOTES.md`，"Realism options"）。我们把它们打包成两套配置（`tfteval/runner.py` 的 `SIM_PROFILES`），新跑的对局默认用 `realistic`：
+fork 的 `develop`（`scripts/setup_sim.sh` 固定在 5e2cb1c：2ba01d5 加上守护天使复活列表不再全进程共用的修复，见 fork 的 `FORK_NOTES.md` 第 16 行）加了几个让对局更接近正式游戏的选项，在模拟器里默认都关（fork 的 `FORK_NOTES.md`，"Realism options"）。我们把它们打包成两套配置（`tfteval/runner.py` 的 `SIM_PROFILES`），新跑的对局默认用 `realistic`：
 
 | 配置 | 选项 |
 |---|---|
@@ -46,7 +46,7 @@ fork 的 `develop`（`scripts/setup_sim.sh` 固定在 2ba01d5）加了几个让�
 - **选秀**：计划座位（带执行器的 `mimic`、`stance` 等）选秀时自己挑（`PlanExecutor.carousel_pick`）：先挑目标阵容里的单位（星级高、费用高的优先）；没有的话挑带着想要的装备的单位：能和手里的散件（装备栏里的，或场上单位身上单独的一件）合成的散件，或者成装；再没有就挑最贵的（模拟器的默认）。出错时也退回默认。runner 在 `env.reset` 之前把选秀函数挂上，1-1 也是自己挑；其他座位（规则 bot 等）照旧用模拟器的默认。每次选秀（回合、可选的单位、选了哪个、理由）记在执行器的 `carousel_log` 里，`smoke_executor.py` 写进输出的 `games[].carousel`，执行器统计里有 `carousel_picks` 和按理由的计数（`carousel_comp`、`carousel_item`、`carousel_default`）。`TFT_PICKERS=0`（或 `play_game(..., pickers=False)`）全部用默认。分叉时换了策略的座位换成新策略的选秀函数。
 - **看不到下回合的对手**：`hide_next_opponent` 下备战阶段 `game_round.matchups` 是空的，env 在 `info["opponent_candidates"]` 里给出候选集合（最近对手规则没排除的、还活着的对手；野怪回合之前为空），`describe()` 的 `next_from` 用的就是它（`tfteval/public.py`）。我们的代码从不读确切的对手；`tests/test_sim_profiles.py` 在一局 `realistic` 里逐回合核对 `matchups` 为空、`next_from` 等于 env 给的候选集合和 `player.opponent_options`。
 - **规则 bot 的随机数**：keyed 下每个座位的规则 bot 用自己的发生器（`player.default_agent.rng`）选阵容，不再用 numpy 全局的；执行器就是它那个座位的规则 bot，也从这个发生器抽。
-- **回归**：`tests/test_regression.py` 核对两份参考。`executor_reference.json` 是 `default` 配置、不挂选秀函数，在 2ba01d5 上照旧逐动作重放，没有重录；`executor_reference_realistic.json` 是 `realistic` 配置加选秀函数，在 2ba01d5 上新录的。`tests/test_branching.py` 的每个测试在两套配置下各跑一遍。
+- **回归**：`tests/test_regression.py` 核对两份参考。`executor_reference.json` 是 `default` 配置、不挂选秀函数，在 2ba01d5 上照旧逐动作重放，没有重录；`executor_reference_realistic.json` 是 `realistic` 配置加选秀函数，在 2ba01d5 上新录的；两份在 5e2cb1c 上照样一致。`tests/test_branching.py` 的每个测试在两套配置下各跑一遍。
 - **扣血表没有算野怪**：`tfteval/stages.py` 的 `dmg_per_loss`、`losses_to_death` 只算对战，野怪回合为 0；`realistic` 下野怪回合输了也扣血，但下文冒烟的 56 局里 hero 在野怪回合一次血都没掉，暂时没改。给大模型的提示词里"输给野怪不扣血"那句也还没改。
 
 **耗时。** `realistic` 一开始比 `default` 慢十几倍。原因在模拟器：规则 bot 给每个候选的买入和换人在棋盘的深拷贝上打分（`Simulator/generators/default_agent.py` 第 306、324、467、491、597 行的 `deepcopy(player.board)`，7 个规则 bot 一局约 10 万次），每个棋子都引用 env 的战斗上下文（`Simulator/battle/champion.py:153`，`self.ctx = get_ctx()`），每次拷贝连上下文一起拷：它的随机数发生器、战斗列表；keyed 下还有 `KeyedStreams`，它持有当前的 `Game_Round`（`Simulator/simulators/tft_simulator.py:265` 设置 `streams.game_round`，`Simulator/rng.py:215`、`221`），等于拷了整局游戏。2-3 时拷一次棋盘 keyed 要 12 毫秒，shared 1 毫秒。runner 在各座位选动作的那段时间让深拷贝共享这个上下文（`runner.light_board_copies`：给上下文的类加一个 deepcopy 分派项，不改模拟器）。拷贝只用来打分，既不从它的上下文抽随机数也不往里写，选动作本身也不从 env 的随机流抽（动作在 `env.step` 里执行，在这段时间之外），所以对局一点不变：`tests/test_sim_profiles.py` 开、关各打一局逐座位核对，下表每一行修之前和修之后的名次、步数也完全相同。单进程，种子 24000，set4：
