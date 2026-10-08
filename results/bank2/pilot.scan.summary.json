@@ -1,0 +1,56 @@
+{
+ "games": 20,
+ "strata": {
+  "pairs3": {
+   "fired": 12,
+   "rate": 0.6,
+   "rounds": {
+    "3-2": 5,
+    "3-3": 3,
+    "3-5": 4
+   },
+   "hero_out": 0,
+   "no_fire": 8
+  },
+  "streak4": {
+   "fired": 12,
+   "rate": 0.6,
+   "rounds": {
+    "4-1": 10,
+    "4-2": 2
+   },
+   "hero_out": 0,
+   "no_fire": 8
+  },
+  "losing3": {
+   "fired": 1,
+   "rate": 0.05,
+   "rounds": {
+    "3-1": 1
+   },
+   "hero_out": 0,
+   "no_fire": 19
+  },
+  "lowhp4": {
+   "fired": 5,
+   "rate": 0.25,
+   "rounds": {
+    "4-1": 1,
+    "4-6": 2,
+    "4-7": 2
+   },
+   "hero_out": 0,
+   "no_fire": 15
+  },
+  "ref41": {
+   "fired": 20,
+   "rate": 1.0,
+   "rounds": {
+    "4-1": 20
+   },
+   "hero_out": 0,
+   "no_fire": 0
+  }
+ },
+ "seconds_per_game": 20.764
+}

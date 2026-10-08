@@ -655,7 +655,100 @@ python scripts/score_bank.py results/bank/pilot.jsonl --agent stance mimic --sto
 | 自检（全部 172 题，按源对局聚类的 95% 区间） | `oracle` 0；`stance` −0.06 ±0.10；`noisy50:stance` −0.08 ±0.09；`random` −0.02 ±0.12；`mimic`（与 `rule` 相同）+0.07 ±0.11；`worst` +0.52 ±0.11。`stance` − `mimic` −0.13 ±0.12（显著，与循环赛一致）；`oracle` ≤ `stance`、`stance` ≤ `noisy50:stance` 两条不成立（差都在 0.1 名以内） |
 | 不读标签的参照（交叉拟合：标注集拆成两半，一半上挑、另一半上算） | 交叉拟合的 `oracle` +0.00 ±0.10，交叉拟合的 `worst` +0.12 ±0.13；`always:save` +0.16 ±0.10，`always:roll` +0.00 ±0.12，`always:` 第二个候选 −0.03 ±0.11 |
 
-怎么读：`worst` 的 +0.52 是在同一批标注分叉上挑最差再报它（赢家诅咒），不说明题库能抓坏决定；不读标签的交叉拟合 `worst` 只有 +0.12 ±0.13，不显著。题库 v1 真正量出来的只有一件事：一直存钱（`save`，`mimic` 多半这样选）比别的候选平均差约 0.15 名，所以 `stance` 对 `mimic` 显著；`stance`、它的一半随机扰动、均匀随机和交叉拟合的最优彼此分不出。原因是这三个决策点上候选之间的真实差别很小：按随机效应估计，同一局面两个候选的真实差的标准差 3-2 约 0，4-1、5-1 约 0.37 名；血少（≤52）、钱少（≤45）、局面差（标注平均名次 > 5.5）时大一些（0.47、0.50、0.65）。用它比两个 agent 时，看两者遗憾值之差，不看相对 `oracle` 的绝对值，也不用读标签的 `worst`。下一版见 `docs/BANK_V2.md`。
+怎么读：`worst` 的 +0.52 是在同一批标注分叉上挑最差再报它（赢家诅咒），不说明题库能抓坏决定；不读标签的交叉拟合 `worst` 只有 +0.12 ±0.13，不显著。题库 v1 真正量出来的只有一件事：一直存钱（`save`，`mimic` 多半这样选）比别的候选平均差约 0.15 名，所以 `stance` 对 `mimic` 显著；`stance`、它的一半随机扰动、均匀随机和交叉拟合的最优彼此分不出。原因是这三个决策点上候选之间的真实差别很小：按随机效应估计，同一局面两个候选的真实差的标准差 3-2 约 0，4-1、5-1 约 0.37 名；血少（≤52）、钱少（≤45）、局面差（标注平均名次 > 5.5）时大一些（0.47、0.50、0.65）。用它比两个 agent 时，看两者遗憾值之差，不看相对 `oracle` 的绝对值，也不用读标签的 `worst`。下一版的方案见 `docs/BANK_V2.md`，实现见下一节。
+
+## 决策题库 v2
+
+方案在 `docs/BANK_V2.md`（为什么改、改什么、不做什么）。代码在 `tfteval/bank2.py`，脚本是 `scripts/build_bank2.py`（出题）、`scripts/score_bank2.py`（打分）、`scripts/rule_check_bank2.py`（规则检查），单测在 `tests/test_bank2.py`。v1 不动：`bank.py` 只加了 v2 候选要用的三个写法（`"7+"` 这类等级、`fodder`、`then: "base"`），v1 的题照旧重算标签、照旧打分，单测拿存着的 v1 自检记分卡逐题核对（选择和遗憾值完全相同）。
+
+和 v1 一样的部分：题存配方不存存档，重建后核对状态指纹；候选是在续打计划者（默认 `stance`）的计划上换掉经济字段、保持几个备战阶段的承诺（`CommitPlanner`）；同一个 k 在各候选间是同一个随机未来；每个分叉的名次和 hero 每回合动作的哈希都存着。不一样的是下面四件事。
+
+**1. 触发式决策点（分层）。** 一层是一个回合窗口、一个触发条件和一份候选。触发条件只读 hero 备战阶段开始时的公开局面（`describe()`）：血量、金币、等级、连胜连败、场上加备战席的对子数（同一个 1 星单位正好两张）、离死还差几次（`bank2.trigger_features`）。出题时把源对局一个备战阶段一个备战阶段往前打，在窗口里**第一次**满足条件的那一回合出题，这一回合写进配方，重建和 v1 一样是 `play_to` 一次打到（单测核对过逐回合打和一次打到指纹相同）。窗口里一直没满足、或者 hero 先出局了，照样写一行，`dropped` 写原因，`scan` 存窗口里每回合的特征，命中率可以直接从题库文件数。阈值和窗口都是 `bank2.py` 顶部的常量。
+
+| 层 | 窗口 | 触发条件 | 候选（平局按这个顺序） |
+|---|---|---|---|
+| `pairs3` | 3-2～3-5 | 对子 ≥ 2，金币 30～50 | `roll10` / `level7` / `save` |
+| `streak4` | 4-1～4-2 | 金币 ≥ 50，连胜 ≥ 2，等级 ≤ 7 | `level8` / `roll30` / `save` |
+| `losing3` | 3-1～3-2 | 连败 ≥ 3，血量 ≥ 70 | `streak` / `roll20` / `level_roll10` |
+| `lowhp4` | 4-1～5-1 | 血量 ≤ 50，金币 ≥ 40 | `roll0` / `roll20` / `level_roll10` / `save` |
+| `ref41` | 4-1 | 无（对照层） | 同 `lowhp4` |
+
+承诺都是 2 个备战阶段（`COMMIT_ROUNDS`）。候选（`bank2.CANDIDATES`，写法同 v1 的 `bank.CANDIDATES`）：
+
+| 候选 | 做什么 |
+|---|---|
+| `save` | 同 v1：不 D，只用 50 金以上的钱朝房间等级曲线买经验 |
+| `roll10` / `roll20` / `roll30` / `roll0` | 不买经验，每回合 D 到 10 / 20 / 30 / 0 金 |
+| `level7` | 用全部金币朝 7 级买经验（已经 7 级就朝 8 级），不 D；到了就停 |
+| `level8` | 用全部金币朝 8 级买经验，不 D；到 8 级以后那一回合交还给续打策略（`then: "base"`），D 不 D 由它定 |
+| `streak` | 保连败：上场最弱的棋子、强的留在备战席（执行器的 `fodder`，即 `stance+lossstreak` 用的那个旋钮），不 D，只用 50 金以上的钱朝等级曲线买经验 |
+| `level_roll10` | 用 10 金以上的钱朝"当前等级 + 1"买经验，再 D 到 10 金（执行器先买经验再刷新） |
+
+`ref41` 和 `lowhp4` 的候选一样；同一局 `lowhp4` 也在 4-1 触发时两道题是同一个局面，`ref41` 直接拷 `lowhp4` 的分叉（`copied_from`，出题时 `lowhp4` 排在前面）。
+
+**2. 配对的逐步淘汰（不做粗筛）。** 每个候选先跑 k = 0…7（`K_START`=8）。之后每看一次：在所有还在场的候选共有的 k 上，平均名次最低的是领先者；其余每个候选和领先者逐 k 相减，平均差大于 2 个配对标准误（`ELIM_Z`；标准误 = max(标准差, 1 名) / √n，下限防止样本少时标准差碰巧为 0）就停掉。剩下的每个再加 4 个分叉（`K_STEP`），直到只剩一个，或者剩下的都到了 24 个（`K_MIN`）而预算不够再加一轮，或者到了 32 个（`K_MAX`），或者预算（`BUDGET`，每题总分叉数，默认 56）不够每个再加一个。被停掉的候选保留它已有的 k。第一次看时所有候选的动作完全相同（重复）就停，题丢掉。淘汰的过程（每次看的均值、差、标准误、停掉谁）存在 `race` 里；整个过程只取决于各分叉的名次，所以可以用存着的分叉重放（`bank2.replay_race`），也可以换更大的预算接着跑（`--extend`：重建、核对指纹，已有的分叉照用，只补缺的；结果和直接用新预算出题完全一样）。
+
+预算和候选数的关系：3 个候选、第一次看停掉 1 个时，剩下 2 个正好各到 24（8 + 2×24 = 56）。4 个候选时 56 不够：停掉 2 个，剩下 2 个各 20；一个都没停掉，各 14。要让 4 个候选的层也到 24，用 `--budget 64`。
+
+**3. 标签（打分时从分叉重算）。**
+
+- **噪声**：模型是 名次(c, k) = μ_c + a_k + e_ck，a_k 是同一个 k 的公共随机数，e 独立。每题用各候选和参照候选（分叉最多的那个）逐 k 之差的方差合并估计，按 8 个自由度向本层的合并值收缩，下限 1 名（`VAR_PRIOR_DF`、`SD_FLOOR`）。由它算出各候选相对参照的配对差估计的协方差（不同候选的 k 集合不同也对）。
+- **先验（每层一个，随机效应、矩估计）**：μ_c = 本层候选 c 的平均效应 α_c + 这一局面的偏离 u_c，u_c ~ N(0, τ²)。α 取各题中心化后的配对差的平均（连同它的抽样协方差一起进先验），τ² 取配对差在题间的方差减去其中的抽样方差。一层少于 5 道可用题时 α 取 0、τ 取 0.26（v1 测的 4-1、5-1 两候选真实差的标准差 0.37 / √2；`TAU_FALLBACK`）。`--prior zero` 改成不带 α 的可交换先验。
+- **后验**：配对差上的正态共轭，蒙特卡洛 2 万次（种子取题号），得到每个候选"真的是最优"的概率 P。重复的候选（所有共有分叉里动作完全相同）合成一组，共享这一组的 P。**明确题**：最大的 P ≥ 0.85（`CLEAR_P`）。**准确率上限**：所有明确题上最大 P 之和，即完美 agent 预期能选对的题数；agent 在明确题上预期选对的题数是所选候选的 P 之和，准确率 = 它 / 上限。
+- **遗憾值**：所选候选与后验最优候选在两者共有的 k 上逐 k 之差的平均（全部分叉；被早停掉的候选只在它自己的 k 上比）。选了菜单里没有的名字按该题最大的遗憾值算，计入 `invalid`。
+- **交叉拟合的参照**：`xfit:oracle` 在奇数 k 上（按相对参照候选的配对差）挑最优、在偶数 k 上算遗憾值，再反过来，两半平均；`xfit:worst` 同样挑最差。没有读标签的 `oracle` 和 `worst`（`make_agent` 拒绝它们）。
+
+**4. 规则检查（`scripts/rule_check_bank2.py`，不跑模拟）。** 每层算：每个固定候选（`always:<候选>`）的遗憾值；交叉拟合选出的最好固定候选；每个单特征阈值规则（特征取血量、金币、对子数、连胜连败、等级、离死还差几次；规则是"特征 ≤ t 选 A，否则选 B"，A、B、t 在别的折的源对局上选，按源对局分 5 折）；深度 2 的决策树（每个叶子选训练题上总遗憾值最小的候选，每次分裂取总遗憾值降得最多、两边各至少 3 题的那个，按源对局交叉验证）。每项都给遗憾值（按源对局聚类的区间）和明确题上相对上限的准确率。**上升空间** = 最好的规则的遗憾值 − `xfit:oracle` 的遗憾值；小于 0.1 名（`RULE_HEADROOM`）的层记为规则层（方案里说这样的层要删掉；脚本只报告，不删）。
+
+**打分**（`score_bank2.py`）。agent 和 v1 一样：`stance`、`mimic` 等计划者出自己的计划，再映射到最近的候选；`random`、`always:<候选>`（只在菜单里有它的题上算）、`noisy<N>:<agent>`、`cmd:<命令>`、`py:<模块>:<函数>`。映射（`bank2.nearest_candidate`）和 v1 一样比本回合花在经验和刷新上的金币，另外上不上弱阵（`fodder`）不同时距离加 2 金（一次刷新），所以 `stance+lossstreak` 那种上弱阵的计划落到 `streak`；`level8` 第一回合已经 8 级时就是计划者自己的计划。每层报遗憾值（按源对局聚类的 95% 区间）、明确题数、上限、预期选对数和准确率；需要一个总数时各层等权（各层均值的平均，区间仍按源对局聚类，同一局在几层都有题也算对）。两个 agent 的差也是每层和各层等权两种。`--sanity` 检查 `xfit:oracle` ≤ `stance` ≤ `noisy50:stance` ≤ `random` ≤ `xfit:worst` 和 `stance` ≤ `mimic`（报告，不是测试）。
+
+```bash
+# 只看命中率（不跑分叉）：每局一行，窗口里每回合的特征和各层在哪一回合触发
+nice -n 19 python scripts/build_bank2.py --lineups stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1 \
+    --seeds 9400:20 --sim realistic --rules set4 --scan-only --out results/bank2/pilot.scan.jsonl
+# 出题（默认 1 个进程、默认淘汰参数；可以随时停下再续跑）
+nice -n 19 python scripts/build_bank2.py --lineups ... --seeds 9500:60 --out results/bank2/bank.jsonl
+python scripts/score_bank2.py results/bank2/bank.jsonl --sanity
+python scripts/score_bank2.py results/bank2/bank.jsonl --agent stance mimic --stored
+python scripts/rule_check_bank2.py results/bank2/bank.jsonl
+```
+
+续跑时跳过文件里已有的题；续打策略、模拟器设置、某层的定义（窗口、条件、候选）和已有的题不一致就拒绝，淘汰参数不一致时也拒绝，除非给 `--extend`（这时按新参数重跑淘汰）。
+
+**题目的字段**（JSONL 一行一题，和 v1 相同的不再重复）：`schema` 2；`id`（`lineup#seed@层`）、`stratum`、`point`（触发的回合，没触发为空）；`trigger`（出题时这一层的窗口、条件、候选、承诺长度）；`scan`（窗口里打过的每回合的特征和是否触发）；`features`（触发那一回合的特征）；`racing`（`k_start`、`k_step`、`k_min`、`k_max`、`budget`、`z`、`sd_floor`）；`branches`（每个分叉：`cand`、`k`、`look` 第几次看时跑的、`place`、`actions`、`applied`/`changed`、`steps`、`fallbacks`、`seconds`）；`race`（`looks`：每次看时在场的候选、`n`、领先者、各候选均值、和领先者的差与标准误、停掉谁；`stop` 为什么停；`survivors`；`n` 每个候选的分叉数）；`copied_from`（从哪道题拷的分叉）；`reraced`（换参数重跑淘汰的记录）。标签不存，`score_bank2.py` 的输出里有（`labels`、每层的先验 `fits`）。
+
+**试跑**（只为跑通流程和看命中率，`results/bank2/pilot.*`，不是正式题库）。源对局和 v1 正式题库相同：`stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1`，`realistic`、set4、挂选秀函数，种子从 9400 起。机器上同时有 3 个进程的 benchmark 在跑，试跑用 `nice -n 19`、1 个进程，耗时偏长。
+
+命中率（`--scan-only`，20 局，种子 9400～9419，不跑分叉；从开局打到 5-1 平均每局 21 秒；`pilot.scan.jsonl`、`pilot.scan.summary.json`）：
+
+| 层 | 触发的局 | 在哪一回合 | 没触发 |
+|---|---|---|---|
+| `pairs3` | 12 / 20（60%） | 3-2：5，3-3：3，3-5：4 | 8 局窗口里没满足 |
+| `streak4` | 12 / 20（60%） | 4-1：10，4-2：2 | 8 |
+| `losing3` | 1 / 20（5%） | 3-1：1 | 19 |
+| `lowhp4` | 5 / 20（25%） | 4-1：1，4-6：2，4-7：2 | 15 |
+| `ref41` | 20 / 20 | 4-1：20 | 0 |
+
+没有一局是 hero 在窗口结束前出局的。用同一批特征换条件重数（`scan` 里有每回合的特征，不用重跑）：`streak4` 去掉"等级 ≤ 7"仍是 12（这 20 局 4-1 时 19 个 7 级、1 个 6 级）；`losing3` 放宽到血量 ≥ 60 是 2 局、连败 ≥ 2 是 3 局，3-1 时 20 个 hero 里连败 ≥ 3 的只有 2 个；`pairs3` 金币放宽到 30～60 是 15 局；`lowhp4` 金币放宽到 ≥ 30 仍是 5 局。`lowhp4` 在 4-1 触发、`ref41` 可以直接拷分叉的只有 1 局。
+
+出题（`pilot.jsonl`、`pilot.log`；小预算：`--k-start 2 --k-step 2 --k-min 4 --k-max 4 --budget 16`，所以每个候选 2 个分叉后看一次、再各加 2 个）：
+
+| 题 | 局面 | 分叉 | 每个分叉 | 结果 |
+|---|---|---|---|---|
+| 9402 `lowhp4` @4-1 | 血 40、40 金、7 级、连胜 3、离死 4 次 | 16 | 5.9 秒（hero 很快出局） | 没有停掉谁；`roll0` 和 `roll20` 每个分叉每回合的动作都相同（重复：一回合 15 个动作的上限下两者都只 D 了 10 次，4-2、4-3 开始时还有 47、40 金，谁也没 D 到 20 金以下）；P：`roll0`/`roll20` 0.51，`level_roll10` 0.31，`save` 0.18 |
+| 9402 `ref41` @4-1 | 同上 | 0（拷自上一题） | — | 同上（只重打局面 11 秒） |
+| 9411 `losing3` @3-1 | 血 88、39 金、5 级、连败 3、4 对 | 12 | 28.7 秒 | 名次 `streak` 7/1/1/4，`roll20` 1/1/3/2，`level_roll10` 5/2/1/3；没有停掉谁；P：`roll20` 0.44，`level_roll10` 0.31，`streak` 0.25 |
+| 9400 `streak4` @4-1 | 血 94、58 金、7 级、连胜 5 | 12 | 19.3 秒 | 没有停掉谁；P：`save` 0.45，`roll30` 0.28，`level8` 0.27 |
+
+共跑 40 个分叉，平均每个 16.8 秒（3.2～32.8）。打分时 3 局各重打一次，4 个指纹全部对上，打分加重建共 25 秒；`--stored` 与重建给 `stance`、`mimic` 的选择相同。4 道题、每层 1 道，先验用的是 τ = 0.26 的后备值，没有明确题，遗憾值和自检的顺序都没有意义（每层只有 1 局，等权的区间算不出来）。各项承诺都生效了：每个候选在两个承诺回合里都改了执行器旋钮，只有 9402 的 `roll20` 第一回合和 `stance` 自己的计划（止血，D 到 20）一样。`stance` 的选择：9402 `roll20`（止血），9411 `streak`（标准运营，不花钱），9400 `level8`（速 8）；`mimic` 在 9402 选 `save`。
+
+怎么读、要注意的：
+
+- `losing3` 在这个房间里几乎不触发（5%），按 60 局出题只有 3 道左右。要这一层，得把窗口提前到第 2 阶段（stance 的保连败本来就在 2-1～2-6），或者放宽到连败 ≥ 2，再测命中率。
+- `pairs3`、`streak4` 约 60%，`lowhp4` 约 25%，`ref41` 每局都有。按 60 局算大约 36 + 36 + 3 + 15 + 60 ≈ 150 道题，和方案的 150 题相当，但是 4 成是不加条件的对照层。
+- 预算：默认每题 56 个分叉；v1 正式题库每个分叉平均 25 秒（3 个进程、不 nice），试跑 16.8 秒（低血量的题很短）。150 题约 150 × 56 × 20 秒 ≈ 47 CPU 小时。
+- 4 个候选的层在默认预算下剩下 2 个时各 20 个分叉、都不停掉时各 14 个（见上文"预算和候选数"），要各 24 个用 `--budget 64`。
+- "D 到多少"受一回合 15 个动作的上限限制（执行器先买牌再刷新）：试跑的 9402 在 40 金的回合只 D 了 10 次（20 金），`roll0` 和 `roll20` 成了同一个决定，两者一起占了预算。`lowhp4`、`ref41` 的菜单在钱多时可能经常出现这种重复，正式出题前先在命中的局面上数一数；要真正分开，得让执行器一回合能 D 更多（动作上限）或者把承诺拉长。
 
 ## Rubric v1 与 Benchmark v1
 
@@ -808,7 +901,8 @@ fork 里另外加了几个选项，默认都关：
 | `tfteval/public.py` | 公开观察：对手能被看到的部分 |
 | `tfteval/stats.py` | 平均名次与区间、配对差、以存档为单位的区间、所需局数 |
 | `tfteval/bank.py` | 决策题库：配方与状态指纹、候选承诺（`CommitPlanner`）、出题、标签、打分；脚本是 `scripts/build_bank.py`、`scripts/score_bank.py`，题在 `results/bank/` |
-| `scripts/` | 批量对局、比较两次运行、安装模拟器、按经济规则测扣血（`measure_damage.py`）、执行器冒烟对比（`smoke_executor.py`）、分叉实验与分析（`branching_validity.py`、`analyze_branching.py`）、两个策略的分叉对比（`branch_compare.py`）、姿态分布统计（`stance_report.py`）、记录对战与拟合胜率模型（`collect_fights.py`、`fit_winprob.py`）、benchmark（`benchmark.py`）、rubric 的存档内验证（`validate_rubric.py`）、决策题库出题和打分（`build_bank.py`、`score_bank.py`） |
+| `tfteval/bank2.py` | 决策题库 v2：分层的触发式决策点、配对的逐步淘汰、贝叶斯明确题与准确率上限、交叉拟合的参照、规则检查；脚本是 `scripts/build_bank2.py`、`scripts/score_bank2.py`、`scripts/rule_check_bank2.py`，题在 `results/bank2/` |
+| `scripts/` | 批量对局、比较两次运行、安装模拟器、按经济规则测扣血（`measure_damage.py`）、执行器冒烟对比（`smoke_executor.py`）、分叉实验与分析（`branching_validity.py`、`analyze_branching.py`）、两个策略的分叉对比（`branch_compare.py`）、姿态分布统计（`stance_report.py`）、记录对战与拟合胜率模型（`collect_fights.py`、`fit_winprob.py`）、benchmark（`benchmark.py`）、rubric 的存档内验证（`validate_rubric.py`）、决策题库出题和打分（`build_bank.py`、`score_bank.py`；v2 是 `build_bank2.py`、`score_bank2.py`、`rule_check_bank2.py`） |
 | `results/` | 原始对局结果；`results/branching/` 是分叉实验，`results/fork_smoke/` 是 fork 上的执行器冒烟（`results/fork_smoke2/` 是修正扣血表、改 `hold` 之后重跑的），`results/damage/` 是两套经济规则下的扣血实测，`results/fights/` 是记录下的对战（`mixed_9600` 旧模拟器，`fork_22000` 和 `fork_set18_23000` 在 fork 上），`results/crn_pilot/` 是 shared 对 keyed 随机流的分叉试点，`results/realistic_smoke/` 是 `realistic` 配置上的冒烟 |
 | `docs/PLAN.md` | 方针 |
 | `docs/STRATEGY.md` | 策略层方案 |

@@ -1,0 +1,3763 @@
+{
+ "bank": "results/bank2/pilot.jsonl",
+ "summary": {
+  "built": 4,
+  "strata": {
+   "streak4": {
+    "games": 1,
+    "fired": 1,
+    "rounds": {
+     "4-1": 1
+    },
+    "dropped": {},
+    "usable": 1,
+    "branches": 12,
+    "copied": 0
+   },
+   "losing3": {
+    "games": 1,
+    "fired": 1,
+    "rounds": {
+     "3-1": 1
+    },
+    "dropped": {},
+    "usable": 1,
+    "branches": 12,
+    "copied": 0
+   },
+   "lowhp4": {
+    "games": 1,
+    "fired": 1,
+    "rounds": {
+     "4-1": 1
+    },
+    "dropped": {},
+    "usable": 1,
+    "branches": 16,
+    "copied": 0
+   },
+   "ref41": {
+    "games": 1,
+    "fired": 1,
+    "rounds": {
+     "4-1": 1
+    },
+    "dropped": {},
+    "usable": 1,
+    "branches": 0,
+    "copied": 1
+   }
+  },
+  "usable": 4,
+  "games": 3,
+  "branch_seconds_mean": 16.771499999999996
+ },
+ "rebuilt": true,
+ "prior": "candidate",
+ "fits": {
+  "lowhp4": {
+   "items": 1,
+   "prior": "candidate",
+   "names": [
+    "roll0",
+    "roll20",
+    "level_roll10",
+    "save"
+   ],
+   "pooled_sd_d": 0.9789450103725609,
+   "alpha": {
+    "roll0": 0.0,
+    "roll20": 0.0,
+    "level_roll10": 0.0,
+    "save": 0.0
+   },
+   "alpha_cov": [
+    [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   ],
+   "tau2": 0.06760000000000001,
+   "tau_source": "fallback"
+  },
+  "ref41": {
+   "items": 1,
+   "prior": "candidate",
+   "names": [
+    "roll0",
+    "roll20",
+    "level_roll10",
+    "save"
+   ],
+   "pooled_sd_d": 0.9789450103725609,
+   "alpha": {
+    "roll0": 0.0,
+    "roll20": 0.0,
+    "level_roll10": 0.0,
+    "save": 0.0
+   },
+   "alpha_cov": [
+    [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   ],
+   "tau2": 0.06760000000000001,
+   "tau_source": "fallback"
+  },
+  "losing3": {
+   "items": 1,
+   "prior": "candidate",
+   "names": [
+    "streak",
+    "roll20",
+    "level_roll10"
+   ],
+   "pooled_sd_d": 2.581988897471611,
+   "alpha": {
+    "streak": 0.0,
+    "roll20": 0.0,
+    "level_roll10": 0.0
+   },
+   "alpha_cov": [
+    [
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0
+    ]
+   ],
+   "tau2": 0.06760000000000001,
+   "tau_source": "fallback"
+  },
+  "streak4": {
+   "items": 1,
+   "prior": "candidate",
+   "names": [
+    "level8",
+    "roll30",
+    "save"
+   ],
+   "pooled_sd_d": 0.67700320038633,
+   "alpha": {
+    "level8": 0.0,
+    "roll30": 0.0,
+    "save": 0.0
+   },
+   "alpha_cov": [
+    [
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0
+    ]
+   ],
+   "tau2": 0.06760000000000001,
+   "tau_source": "fallback"
+  }
+ },
+ "labels": {
+  "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9402@lowhp4": {
+   "ref": "roll0",
+   "P": {
+    "roll0": 0.5146,
+    "roll20": 0.5146,
+    "level_roll10": 0.3084,
+    "save": 0.177
+   },
+   "best": "roll0",
+   "best_group": [
+    "roll0",
+    "roll20"
+   ],
+   "pmax": 0.5146,
+   "post_mean": {
+    "roll0": 0.0,
+    "level_roll10": 0.08774662512980268,
+    "save": 0.17549325025960544
+   },
+   "sigma_d": 1.0,
+   "duplicates": [
+    [
+     "roll0",
+     "roll20"
+    ],
+    [
+     "level_roll10"
+    ],
+    [
+     "save"
+    ]
+   ],
+   "clear": false,
+   "regret": {
+    "roll0": 0.0,
+    "roll20": 0.0,
+    "level_roll10": 0.25,
+    "save": 0.5
+   },
+   "mean": {
+    "roll0": 7.0,
+    "roll20": 7.0,
+    "level_roll10": 7.25,
+    "save": 7.5
+   },
+   "n": {
+    "roll0": 4,
+    "roll20": 4,
+    "level_roll10": 4,
+    "save": 4
+   },
+   "xfit": {
+    "oracle": {
+     "picks": [
+      "roll0",
+      "save"
+     ],
+     "regret": 0.75
+    },
+    "worst": {
+     "picks": [
+      "save",
+      "roll0"
+     ],
+     "regret": -0.25
+    }
+   }
+  },
+  "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9402@ref41": {
+   "ref": "roll0",
+   "P": {
+    "roll0": 0.51045,
+    "roll20": 0.51045,
+    "level_roll10": 0.3127,
+    "save": 0.17685
+   },
+   "best": "roll0",
+   "best_group": [
+    "roll0",
+    "roll20"
+   ],
+   "pmax": 0.51045,
+   "post_mean": {
+    "roll0": 0.0,
+    "level_roll10": 0.08774662512980268,
+    "save": 0.17549325025960544
+   },
+   "sigma_d": 1.0,
+   "duplicates": [
+    [
+     "roll0",
+     "roll20"
+    ],
+    [
+     "level_roll10"
+    ],
+    [
+     "save"
+    ]
+   ],
+   "clear": false,
+   "regret": {
+    "roll0": 0.0,
+    "roll20": 0.0,
+    "level_roll10": 0.25,
+    "save": 0.5
+   },
+   "mean": {
+    "roll0": 7.0,
+    "roll20": 7.0,
+    "level_roll10": 7.25,
+    "save": 7.5
+   },
+   "n": {
+    "roll0": 4,
+    "roll20": 4,
+    "level_roll10": 4,
+    "save": 4
+   },
+   "xfit": {
+    "oracle": {
+     "picks": [
+      "roll0",
+      "save"
+     ],
+     "regret": 0.75
+    },
+    "worst": {
+     "picks": [
+      "save",
+      "roll0"
+     ],
+     "regret": -0.25
+    }
+   }
+  },
+  "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9411@losing3": {
+   "ref": "streak",
+   "P": {
+    "streak": 0.25075,
+    "roll20": 0.4369,
+    "level_roll10": 0.31235
+   },
+   "best": "roll20",
+   "best_group": [
+    "roll20"
+   ],
+   "pmax": 0.4369,
+   "post_mean": {
+    "streak": 0.0,
+    "roll20": -0.11254994820186476,
+    "level_roll10": -0.037516649400621584
+   },
+   "sigma_d": 2.581988897471611,
+   "duplicates": [
+    [
+     "streak"
+    ],
+    [
+     "roll20"
+    ],
+    [
+     "level_roll10"
+    ]
+   ],
+   "clear": false,
+   "regret": {
+    "streak": 1.5,
+    "roll20": 0.0,
+    "level_roll10": 1.0
+   },
+   "mean": {
+    "streak": 3.25,
+    "roll20": 1.75,
+    "level_roll10": 2.75
+   },
+   "n": {
+    "streak": 4,
+    "roll20": 4,
+    "level_roll10": 4
+   },
+   "xfit": {
+    "oracle": {
+     "picks": [
+      "roll20",
+      "roll20"
+     ],
+     "regret": 0.0
+    },
+    "worst": {
+     "picks": [
+      "streak",
+      "streak"
+     ],
+     "regret": 1.5
+    }
+   }
+  },
+  "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9400@streak4": {
+   "ref": "level8",
+   "P": {
+    "level8": 0.26845,
+    "roll30": 0.27825,
+    "save": 0.4533
+   },
+   "best": "save",
+   "best_group": [
+    "save"
+   ],
+   "pmax": 0.4533,
+   "post_mean": {
+    "level8": 0.0,
+    "roll30": 9.932042112328205e-18,
+    "save": -0.08774662512980272
+   },
+   "sigma_d": 1.0,
+   "duplicates": [
+    [
+     "level8"
+    ],
+    [
+     "roll30"
+    ],
+    [
+     "save"
+    ]
+   ],
+   "clear": false,
+   "regret": {
+    "level8": 0.25,
+    "roll30": 0.25,
+    "save": 0.0
+   },
+   "mean": {
+    "level8": 2.75,
+    "roll30": 2.75,
+    "save": 2.5
+   },
+   "n": {
+    "level8": 4,
+    "roll30": 4,
+    "save": 4
+   },
+   "xfit": {
+    "oracle": {
+     "picks": [
+      "roll30",
+      "save"
+     ],
+     "regret": 0.5
+    },
+    "worst": {
+     "picks": [
+      "level8",
+      "roll30"
+     ],
+     "regret": 0.0
+    }
+   }
+  }
+ },
+ "cards": {
+  "xfit:oracle": {
+   "agent": "xfit:oracle",
+   "bank": "results/bank2/pilot.jsonl",
+   "items": 4,
+   "splits": {
+    "all": {
+     "equal": {
+      "items": 4,
+      "games": 3,
+      "regret": {
+       "n": 4,
+       "games": 3,
+       "strata": 4,
+       "mean": 0.5,
+       "ci95": null
+      },
+      "clear": 0,
+      "ceiling": 0.0,
+      "expected_hits": 0.0,
+      "hits": 0.0,
+      "accuracy": null,
+      "invalid": 0,
+      "choices": {
+       "roll0/save": 2,
+       "roll20/roll20": 1,
+       "roll30/save": 1
+      }
+     },
+     "strata": {
+      "streak4": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.5,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "roll30/save": 1
+       }
+      },
+      "losing3": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.0,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "roll20/roll20": 1
+       }
+      },
+      "lowhp4": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.75,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "roll0/save": 1
+       }
+      },
+      "ref41": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.75,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "roll0/save": 1
+       }
+      }
+     }
+    },
+    "dev": {
+     "equal": {
+      "items": 3,
+      "games": 2,
+      "regret": {
+       "n": 3,
+       "games": 2,
+       "strata": 3,
+       "mean": 0.5,
+       "ci95": null
+      },
+      "clear": 0,
+      "ceiling": 0.0,
+      "expected_hits": 0.0,
+      "hits": 0.0,
+      "accuracy": null,
+      "invalid": 0,
+      "choices": {
+       "roll0/save": 2,
+       "roll20/roll20": 1
+      }
+     },
+     "strata": {
+      "losing3": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.0,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "roll20/roll20": 1
+       }
+      },
+      "lowhp4": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.75,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "roll0/save": 1
+       }
+      },
+      "ref41": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.75,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "roll0/save": 1
+       }
+      }
+     }
+    },
+    "heldout": {
+     "equal": {
+      "items": 1,
+      "games": 1,
+      "regret": {
+       "n": 1,
+       "games": 1,
+       "strata": 1,
+       "mean": 0.5,
+       "ci95": null
+      },
+      "clear": 0,
+      "ceiling": 0.0,
+      "expected_hits": 0.0,
+      "hits": 0.0,
+      "accuracy": null,
+      "invalid": 0,
+      "choices": {
+       "roll30/save": 1
+      }
+     },
+     "strata": {
+      "streak4": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.5,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "roll30/save": 1
+       }
+      }
+     }
+    }
+   },
+   "rows": [
+    {
+     "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9402@lowhp4",
+     "game": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9402",
+     "split": "dev",
+     "stratum": "lowhp4",
+     "point": "4-1",
+     "clear": false,
+     "pmax": 0.5146,
+     "choice": "roll0/save",
+     "valid": true,
+     "best": "roll0",
+     "regret": 0.75,
+     "p_choice": 0.3458,
+     "hit": 0.5
+    },
+    {
+     "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9402@ref41",
+     "game": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9402",
+     "split": "dev",
+     "stratum": "ref41",
+     "point": "4-1",
+     "clear": false,
+     "pmax": 0.51045,
+     "choice": "roll0/save",
+     "valid": true,
+     "best": "roll0",
+     "regret": 0.75,
+     "p_choice": 0.34365,
+     "hit": 0.5
+    },
+    {
+     "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9411@losing3",
+     "game": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9411",
+     "split": "dev",
+     "stratum": "losing3",
+     "point": "3-1",
+     "clear": false,
+     "pmax": 0.4369,
+     "choice": "roll20/roll20",
+     "valid": true,
+     "best": "roll20",
+     "regret": 0.0,
+     "p_choice": 0.4369,
+     "hit": 1.0
+    },
+    {
+     "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9400@streak4",
+     "game": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9400",
+     "split": "heldout",
+     "stratum": "streak4",
+     "point": "4-1",
+     "clear": false,
+     "pmax": 0.4533,
+     "choice": "roll30/save",
+     "valid": true,
+     "best": "save",
+     "regret": 0.5,
+     "p_choice": 0.36577499999999996,
+     "hit": 0.5
+    }
+   ]
+  },
+  "xfit:worst": {
+   "agent": "xfit:worst",
+   "bank": "results/bank2/pilot.jsonl",
+   "items": 4,
+   "splits": {
+    "all": {
+     "equal": {
+      "items": 4,
+      "games": 3,
+      "regret": {
+       "n": 4,
+       "games": 3,
+       "strata": 4,
+       "mean": 0.25,
+       "ci95": null
+      },
+      "clear": 0,
+      "ceiling": 0.0,
+      "expected_hits": 0.0,
+      "hits": 0.0,
+      "accuracy": null,
+      "invalid": 0,
+      "choices": {
+       "level8/roll30": 1,
+       "save/roll0": 2,
+       "streak/streak": 1
+      }
+     },
+     "strata": {
+      "streak4": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.0,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "level8/roll30": 1
+       }
+      },
+      "losing3": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 1.5,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "streak/streak": 1
+       }
+      },
+      "lowhp4": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": -0.25,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "save/roll0": 1
+       }
+      },
+      "ref41": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": -0.25,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "save/roll0": 1
+       }
+      }
+     }
+    },
+    "dev": {
+     "equal": {
+      "items": 3,
+      "games": 2,
+      "regret": {
+       "n": 3,
+       "games": 2,
+       "strata": 3,
+       "mean": 0.3333333333333333,
+       "ci95": null
+      },
+      "clear": 0,
+      "ceiling": 0.0,
+      "expected_hits": 0.0,
+      "hits": 0.0,
+      "accuracy": null,
+      "invalid": 0,
+      "choices": {
+       "save/roll0": 2,
+       "streak/streak": 1
+      }
+     },
+     "strata": {
+      "losing3": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 1.5,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "streak/streak": 1
+       }
+      },
+      "lowhp4": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": -0.25,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "save/roll0": 1
+       }
+      },
+      "ref41": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": -0.25,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "save/roll0": 1
+       }
+      }
+     }
+    },
+    "heldout": {
+     "equal": {
+      "items": 1,
+      "games": 1,
+      "regret": {
+       "n": 1,
+       "games": 1,
+       "strata": 1,
+       "mean": 0.0,
+       "ci95": null
+      },
+      "clear": 0,
+      "ceiling": 0.0,
+      "expected_hits": 0.0,
+      "hits": 0.0,
+      "accuracy": null,
+      "invalid": 0,
+      "choices": {
+       "level8/roll30": 1
+      }
+     },
+     "strata": {
+      "streak4": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.0,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "level8/roll30": 1
+       }
+      }
+     }
+    }
+   },
+   "rows": [
+    {
+     "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9402@lowhp4",
+     "game": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9402",
+     "split": "dev",
+     "stratum": "lowhp4",
+     "point": "4-1",
+     "clear": false,
+     "pmax": 0.5146,
+     "choice": "save/roll0",
+     "valid": true,
+     "best": "roll0",
+     "regret": -0.25,
+     "p_choice": 0.3458,
+     "hit": 0.5
+    },
+    {
+     "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9402@ref41",
+     "game": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9402",
+     "split": "dev",
+     "stratum": "ref41",
+     "point": "4-1",
+     "clear": false,
+     "pmax": 0.51045,
+     "choice": "save/roll0",
+     "valid": true,
+     "best": "roll0",
+     "regret": -0.25,
+     "p_choice": 0.34365,
+     "hit": 0.5
+    },
+    {
+     "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9411@losing3",
+     "game": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9411",
+     "split": "dev",
+     "stratum": "losing3",
+     "point": "3-1",
+     "clear": false,
+     "pmax": 0.4369,
+     "choice": "streak/streak",
+     "valid": true,
+     "best": "roll20",
+     "regret": 1.5,
+     "p_choice": 0.25075,
+     "hit": 0.0
+    },
+    {
+     "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9400@streak4",
+     "game": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9400",
+     "split": "heldout",
+     "stratum": "streak4",
+     "point": "4-1",
+     "clear": false,
+     "pmax": 0.4533,
+     "choice": "level8/roll30",
+     "valid": true,
+     "best": "save",
+     "regret": 0.0,
+     "p_choice": 0.27335,
+     "hit": 0.0
+    }
+   ]
+  },
+  "stance": {
+   "agent": "stance",
+   "bank": "results/bank2/pilot.jsonl",
+   "items": 4,
+   "splits": {
+    "all": {
+     "equal": {
+      "items": 4,
+      "games": 3,
+      "regret": {
+       "n": 4,
+       "games": 3,
+       "strata": 4,
+       "mean": 0.4375,
+       "ci95": null
+      },
+      "clear": 0,
+      "ceiling": 0.0,
+      "expected_hits": 0.0,
+      "hits": 0.0,
+      "accuracy": null,
+      "invalid": 0,
+      "choices": {
+       "level8": 1,
+       "roll20": 2,
+       "streak": 1
+      }
+     },
+     "strata": {
+      "streak4": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.25,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "level8": 1
+       }
+      },
+      "losing3": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 1.5,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "streak": 1
+       }
+      },
+      "lowhp4": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.0,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "roll20": 1
+       }
+      },
+      "ref41": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.0,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "roll20": 1
+       }
+      }
+     }
+    },
+    "dev": {
+     "equal": {
+      "items": 3,
+      "games": 2,
+      "regret": {
+       "n": 3,
+       "games": 2,
+       "strata": 3,
+       "mean": 0.5,
+       "ci95": null
+      },
+      "clear": 0,
+      "ceiling": 0.0,
+      "expected_hits": 0.0,
+      "hits": 0.0,
+      "accuracy": null,
+      "invalid": 0,
+      "choices": {
+       "roll20": 2,
+       "streak": 1
+      }
+     },
+     "strata": {
+      "losing3": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 1.5,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "streak": 1
+       }
+      },
+      "lowhp4": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.0,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "roll20": 1
+       }
+      },
+      "ref41": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.0,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "roll20": 1
+       }
+      }
+     }
+    },
+    "heldout": {
+     "equal": {
+      "items": 1,
+      "games": 1,
+      "regret": {
+       "n": 1,
+       "games": 1,
+       "strata": 1,
+       "mean": 0.25,
+       "ci95": null
+      },
+      "clear": 0,
+      "ceiling": 0.0,
+      "expected_hits": 0.0,
+      "hits": 0.0,
+      "accuracy": null,
+      "invalid": 0,
+      "choices": {
+       "level8": 1
+      }
+     },
+     "strata": {
+      "streak4": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.25,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "level8": 1
+       }
+      }
+     }
+    }
+   },
+   "rows": [
+    {
+     "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9402@lowhp4",
+     "game": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9402",
+     "split": "dev",
+     "stratum": "lowhp4",
+     "point": "4-1",
+     "clear": false,
+     "pmax": 0.5146,
+     "choice": "roll20",
+     "valid": true,
+     "best": "roll0",
+     "regret": 0.0,
+     "p_choice": 0.5146,
+     "hit": 1.0,
+     "notes": {
+      "plan": {
+       "level_to": 7,
+       "roll_floor": 20,
+       "survival": 2,
+       "stance": "stabilize"
+      }
+     }
+    },
+    {
+     "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9402@ref41",
+     "game": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9402",
+     "split": "dev",
+     "stratum": "ref41",
+     "point": "4-1",
+     "clear": false,
+     "pmax": 0.51045,
+     "choice": "roll20",
+     "valid": true,
+     "best": "roll0",
+     "regret": 0.0,
+     "p_choice": 0.51045,
+     "hit": 1.0,
+     "notes": {
+      "plan": {
+       "level_to": 7,
+       "roll_floor": 20,
+       "survival": 2,
+       "stance": "stabilize"
+      }
+     }
+    },
+    {
+     "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9411@losing3",
+     "game": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9411",
+     "split": "dev",
+     "stratum": "losing3",
+     "point": "3-1",
+     "clear": false,
+     "pmax": 0.4369,
+     "choice": "streak",
+     "valid": true,
+     "best": "roll20",
+     "regret": 1.5,
+     "p_choice": 0.25075,
+     "hit": 0.0,
+     "notes": {
+      "plan": {
+       "level_to": 5,
+       "roll_floor": 999,
+       "stance": "standard"
+      }
+     }
+    },
+    {
+     "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9400@streak4",
+     "game": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9400",
+     "split": "heldout",
+     "stratum": "streak4",
+     "point": "4-1",
+     "clear": false,
+     "pmax": 0.4533,
+     "choice": "level8",
+     "valid": true,
+     "best": "save",
+     "regret": 0.25,
+     "p_choice": 0.26845,
+     "hit": 0.0,
+     "notes": {
+      "plan": {
+       "level_to": 7,
+       "roll_floor": 999,
+       "level_by": {
+        "level": 8,
+        "by": "4-1"
+       },
+       "xp_buys": 2,
+       "stance": "fast8"
+      }
+     }
+    }
+   ]
+  },
+  "mimic": {
+   "agent": "mimic",
+   "bank": "results/bank2/pilot.jsonl",
+   "items": 4,
+   "splits": {
+    "all": {
+     "equal": {
+      "items": 4,
+      "games": 3,
+      "regret": {
+       "n": 4,
+       "games": 3,
+       "strata": 4,
+       "mean": 0.6875,
+       "ci95": null
+      },
+      "clear": 0,
+      "ceiling": 0.0,
+      "expected_hits": 0.0,
+      "hits": 0.0,
+      "accuracy": null,
+      "invalid": 0,
+      "choices": {
+       "level8": 1,
+       "save": 2,
+       "streak": 1
+      }
+     },
+     "strata": {
+      "streak4": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.25,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "level8": 1
+       }
+      },
+      "losing3": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 1.5,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "streak": 1
+       }
+      },
+      "lowhp4": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.5,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "save": 1
+       }
+      },
+      "ref41": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.5,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "save": 1
+       }
+      }
+     }
+    },
+    "dev": {
+     "equal": {
+      "items": 3,
+      "games": 2,
+      "regret": {
+       "n": 3,
+       "games": 2,
+       "strata": 3,
+       "mean": 0.8333333333333334,
+       "ci95": null
+      },
+      "clear": 0,
+      "ceiling": 0.0,
+      "expected_hits": 0.0,
+      "hits": 0.0,
+      "accuracy": null,
+      "invalid": 0,
+      "choices": {
+       "save": 2,
+       "streak": 1
+      }
+     },
+     "strata": {
+      "losing3": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 1.5,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "streak": 1
+       }
+      },
+      "lowhp4": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.5,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "save": 1
+       }
+      },
+      "ref41": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.5,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "save": 1
+       }
+      }
+     }
+    },
+    "heldout": {
+     "equal": {
+      "items": 1,
+      "games": 1,
+      "regret": {
+       "n": 1,
+       "games": 1,
+       "strata": 1,
+       "mean": 0.25,
+       "ci95": null
+      },
+      "clear": 0,
+      "ceiling": 0.0,
+      "expected_hits": 0.0,
+      "hits": 0.0,
+      "accuracy": null,
+      "invalid": 0,
+      "choices": {
+       "level8": 1
+      }
+     },
+     "strata": {
+      "streak4": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.25,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "level8": 1
+       }
+      }
+     }
+    }
+   },
+   "rows": [
+    {
+     "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9402@lowhp4",
+     "game": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9402",
+     "split": "dev",
+     "stratum": "lowhp4",
+     "point": "4-1",
+     "clear": false,
+     "pmax": 0.5146,
+     "choice": "save",
+     "valid": true,
+     "best": "roll0",
+     "regret": 0.5,
+     "p_choice": 0.177,
+     "hit": 0.0,
+     "notes": {
+      "plan": {
+       "level_to": 7,
+       "roll_floor": 999
+      }
+     }
+    },
+    {
+     "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9402@ref41",
+     "game": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9402",
+     "split": "dev",
+     "stratum": "ref41",
+     "point": "4-1",
+     "clear": false,
+     "pmax": 0.51045,
+     "choice": "save",
+     "valid": true,
+     "best": "roll0",
+     "regret": 0.5,
+     "p_choice": 0.17685,
+     "hit": 0.0,
+     "notes": {
+      "plan": {
+       "level_to": 7,
+       "roll_floor": 999
+      }
+     }
+    },
+    {
+     "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9411@losing3",
+     "game": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9411",
+     "split": "dev",
+     "stratum": "losing3",
+     "point": "3-1",
+     "clear": false,
+     "pmax": 0.4369,
+     "choice": "streak",
+     "valid": true,
+     "best": "roll20",
+     "regret": 1.5,
+     "p_choice": 0.25075,
+     "hit": 0.0,
+     "notes": {
+      "plan": {
+       "level_to": 5,
+       "roll_floor": 999
+      }
+     }
+    },
+    {
+     "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9400@streak4",
+     "game": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9400",
+     "split": "heldout",
+     "stratum": "streak4",
+     "point": "4-1",
+     "clear": false,
+     "pmax": 0.4533,
+     "choice": "level8",
+     "valid": true,
+     "best": "save",
+     "regret": 0.25,
+     "p_choice": 0.26845,
+     "hit": 0.0,
+     "notes": {
+      "plan": {
+       "level_to": 8,
+       "roll_floor": 999
+      }
+     }
+    }
+   ]
+  },
+  "noisy50:stance": {
+   "agent": "noisy50:stance",
+   "bank": "results/bank2/pilot.jsonl",
+   "items": 4,
+   "splits": {
+    "all": {
+     "equal": {
+      "items": 4,
+      "games": 3,
+      "regret": {
+       "n": 4,
+       "games": 3,
+       "strata": 4,
+       "mean": 0.0625,
+       "ci95": null
+      },
+      "clear": 0,
+      "ceiling": 0.0,
+      "expected_hits": 0.0,
+      "hits": 0.0,
+      "accuracy": null,
+      "invalid": 0,
+      "choices": {
+       "level8": 1,
+       "roll20": 3
+      }
+     },
+     "strata": {
+      "streak4": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.25,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "level8": 1
+       }
+      },
+      "losing3": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.0,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "roll20": 1
+       }
+      },
+      "lowhp4": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.0,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "roll20": 1
+       }
+      },
+      "ref41": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.0,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "roll20": 1
+       }
+      }
+     }
+    },
+    "dev": {
+     "equal": {
+      "items": 3,
+      "games": 2,
+      "regret": {
+       "n": 3,
+       "games": 2,
+       "strata": 3,
+       "mean": 0.0,
+       "ci95": null
+      },
+      "clear": 0,
+      "ceiling": 0.0,
+      "expected_hits": 0.0,
+      "hits": 0.0,
+      "accuracy": null,
+      "invalid": 0,
+      "choices": {
+       "roll20": 3
+      }
+     },
+     "strata": {
+      "losing3": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.0,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "roll20": 1
+       }
+      },
+      "lowhp4": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.0,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "roll20": 1
+       }
+      },
+      "ref41": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.0,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "roll20": 1
+       }
+      }
+     }
+    },
+    "heldout": {
+     "equal": {
+      "items": 1,
+      "games": 1,
+      "regret": {
+       "n": 1,
+       "games": 1,
+       "strata": 1,
+       "mean": 0.25,
+       "ci95": null
+      },
+      "clear": 0,
+      "ceiling": 0.0,
+      "expected_hits": 0.0,
+      "hits": 0.0,
+      "accuracy": null,
+      "invalid": 0,
+      "choices": {
+       "level8": 1
+      }
+     },
+     "strata": {
+      "streak4": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.25,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "level8": 1
+       }
+      }
+     }
+    }
+   },
+   "rows": [
+    {
+     "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9402@lowhp4",
+     "game": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9402",
+     "split": "dev",
+     "stratum": "lowhp4",
+     "point": "4-1",
+     "clear": false,
+     "pmax": 0.5146,
+     "choice": "roll20",
+     "valid": true,
+     "best": "roll0",
+     "regret": 0.0,
+     "p_choice": 0.5146,
+     "hit": 1.0,
+     "notes": {
+      "plan": {
+       "level_to": 7,
+       "roll_floor": 20,
+       "survival": 2,
+       "stance": "stabilize"
+      }
+     }
+    },
+    {
+     "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9402@ref41",
+     "game": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9402",
+     "split": "dev",
+     "stratum": "ref41",
+     "point": "4-1",
+     "clear": false,
+     "pmax": 0.51045,
+     "choice": "roll20",
+     "valid": true,
+     "best": "roll0",
+     "regret": 0.0,
+     "p_choice": 0.51045,
+     "hit": 1.0,
+     "notes": null
+    },
+    {
+     "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9411@losing3",
+     "game": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9411",
+     "split": "dev",
+     "stratum": "losing3",
+     "point": "3-1",
+     "clear": false,
+     "pmax": 0.4369,
+     "choice": "roll20",
+     "valid": true,
+     "best": "roll20",
+     "regret": 0.0,
+     "p_choice": 0.4369,
+     "hit": 1.0,
+     "notes": null
+    },
+    {
+     "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9400@streak4",
+     "game": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9400",
+     "split": "heldout",
+     "stratum": "streak4",
+     "point": "4-1",
+     "clear": false,
+     "pmax": 0.4533,
+     "choice": "level8",
+     "valid": true,
+     "best": "save",
+     "regret": 0.25,
+     "p_choice": 0.26845,
+     "hit": 0.0,
+     "notes": {
+      "plan": {
+       "level_to": 7,
+       "roll_floor": 999,
+       "level_by": {
+        "level": 8,
+        "by": "4-1"
+       },
+       "xp_buys": 2,
+       "stance": "fast8"
+      }
+     }
+    }
+   ]
+  },
+  "random": {
+   "agent": "random",
+   "bank": "results/bank2/pilot.jsonl",
+   "items": 4,
+   "splits": {
+    "all": {
+     "equal": {
+      "items": 4,
+      "games": 3,
+      "regret": {
+       "n": 4,
+       "games": 3,
+       "strata": 4,
+       "mean": 0.5625,
+       "ci95": null
+      },
+      "clear": 0,
+      "ceiling": 0.0,
+      "expected_hits": 0.0,
+      "hits": 0.0,
+      "accuracy": null,
+      "invalid": 0,
+      "choices": {
+       "level_roll10": 1,
+       "save": 2,
+       "streak": 1
+      }
+     },
+     "strata": {
+      "streak4": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.0,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "save": 1
+       }
+      },
+      "losing3": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 1.5,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "streak": 1
+       }
+      },
+      "lowhp4": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.25,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "level_roll10": 1
+       }
+      },
+      "ref41": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.5,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "save": 1
+       }
+      }
+     }
+    },
+    "dev": {
+     "equal": {
+      "items": 3,
+      "games": 2,
+      "regret": {
+       "n": 3,
+       "games": 2,
+       "strata": 3,
+       "mean": 0.75,
+       "ci95": null
+      },
+      "clear": 0,
+      "ceiling": 0.0,
+      "expected_hits": 0.0,
+      "hits": 0.0,
+      "accuracy": null,
+      "invalid": 0,
+      "choices": {
+       "level_roll10": 1,
+       "save": 1,
+       "streak": 1
+      }
+     },
+     "strata": {
+      "losing3": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 1.5,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "streak": 1
+       }
+      },
+      "lowhp4": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.25,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "level_roll10": 1
+       }
+      },
+      "ref41": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.5,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "save": 1
+       }
+      }
+     }
+    },
+    "heldout": {
+     "equal": {
+      "items": 1,
+      "games": 1,
+      "regret": {
+       "n": 1,
+       "games": 1,
+       "strata": 1,
+       "mean": 0.0,
+       "ci95": null
+      },
+      "clear": 0,
+      "ceiling": 0.0,
+      "expected_hits": 0.0,
+      "hits": 0.0,
+      "accuracy": null,
+      "invalid": 0,
+      "choices": {
+       "save": 1
+      }
+     },
+     "strata": {
+      "streak4": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.0,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "save": 1
+       }
+      }
+     }
+    }
+   },
+   "rows": [
+    {
+     "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9402@lowhp4",
+     "game": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9402",
+     "split": "dev",
+     "stratum": "lowhp4",
+     "point": "4-1",
+     "clear": false,
+     "pmax": 0.5146,
+     "choice": "level_roll10",
+     "valid": true,
+     "best": "roll0",
+     "regret": 0.25,
+     "p_choice": 0.3084,
+     "hit": 0.0,
+     "notes": null
+    },
+    {
+     "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9402@ref41",
+     "game": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9402",
+     "split": "dev",
+     "stratum": "ref41",
+     "point": "4-1",
+     "clear": false,
+     "pmax": 0.51045,
+     "choice": "save",
+     "valid": true,
+     "best": "roll0",
+     "regret": 0.5,
+     "p_choice": 0.17685,
+     "hit": 0.0,
+     "notes": null
+    },
+    {
+     "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9411@losing3",
+     "game": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9411",
+     "split": "dev",
+     "stratum": "losing3",
+     "point": "3-1",
+     "clear": false,
+     "pmax": 0.4369,
+     "choice": "streak",
+     "valid": true,
+     "best": "roll20",
+     "regret": 1.5,
+     "p_choice": 0.25075,
+     "hit": 0.0,
+     "notes": null
+    },
+    {
+     "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9400@streak4",
+     "game": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9400",
+     "split": "heldout",
+     "stratum": "streak4",
+     "point": "4-1",
+     "clear": false,
+     "pmax": 0.4533,
+     "choice": "save",
+     "valid": true,
+     "best": "save",
+     "regret": 0.0,
+     "p_choice": 0.4533,
+     "hit": 1.0,
+     "notes": null
+    }
+   ]
+  },
+  "always:save": {
+   "agent": "always:save",
+   "bank": "results/bank2/pilot.jsonl",
+   "items": 3,
+   "splits": {
+    "all": {
+     "equal": {
+      "items": 3,
+      "games": 2,
+      "regret": {
+       "n": 3,
+       "games": 2,
+       "strata": 3,
+       "mean": 0.3333333333333333,
+       "ci95": null
+      },
+      "clear": 0,
+      "ceiling": 0.0,
+      "expected_hits": 0.0,
+      "hits": 0.0,
+      "accuracy": null,
+      "invalid": 0,
+      "choices": {
+       "save": 3
+      }
+     },
+     "strata": {
+      "streak4": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.0,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "save": 1
+       }
+      },
+      "lowhp4": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.5,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "save": 1
+       }
+      },
+      "ref41": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.5,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "save": 1
+       }
+      }
+     }
+    },
+    "dev": {
+     "equal": {
+      "items": 2,
+      "games": 1,
+      "regret": {
+       "n": 2,
+       "games": 1,
+       "strata": 2,
+       "mean": 0.5,
+       "ci95": null
+      },
+      "clear": 0,
+      "ceiling": 0.0,
+      "expected_hits": 0.0,
+      "hits": 0.0,
+      "accuracy": null,
+      "invalid": 0,
+      "choices": {
+       "save": 2
+      }
+     },
+     "strata": {
+      "lowhp4": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.5,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "save": 1
+       }
+      },
+      "ref41": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.5,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "save": 1
+       }
+      }
+     }
+    },
+    "heldout": {
+     "equal": {
+      "items": 1,
+      "games": 1,
+      "regret": {
+       "n": 1,
+       "games": 1,
+       "strata": 1,
+       "mean": 0.0,
+       "ci95": null
+      },
+      "clear": 0,
+      "ceiling": 0.0,
+      "expected_hits": 0.0,
+      "hits": 0.0,
+      "accuracy": null,
+      "invalid": 0,
+      "choices": {
+       "save": 1
+      }
+     },
+     "strata": {
+      "streak4": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.0,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "save": 1
+       }
+      }
+     }
+    }
+   },
+   "rows": [
+    {
+     "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9402@lowhp4",
+     "game": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9402",
+     "split": "dev",
+     "stratum": "lowhp4",
+     "point": "4-1",
+     "clear": false,
+     "pmax": 0.5146,
+     "choice": "save",
+     "valid": true,
+     "best": "roll0",
+     "regret": 0.5,
+     "p_choice": 0.177,
+     "hit": 0.0,
+     "notes": null
+    },
+    {
+     "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9402@ref41",
+     "game": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9402",
+     "split": "dev",
+     "stratum": "ref41",
+     "point": "4-1",
+     "clear": false,
+     "pmax": 0.51045,
+     "choice": "save",
+     "valid": true,
+     "best": "roll0",
+     "regret": 0.5,
+     "p_choice": 0.17685,
+     "hit": 0.0,
+     "notes": null
+    },
+    {
+     "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9400@streak4",
+     "game": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9400",
+     "split": "heldout",
+     "stratum": "streak4",
+     "point": "4-1",
+     "clear": false,
+     "pmax": 0.4533,
+     "choice": "save",
+     "valid": true,
+     "best": "save",
+     "regret": 0.0,
+     "p_choice": 0.4533,
+     "hit": 1.0,
+     "notes": null
+    }
+   ]
+  },
+  "always:level8": {
+   "agent": "always:level8",
+   "bank": "results/bank2/pilot.jsonl",
+   "items": 1,
+   "splits": {
+    "all": {
+     "equal": {
+      "items": 1,
+      "games": 1,
+      "regret": {
+       "n": 1,
+       "games": 1,
+       "strata": 1,
+       "mean": 0.25,
+       "ci95": null
+      },
+      "clear": 0,
+      "ceiling": 0.0,
+      "expected_hits": 0.0,
+      "hits": 0.0,
+      "accuracy": null,
+      "invalid": 0,
+      "choices": {
+       "level8": 1
+      }
+     },
+     "strata": {
+      "streak4": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.25,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "level8": 1
+       }
+      }
+     }
+    },
+    "dev": {
+     "equal": {
+      "items": 0
+     },
+     "strata": {}
+    },
+    "heldout": {
+     "equal": {
+      "items": 1,
+      "games": 1,
+      "regret": {
+       "n": 1,
+       "games": 1,
+       "strata": 1,
+       "mean": 0.25,
+       "ci95": null
+      },
+      "clear": 0,
+      "ceiling": 0.0,
+      "expected_hits": 0.0,
+      "hits": 0.0,
+      "accuracy": null,
+      "invalid": 0,
+      "choices": {
+       "level8": 1
+      }
+     },
+     "strata": {
+      "streak4": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.25,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "level8": 1
+       }
+      }
+     }
+    }
+   },
+   "rows": [
+    {
+     "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9400@streak4",
+     "game": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9400",
+     "split": "heldout",
+     "stratum": "streak4",
+     "point": "4-1",
+     "clear": false,
+     "pmax": 0.4533,
+     "choice": "level8",
+     "valid": true,
+     "best": "save",
+     "regret": 0.25,
+     "p_choice": 0.26845,
+     "hit": 0.0,
+     "notes": null
+    }
+   ]
+  },
+  "always:roll30": {
+   "agent": "always:roll30",
+   "bank": "results/bank2/pilot.jsonl",
+   "items": 1,
+   "splits": {
+    "all": {
+     "equal": {
+      "items": 1,
+      "games": 1,
+      "regret": {
+       "n": 1,
+       "games": 1,
+       "strata": 1,
+       "mean": 0.25,
+       "ci95": null
+      },
+      "clear": 0,
+      "ceiling": 0.0,
+      "expected_hits": 0.0,
+      "hits": 0.0,
+      "accuracy": null,
+      "invalid": 0,
+      "choices": {
+       "roll30": 1
+      }
+     },
+     "strata": {
+      "streak4": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.25,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "roll30": 1
+       }
+      }
+     }
+    },
+    "dev": {
+     "equal": {
+      "items": 0
+     },
+     "strata": {}
+    },
+    "heldout": {
+     "equal": {
+      "items": 1,
+      "games": 1,
+      "regret": {
+       "n": 1,
+       "games": 1,
+       "strata": 1,
+       "mean": 0.25,
+       "ci95": null
+      },
+      "clear": 0,
+      "ceiling": 0.0,
+      "expected_hits": 0.0,
+      "hits": 0.0,
+      "accuracy": null,
+      "invalid": 0,
+      "choices": {
+       "roll30": 1
+      }
+     },
+     "strata": {
+      "streak4": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.25,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "roll30": 1
+       }
+      }
+     }
+    }
+   },
+   "rows": [
+    {
+     "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9400@streak4",
+     "game": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9400",
+     "split": "heldout",
+     "stratum": "streak4",
+     "point": "4-1",
+     "clear": false,
+     "pmax": 0.4533,
+     "choice": "roll30",
+     "valid": true,
+     "best": "save",
+     "regret": 0.25,
+     "p_choice": 0.27825,
+     "hit": 0.0,
+     "notes": null
+    }
+   ]
+  },
+  "always:streak": {
+   "agent": "always:streak",
+   "bank": "results/bank2/pilot.jsonl",
+   "items": 1,
+   "splits": {
+    "all": {
+     "equal": {
+      "items": 1,
+      "games": 1,
+      "regret": {
+       "n": 1,
+       "games": 1,
+       "strata": 1,
+       "mean": 1.5,
+       "ci95": null
+      },
+      "clear": 0,
+      "ceiling": 0.0,
+      "expected_hits": 0.0,
+      "hits": 0.0,
+      "accuracy": null,
+      "invalid": 0,
+      "choices": {
+       "streak": 1
+      }
+     },
+     "strata": {
+      "losing3": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 1.5,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "streak": 1
+       }
+      }
+     }
+    },
+    "dev": {
+     "equal": {
+      "items": 1,
+      "games": 1,
+      "regret": {
+       "n": 1,
+       "games": 1,
+       "strata": 1,
+       "mean": 1.5,
+       "ci95": null
+      },
+      "clear": 0,
+      "ceiling": 0.0,
+      "expected_hits": 0.0,
+      "hits": 0.0,
+      "accuracy": null,
+      "invalid": 0,
+      "choices": {
+       "streak": 1
+      }
+     },
+     "strata": {
+      "losing3": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 1.5,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "streak": 1
+       }
+      }
+     }
+    },
+    "heldout": {
+     "equal": {
+      "items": 0
+     },
+     "strata": {}
+    }
+   },
+   "rows": [
+    {
+     "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9411@losing3",
+     "game": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9411",
+     "split": "dev",
+     "stratum": "losing3",
+     "point": "3-1",
+     "clear": false,
+     "pmax": 0.4369,
+     "choice": "streak",
+     "valid": true,
+     "best": "roll20",
+     "regret": 1.5,
+     "p_choice": 0.25075,
+     "hit": 0.0,
+     "notes": null
+    }
+   ]
+  },
+  "always:roll20": {
+   "agent": "always:roll20",
+   "bank": "results/bank2/pilot.jsonl",
+   "items": 3,
+   "splits": {
+    "all": {
+     "equal": {
+      "items": 3,
+      "games": 2,
+      "regret": {
+       "n": 3,
+       "games": 2,
+       "strata": 3,
+       "mean": 0.0,
+       "ci95": null
+      },
+      "clear": 0,
+      "ceiling": 0.0,
+      "expected_hits": 0.0,
+      "hits": 0.0,
+      "accuracy": null,
+      "invalid": 0,
+      "choices": {
+       "roll20": 3
+      }
+     },
+     "strata": {
+      "losing3": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.0,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "roll20": 1
+       }
+      },
+      "lowhp4": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.0,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "roll20": 1
+       }
+      },
+      "ref41": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.0,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "roll20": 1
+       }
+      }
+     }
+    },
+    "dev": {
+     "equal": {
+      "items": 3,
+      "games": 2,
+      "regret": {
+       "n": 3,
+       "games": 2,
+       "strata": 3,
+       "mean": 0.0,
+       "ci95": null
+      },
+      "clear": 0,
+      "ceiling": 0.0,
+      "expected_hits": 0.0,
+      "hits": 0.0,
+      "accuracy": null,
+      "invalid": 0,
+      "choices": {
+       "roll20": 3
+      }
+     },
+     "strata": {
+      "losing3": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.0,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "roll20": 1
+       }
+      },
+      "lowhp4": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.0,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "roll20": 1
+       }
+      },
+      "ref41": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.0,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "roll20": 1
+       }
+      }
+     }
+    },
+    "heldout": {
+     "equal": {
+      "items": 0
+     },
+     "strata": {}
+    }
+   },
+   "rows": [
+    {
+     "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9402@lowhp4",
+     "game": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9402",
+     "split": "dev",
+     "stratum": "lowhp4",
+     "point": "4-1",
+     "clear": false,
+     "pmax": 0.5146,
+     "choice": "roll20",
+     "valid": true,
+     "best": "roll0",
+     "regret": 0.0,
+     "p_choice": 0.5146,
+     "hit": 1.0,
+     "notes": null
+    },
+    {
+     "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9402@ref41",
+     "game": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9402",
+     "split": "dev",
+     "stratum": "ref41",
+     "point": "4-1",
+     "clear": false,
+     "pmax": 0.51045,
+     "choice": "roll20",
+     "valid": true,
+     "best": "roll0",
+     "regret": 0.0,
+     "p_choice": 0.51045,
+     "hit": 1.0,
+     "notes": null
+    },
+    {
+     "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9411@losing3",
+     "game": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9411",
+     "split": "dev",
+     "stratum": "losing3",
+     "point": "3-1",
+     "clear": false,
+     "pmax": 0.4369,
+     "choice": "roll20",
+     "valid": true,
+     "best": "roll20",
+     "regret": 0.0,
+     "p_choice": 0.4369,
+     "hit": 1.0,
+     "notes": null
+    }
+   ]
+  },
+  "always:level_roll10": {
+   "agent": "always:level_roll10",
+   "bank": "results/bank2/pilot.jsonl",
+   "items": 3,
+   "splits": {
+    "all": {
+     "equal": {
+      "items": 3,
+      "games": 2,
+      "regret": {
+       "n": 3,
+       "games": 2,
+       "strata": 3,
+       "mean": 0.5,
+       "ci95": null
+      },
+      "clear": 0,
+      "ceiling": 0.0,
+      "expected_hits": 0.0,
+      "hits": 0.0,
+      "accuracy": null,
+      "invalid": 0,
+      "choices": {
+       "level_roll10": 3
+      }
+     },
+     "strata": {
+      "losing3": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 1.0,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "level_roll10": 1
+       }
+      },
+      "lowhp4": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.25,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "level_roll10": 1
+       }
+      },
+      "ref41": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.25,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "level_roll10": 1
+       }
+      }
+     }
+    },
+    "dev": {
+     "equal": {
+      "items": 3,
+      "games": 2,
+      "regret": {
+       "n": 3,
+       "games": 2,
+       "strata": 3,
+       "mean": 0.5,
+       "ci95": null
+      },
+      "clear": 0,
+      "ceiling": 0.0,
+      "expected_hits": 0.0,
+      "hits": 0.0,
+      "accuracy": null,
+      "invalid": 0,
+      "choices": {
+       "level_roll10": 3
+      }
+     },
+     "strata": {
+      "losing3": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 1.0,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "level_roll10": 1
+       }
+      },
+      "lowhp4": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.25,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "level_roll10": 1
+       }
+      },
+      "ref41": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.25,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "level_roll10": 1
+       }
+      }
+     }
+    },
+    "heldout": {
+     "equal": {
+      "items": 0
+     },
+     "strata": {}
+    }
+   },
+   "rows": [
+    {
+     "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9402@lowhp4",
+     "game": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9402",
+     "split": "dev",
+     "stratum": "lowhp4",
+     "point": "4-1",
+     "clear": false,
+     "pmax": 0.5146,
+     "choice": "level_roll10",
+     "valid": true,
+     "best": "roll0",
+     "regret": 0.25,
+     "p_choice": 0.3084,
+     "hit": 0.0,
+     "notes": null
+    },
+    {
+     "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9402@ref41",
+     "game": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9402",
+     "split": "dev",
+     "stratum": "ref41",
+     "point": "4-1",
+     "clear": false,
+     "pmax": 0.51045,
+     "choice": "level_roll10",
+     "valid": true,
+     "best": "roll0",
+     "regret": 0.25,
+     "p_choice": 0.3127,
+     "hit": 0.0,
+     "notes": null
+    },
+    {
+     "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9411@losing3",
+     "game": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9411",
+     "split": "dev",
+     "stratum": "losing3",
+     "point": "3-1",
+     "clear": false,
+     "pmax": 0.4369,
+     "choice": "level_roll10",
+     "valid": true,
+     "best": "roll20",
+     "regret": 1.0,
+     "p_choice": 0.31235,
+     "hit": 0.0,
+     "notes": null
+    }
+   ]
+  },
+  "always:roll0": {
+   "agent": "always:roll0",
+   "bank": "results/bank2/pilot.jsonl",
+   "items": 2,
+   "splits": {
+    "all": {
+     "equal": {
+      "items": 2,
+      "games": 1,
+      "regret": {
+       "n": 2,
+       "games": 1,
+       "strata": 2,
+       "mean": 0.0,
+       "ci95": null
+      },
+      "clear": 0,
+      "ceiling": 0.0,
+      "expected_hits": 0.0,
+      "hits": 0.0,
+      "accuracy": null,
+      "invalid": 0,
+      "choices": {
+       "roll0": 2
+      }
+     },
+     "strata": {
+      "lowhp4": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.0,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "roll0": 1
+       }
+      },
+      "ref41": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.0,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "roll0": 1
+       }
+      }
+     }
+    },
+    "dev": {
+     "equal": {
+      "items": 2,
+      "games": 1,
+      "regret": {
+       "n": 2,
+       "games": 1,
+       "strata": 2,
+       "mean": 0.0,
+       "ci95": null
+      },
+      "clear": 0,
+      "ceiling": 0.0,
+      "expected_hits": 0.0,
+      "hits": 0.0,
+      "accuracy": null,
+      "invalid": 0,
+      "choices": {
+       "roll0": 2
+      }
+     },
+     "strata": {
+      "lowhp4": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.0,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "roll0": 1
+       }
+      },
+      "ref41": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.0,
+        "ci95": null
+       },
+       "clear": 0,
+       "ceiling": 0.0,
+       "expected_hits": 0.0,
+       "hits": 0.0,
+       "accuracy": null,
+       "invalid": 0,
+       "choices": {
+        "roll0": 1
+       }
+      }
+     }
+    },
+    "heldout": {
+     "equal": {
+      "items": 0
+     },
+     "strata": {}
+    }
+   },
+   "rows": [
+    {
+     "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9402@lowhp4",
+     "game": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9402",
+     "split": "dev",
+     "stratum": "lowhp4",
+     "point": "4-1",
+     "clear": false,
+     "pmax": 0.5146,
+     "choice": "roll0",
+     "valid": true,
+     "best": "roll0",
+     "regret": 0.0,
+     "p_choice": 0.5146,
+     "hit": 1.0,
+     "notes": null
+    },
+    {
+     "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9402@ref41",
+     "game": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9402",
+     "split": "dev",
+     "stratum": "ref41",
+     "point": "4-1",
+     "clear": false,
+     "pmax": 0.51045,
+     "choice": "roll0",
+     "valid": true,
+     "best": "roll0",
+     "regret": 0.0,
+     "p_choice": 0.51045,
+     "hit": 1.0,
+     "notes": null
+    }
+   ]
+  }
+ },
+ "differences": [
+  {
+   "a": "xfit:oracle",
+   "b": "stance",
+   "why": "the cross-fit oracle should not be beaten by a rule policy",
+   "diff": {
+    "equal": {
+     "n": 4,
+     "games": 3,
+     "strata": 4,
+     "mean": 0.0625,
+     "ci95": null
+    },
+    "strata": {
+     "streak4": {
+      "n": 1,
+      "games": 1,
+      "mean": 0.25,
+      "ci95": null
+     },
+     "losing3": {
+      "n": 1,
+      "games": 1,
+      "mean": -1.5,
+      "ci95": null
+     },
+     "lowhp4": {
+      "n": 1,
+      "games": 1,
+      "mean": 0.75,
+      "ci95": null
+     },
+     "ref41": {
+      "n": 1,
+      "games": 1,
+      "mean": 0.75,
+      "ci95": null
+     }
+    }
+   },
+   "verdict": "VIOLATED"
+  },
+  {
+   "a": "stance",
+   "b": "noisy50:stance",
+   "why": "half of stance's choices made at random should not help",
+   "diff": {
+    "equal": {
+     "n": 4,
+     "games": 3,
+     "strata": 4,
+     "mean": 0.375,
+     "ci95": null
+    },
+    "strata": {
+     "streak4": {
+      "n": 1,
+      "games": 1,
+      "mean": 0.0,
+      "ci95": null
+     },
+     "losing3": {
+      "n": 1,
+      "games": 1,
+      "mean": 1.5,
+      "ci95": null
+     },
+     "lowhp4": {
+      "n": 1,
+      "games": 1,
+      "mean": 0.0,
+      "ci95": null
+     },
+     "ref41": {
+      "n": 1,
+      "games": 1,
+      "mean": 0.0,
+      "ci95": null
+     }
+    }
+   },
+   "verdict": "VIOLATED"
+  },
+  {
+   "a": "noisy50:stance",
+   "b": "random",
+   "why": "a rule policy should beat uniform choice",
+   "diff": {
+    "equal": {
+     "n": 4,
+     "games": 3,
+     "strata": 4,
+     "mean": -0.5,
+     "ci95": null
+    },
+    "strata": {
+     "streak4": {
+      "n": 1,
+      "games": 1,
+      "mean": 0.25,
+      "ci95": null
+     },
+     "losing3": {
+      "n": 1,
+      "games": 1,
+      "mean": -1.5,
+      "ci95": null
+     },
+     "lowhp4": {
+      "n": 1,
+      "games": 1,
+      "mean": -0.25,
+      "ci95": null
+     },
+     "ref41": {
+      "n": 1,
+      "games": 1,
+      "mean": -0.5,
+      "ci95": null
+     }
+    }
+   },
+   "verdict": "holds"
+  },
+  {
+   "a": "random",
+   "b": "xfit:worst",
+   "why": "uniform choice should beat the cross-fit worst",
+   "diff": {
+    "equal": {
+     "n": 4,
+     "games": 3,
+     "strata": 4,
+     "mean": 0.3125,
+     "ci95": null
+    },
+    "strata": {
+     "streak4": {
+      "n": 1,
+      "games": 1,
+      "mean": 0.0,
+      "ci95": null
+     },
+     "losing3": {
+      "n": 1,
+      "games": 1,
+      "mean": 0.0,
+      "ci95": null
+     },
+     "lowhp4": {
+      "n": 1,
+      "games": 1,
+      "mean": 0.5,
+      "ci95": null
+     },
+     "ref41": {
+      "n": 1,
+      "games": 1,
+      "mean": 0.75,
+      "ci95": null
+     }
+    }
+   },
+   "verdict": "VIOLATED"
+  },
+  {
+   "a": "stance",
+   "b": "mimic",
+   "why": "stance placed better than mimic in the round robin and in bank v1",
+   "diff": {
+    "equal": {
+     "n": 4,
+     "games": 3,
+     "strata": 4,
+     "mean": -0.25,
+     "ci95": null
+    },
+    "strata": {
+     "streak4": {
+      "n": 1,
+      "games": 1,
+      "mean": 0.0,
+      "ci95": null
+     },
+     "losing3": {
+      "n": 1,
+      "games": 1,
+      "mean": 0.0,
+      "ci95": null
+     },
+     "lowhp4": {
+      "n": 1,
+      "games": 1,
+      "mean": -0.5,
+      "ci95": null
+     },
+     "ref41": {
+      "n": 1,
+      "games": 1,
+      "mean": -0.5,
+      "ci95": null
+     }
+    }
+   },
+   "verdict": "holds"
+  }
+ ]
+}
