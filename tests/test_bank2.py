@@ -458,6 +458,41 @@ def test_rule_check_finds_a_single_feature_rule():
     assert rep["threshold"]["gold"]["regret"]["mean"] >= rep["best_fixed"]["regret"]["mean"] - 0.1
 
 
+def test_heldout_oracle_scores_each_fold_with_a_pick_from_the_others():
+    # 8 keys, 2 candidates; a is better on keys 0-5, b on keys 6-7 (folds: k % 4 by position)
+    places = {"a": {k: (1 if k < 6 else 8) for k in range(8)}, "b": {k: (4 if k < 6 else 2) for k in range(8)}}
+    data = {"ks": list(range(8)), "reps": ["a", "b"],
+            "cen": {c: {k: places[c][k] - (places["a"][k] + places["b"][k]) / 2 for k in range(8)} for c in "ab"}}
+    res = bank2.heldout_oracle(data, folds=4)
+    # every fold's training keys favour a (b wins only on keys 6 and 7), so a is picked and scored everywhere
+    assert res["picks"] == ["a", "a", "a", "a"]
+    assert res["score"] == pytest.approx(np.mean([data["cen"]["a"][k] for k in range(8)]))
+
+
+def test_vpi_is_zero_without_item_effects_and_grows_with_tau():
+    fit = {"alpha": {"a": 0.0, "b": 0.5}, "tau2": 0.0}
+    assert bank2.vpi(fit, ["a", "b"]) == pytest.approx(0.0, abs=1e-9)
+    # two exchangeable candidates: E[min(u1, u2)] = -tau / sqrt(pi)
+    fit = {"alpha": {"a": 0.0, "b": 0.0}, "tau2": 0.25}
+    assert bank2.vpi(fit, ["a", "b"]) == pytest.approx(0.5 / math.sqrt(math.pi), abs=0.01)
+
+
+def test_heldout_check_rules_vs_oracle():
+    # one HP threshold solves the stratum: the cross-fitted rule matches the held-out oracle, the best
+    # fixed candidate does not, and an agent that always picks save scores like always:save
+    items, _ = synthetic_stratum(n_games=60, tau=0.1, noise=0.8, seed=5,
+                                 rule=lambda f: {"roll_all": -1.5} if f["hp"] <= 30 else {"save": -1.5})
+    _, fits = bank2.label_items(items, draws=500)
+    choices = {"saver": {it["id"]: "save" for it in items}}
+    rep = bank2.heldout_check(items, fits, choices)["lowhp4"]
+    assert rep["threshold"]["hp"]["score"]["mean"] < rep["best_fixed"]["score"]["mean"] - 0.4
+    assert abs(rep["threshold"]["hp"]["vs_oracle"]["mean"]) < 0.25
+    assert rep["best_fixed"]["vs_oracle"]["mean"] > 0.3
+    assert rep["agents"]["saver"]["score"]["mean"] == pytest.approx(rep["fixed"]["save"]["score"]["mean"])
+    # random choice scores 0 by construction: the item-centred scores of the candidates average to 0
+    assert sum(rep["fixed"][c]["score"]["mean"] for c in rep["fixed"]) == pytest.approx(0.0, abs=1e-9)
+
+
 def test_game_folds_keep_games_whole():
     folds = bank2.game_folds([f"g{i}" for i in range(12)] * 2, 5)
     assert set(folds.values()) == set(range(5)) and len(folds) == 12

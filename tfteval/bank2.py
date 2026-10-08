@@ -1128,3 +1128,105 @@ def rule_check(items: list[dict], labels: dict, folds: int = RULE_FOLDS) -> dict
         entry["rule_stratum"] = entry["headroom"] < RULE_HEADROOM
         out[stratum] = entry
     return out
+
+
+# --------------------------------------------------------------------------- held-out check
+
+BRANCH_FOLDS = 4        # folds over an item's branch keys for the held-out oracle
+VPI_DRAWS = 20000
+
+
+def _centred_places(item: dict) -> dict:
+    """{"ks": the keys every distinct candidate has, "cen": candidate -> k -> its place minus the mean
+    place of the item's distinct candidates on that k} (duplicates take their group's places)."""
+    places = places_of(item)
+    groups = candidate_groups(item)
+    reps = [g[0] for g in groups]
+    group_of = {c: g for g in groups for c in g}
+    ks = sorted(set.intersection(*(set(places[r]) for r in reps)))
+    mean_k = {k: float(np.mean([places[r][k] for r in reps])) for k in ks}
+    names = [c["name"] for c in item["candidates"]]
+    return {"ks": ks, "reps": reps,
+            "cen": {c: {k: places[group_of[c][0]][k] - mean_k[k] for k in ks} for c in names}}
+
+
+def _mean_on(cen: dict, c: str, keys) -> float:
+    return float(np.mean([cen[c][k] for k in keys]))
+
+
+def heldout_oracle(data: dict, folds: int = BRANCH_FOLDS) -> dict:
+    """The oracle that picks the best candidate on the item's other branch folds and is scored on the
+    held-out one, averaged over folds (every branch is scored once, never by the pick it informed)."""
+    ks, cen = data["ks"], data["cen"]
+    fold = {k: i % folds for i, k in enumerate(ks)}
+    picks, scores, weights = [], [], []
+    for f in sorted(set(fold.values())):
+        held = [k for k in ks if fold[k] == f]
+        train = [k for k in ks if fold[k] != f]
+        if not held or not train:
+            continue
+        pick = min(data["reps"], key=lambda c: (_mean_on(cen, c, train), data["reps"].index(c)))
+        picks.append(pick)
+        scores.append(_mean_on(cen, pick, held))
+        weights.append(len(held))
+    return {"picks": picks, "score": float(np.average(scores, weights=weights))}
+
+
+def vpi(fit: dict, names: list[str], draws: int = VPI_DRAWS, seed: int = 0) -> float:
+    """Value of perfect information under the stratum prior: E[min_c (alpha_c + u_c)] - min_c alpha_c with
+    u_c ~ N(0, tau^2), in places; how much an agent that reads every state perfectly gains on average over
+    the best fixed candidate (an upper bound for state reading on this menu)."""
+    alpha = np.array([fit["alpha"].get(c, 0.0) for c in names])
+    tau = math.sqrt(fit["tau2"])
+    u = np.random.default_rng(seed).normal(0.0, tau, size=(draws, len(names)))
+    return float(alpha.min() - (alpha + u).min(axis=1).mean())
+
+
+def heldout_check(items: list[dict], fits: dict, choices: dict | None = None, folds: int = RULE_FOLDS,
+                  branch_folds: int = BRANCH_FOLDS) -> dict:
+    """Per stratum, every policy scored on the same branches by the place of its choice relative to the
+    item's mean over candidates (lower is better; a uniformly random choice scores 0): the held-out oracle
+    (heldout_oracle), every fixed candidate, the best fixed candidate, single-feature threshold rules and a
+    depth-2 tree (each fitted on the other folds' source games, so nothing is scored on branches it was
+    chosen with), and the agents in `choices` (agent -> item id -> choice). Differences to the oracle are
+    paired per item (95% CI clustered by game). VPI (`vpi`) is the ceiling for state reading."""
+    choices = choices or {}
+    by_stratum = defaultdict(list)
+    for it in items:
+        by_stratum[it["stratum"]].append(it)
+    out = {}
+    for stratum, part in by_stratum.items():
+        names = [c["name"] for c in part[0]["candidates"]]
+        datas = [_centred_places(it) for it in part]
+        games = [it["game"] for it in part]
+        rows = [{"id": it["id"], "game": it["game"], "x": item_features(it),
+                 "R": {c: _mean_on(d["cen"], c, d["ks"]) for c in names}} for it, d in zip(part, datas)]
+        oracle = [heldout_oracle(d, branch_folds)["score"] for d in datas]
+        fold_of = game_folds(games, folds)
+
+        def stat(per_item):
+            return {"score": bank.clustered_mean_ci(per_item, games),
+                    "vs_oracle": bank.clustered_mean_ci([a - b for a, b in zip(per_item, oracle)], games),
+                    "values": [float(v) for v in per_item]}
+
+        def of(choice_list):
+            return [r["R"][c] for r, c in zip(rows, choice_list)]
+
+        entry = {"ids": [it["id"] for it in part], "game_of": games, "items": len(part), "games": len(set(games)), "branches_per_cand": float(np.mean([len(d["ks"]) for d in datas])),
+                 "tau": math.sqrt(fits[stratum]["tau2"]), "alpha": fits[stratum]["alpha"],
+                 "vpi": vpi(fits[stratum], names), "oracle": stat(oracle)}
+        entry["fixed"] = {c: stat(of([c] * len(rows))) for c in names}
+        entry["best_fixed"] = stat(of(crossfit_rule(rows, lambda tr: fit_fixed(tr, names), fold_of)))
+        entry["threshold"] = {f: stat(of(crossfit_rule(rows, lambda tr, f=f: fit_threshold(tr, names, f), fold_of)))
+                              for f in RULE_FEATURES}
+        entry["tree"] = stat(of(crossfit_rule(rows, lambda tr: fit_tree(tr, names), fold_of)))
+        entry["agents"] = {}
+        for agent, picks in choices.items():
+            if all(it["id"] in picks for it in part):
+                entry["agents"][agent] = stat(of([picks[it["id"]] for it in part]))
+        rules = {"best_fixed": entry["best_fixed"], "tree": entry["tree"],
+                 **{f"threshold:{f}": v for f, v in entry["threshold"].items()}}
+        best = min(rules, key=lambda k: rules[k]["score"]["mean"])
+        entry["best_rule"], entry["best_rule_vs_oracle"] = best, rules[best]["vs_oracle"]
+        out[stratum] = entry
+    return out
