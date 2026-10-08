@@ -2,19 +2,53 @@
  "bank": "results/bank2/pilot.jsonl",
  "prior": "candidate",
  "fits": {
+  "pairs3": {
+   "items": 1,
+   "prior": "candidate",
+   "names": [
+    "roll10",
+    "level7",
+    "save"
+   ],
+   "pooled_sd_d": 2.4409697526461347,
+   "alpha": {
+    "roll10": 0.0,
+    "level7": 0.0,
+    "save": 0.0
+   },
+   "alpha_cov": [
+    [
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0
+    ]
+   ],
+   "tau2": 0.06760000000000001,
+   "tau_source": "fallback"
+  },
   "lowhp4": {
    "items": 1,
    "prior": "candidate",
    "names": [
-    "roll0",
-    "roll20",
+    "roll_all",
+    "roll30",
     "level_roll10",
     "save"
    ],
-   "pooled_sd_d": 0.9789450103725609,
+   "pooled_sd_d": 0.8498365855987975,
    "alpha": {
-    "roll0": 0.0,
-    "roll20": 0.0,
+    "roll_all": 0.0,
+    "roll30": 0.0,
     "level_roll10": 0.0,
     "save": 0.0
    },
@@ -48,18 +82,18 @@
    "tau_source": "fallback"
   },
   "ref41": {
-   "items": 1,
+   "items": 2,
    "prior": "candidate",
    "names": [
-    "roll0",
-    "roll20",
+    "roll_all",
+    "roll30",
     "level_roll10",
     "save"
    ],
-   "pooled_sd_d": 0.9789450103725609,
+   "pooled_sd_d": 0.8266397845091497,
    "alpha": {
-    "roll0": 0.0,
-    "roll20": 0.0,
+    "roll_all": 0.0,
+    "roll30": 0.0,
     "level_roll10": 0.0,
     "save": 0.0
    },
@@ -162,6 +196,221 @@
   }
  },
  "strata": {
+  "pairs3": {
+   "items": 1,
+   "games": 1,
+   "folds": 1,
+   "clear": 0,
+   "ceiling": 0,
+   "xfit_oracle": {
+    "n": 1,
+    "games": 1,
+    "mean": 0.0,
+    "ci95": null
+   },
+   "xfit_worst": {
+    "n": 1,
+    "games": 1,
+    "mean": 0.25,
+    "ci95": null
+   },
+   "fixed": {
+    "roll10": {
+     "regret": {
+      "n": 1,
+      "games": 1,
+      "mean": 0.0,
+      "ci95": null
+     },
+     "accuracy": null,
+     "expected_hits": 0,
+     "choices": {
+      "roll10": 1
+     }
+    },
+    "level7": {
+     "regret": {
+      "n": 1,
+      "games": 1,
+      "mean": 0.5,
+      "ci95": null
+     },
+     "accuracy": null,
+     "expected_hits": 0,
+     "choices": {
+      "level7": 1
+     }
+    },
+    "save": {
+     "regret": {
+      "n": 1,
+      "games": 1,
+      "mean": 0.75,
+      "ci95": null
+     },
+     "accuracy": null,
+     "expected_hits": 0,
+     "choices": {
+      "save": 1
+     }
+    }
+   },
+   "best_fixed": {
+    "regret": {
+     "n": 1,
+     "games": 1,
+     "mean": 0.0,
+     "ci95": null
+    },
+    "accuracy": null,
+    "expected_hits": 0,
+    "choices": {
+     "roll10": 1
+    }
+   },
+   "threshold": {
+    "hp": {
+     "regret": {
+      "n": 1,
+      "games": 1,
+      "mean": 0.0,
+      "ci95": null
+     },
+     "accuracy": null,
+     "expected_hits": 0,
+     "choices": {
+      "roll10": 1
+     },
+     "rule_on_all": {
+      "kind": "threshold",
+      "feature": "hp",
+      "t": null,
+      "a": "roll10",
+      "b": "roll10"
+     }
+    },
+    "gold": {
+     "regret": {
+      "n": 1,
+      "games": 1,
+      "mean": 0.0,
+      "ci95": null
+     },
+     "accuracy": null,
+     "expected_hits": 0,
+     "choices": {
+      "roll10": 1
+     },
+     "rule_on_all": {
+      "kind": "threshold",
+      "feature": "gold",
+      "t": null,
+      "a": "roll10",
+      "b": "roll10"
+     }
+    },
+    "pairs": {
+     "regret": {
+      "n": 1,
+      "games": 1,
+      "mean": 0.0,
+      "ci95": null
+     },
+     "accuracy": null,
+     "expected_hits": 0,
+     "choices": {
+      "roll10": 1
+     },
+     "rule_on_all": {
+      "kind": "threshold",
+      "feature": "pairs",
+      "t": null,
+      "a": "roll10",
+      "b": "roll10"
+     }
+    },
+    "streak": {
+     "regret": {
+      "n": 1,
+      "games": 1,
+      "mean": 0.0,
+      "ci95": null
+     },
+     "accuracy": null,
+     "expected_hits": 0,
+     "choices": {
+      "roll10": 1
+     },
+     "rule_on_all": {
+      "kind": "threshold",
+      "feature": "streak",
+      "t": null,
+      "a": "roll10",
+      "b": "roll10"
+     }
+    },
+    "level": {
+     "regret": {
+      "n": 1,
+      "games": 1,
+      "mean": 0.0,
+      "ci95": null
+     },
+     "accuracy": null,
+     "expected_hits": 0,
+     "choices": {
+      "roll10": 1
+     },
+     "rule_on_all": {
+      "kind": "threshold",
+      "feature": "level",
+      "t": null,
+      "a": "roll10",
+      "b": "roll10"
+     }
+    },
+    "losses_to_death": {
+     "regret": {
+      "n": 1,
+      "games": 1,
+      "mean": 0.0,
+      "ci95": null
+     },
+     "accuracy": null,
+     "expected_hits": 0,
+     "choices": {
+      "roll10": 1
+     },
+     "rule_on_all": {
+      "kind": "threshold",
+      "feature": "losses_to_death",
+      "t": null,
+      "a": "roll10",
+      "b": "roll10"
+     }
+    }
+   },
+   "tree": {
+    "regret": {
+     "n": 1,
+     "games": 1,
+     "mean": 0.0,
+     "ci95": null
+    },
+    "accuracy": null,
+    "expected_hits": 0,
+    "choices": {
+     "roll10": 1
+    },
+    "rule_on_all": {
+     "leaf": "roll10"
+    }
+   },
+   "best_rule": "best_fixed",
+   "best_rule_regret": 0.0,
+   "headroom": 0.0,
+   "rule_stratum": true
+  },
   "lowhp4": {
    "items": 1,
    "games": 1,
@@ -181,7 +430,7 @@
     "ci95": null
    },
    "fixed": {
-    "roll0": {
+    "roll_all": {
      "regret": {
       "n": 1,
       "games": 1,
@@ -191,20 +440,20 @@
      "accuracy": null,
      "expected_hits": 0,
      "choices": {
-      "roll0": 1
+      "roll_all": 1
      }
     },
-    "roll20": {
+    "roll30": {
      "regret": {
       "n": 1,
       "games": 1,
-      "mean": 0.0,
+      "mean": 0.25,
       "ci95": null
      },
      "accuracy": null,
      "expected_hits": 0,
      "choices": {
-      "roll20": 1
+      "roll30": 1
      }
     },
     "level_roll10": {
@@ -244,7 +493,7 @@
     "accuracy": null,
     "expected_hits": 0,
     "choices": {
-     "roll0": 1
+     "roll_all": 1
     }
    },
    "threshold": {
@@ -258,14 +507,14 @@
      "accuracy": null,
      "expected_hits": 0,
      "choices": {
-      "roll0": 1
+      "roll_all": 1
      },
      "rule_on_all": {
       "kind": "threshold",
       "feature": "hp",
       "t": null,
-      "a": "roll0",
-      "b": "roll0"
+      "a": "roll_all",
+      "b": "roll_all"
      }
     },
     "gold": {
@@ -278,14 +527,14 @@
      "accuracy": null,
      "expected_hits": 0,
      "choices": {
-      "roll0": 1
+      "roll_all": 1
      },
      "rule_on_all": {
       "kind": "threshold",
       "feature": "gold",
       "t": null,
-      "a": "roll0",
-      "b": "roll0"
+      "a": "roll_all",
+      "b": "roll_all"
      }
     },
     "pairs": {
@@ -298,14 +547,14 @@
      "accuracy": null,
      "expected_hits": 0,
      "choices": {
-      "roll0": 1
+      "roll_all": 1
      },
      "rule_on_all": {
       "kind": "threshold",
       "feature": "pairs",
       "t": null,
-      "a": "roll0",
-      "b": "roll0"
+      "a": "roll_all",
+      "b": "roll_all"
      }
     },
     "streak": {
@@ -318,14 +567,14 @@
      "accuracy": null,
      "expected_hits": 0,
      "choices": {
-      "roll0": 1
+      "roll_all": 1
      },
      "rule_on_all": {
       "kind": "threshold",
       "feature": "streak",
       "t": null,
-      "a": "roll0",
-      "b": "roll0"
+      "a": "roll_all",
+      "b": "roll_all"
      }
     },
     "level": {
@@ -338,14 +587,14 @@
      "accuracy": null,
      "expected_hits": 0,
      "choices": {
-      "roll0": 1
+      "roll_all": 1
      },
      "rule_on_all": {
       "kind": "threshold",
       "feature": "level",
       "t": null,
-      "a": "roll0",
-      "b": "roll0"
+      "a": "roll_all",
+      "b": "roll_all"
      }
     },
     "losses_to_death": {
@@ -358,14 +607,14 @@
      "accuracy": null,
      "expected_hits": 0,
      "choices": {
-      "roll0": 1
+      "roll_all": 1
      },
      "rule_on_all": {
       "kind": "threshold",
       "feature": "losses_to_death",
       "t": null,
-      "a": "roll0",
-      "b": "roll0"
+      "a": "roll_all",
+      "b": "roll_all"
      }
     }
    },
@@ -379,10 +628,10 @@
     "accuracy": null,
     "expected_hits": 0,
     "choices": {
-     "roll0": 1
+     "roll_all": 1
     },
     "rule_on_all": {
-     "leaf": "roll0"
+     "leaf": "roll_all"
     }
    },
    "best_rule": "best_fixed",
@@ -391,232 +640,240 @@
    "rule_stratum": true
   },
   "ref41": {
-   "items": 1,
-   "games": 1,
-   "folds": 1,
+   "items": 2,
+   "games": 2,
+   "folds": 2,
    "clear": 0,
    "ceiling": 0,
    "xfit_oracle": {
-    "n": 1,
-    "games": 1,
-    "mean": 0.75,
-    "ci95": null
+    "n": 2,
+    "games": 2,
+    "mean": 0.375,
+    "ci95": 4.764749999999999
    },
    "xfit_worst": {
-    "n": 1,
-    "games": 1,
-    "mean": -0.25,
-    "ci95": null
+    "n": 2,
+    "games": 2,
+    "mean": 0.25,
+    "ci95": 6.353
    },
    "fixed": {
-    "roll0": {
+    "roll_all": {
      "regret": {
-      "n": 1,
-      "games": 1,
-      "mean": 0.0,
-      "ci95": null
+      "n": 2,
+      "games": 2,
+      "mean": 0.375,
+      "ci95": 4.764749999999999
      },
      "accuracy": null,
      "expected_hits": 0,
      "choices": {
-      "roll0": 1
+      "roll_all": 2
      }
     },
-    "roll20": {
+    "roll30": {
      "regret": {
-      "n": 1,
-      "games": 1,
-      "mean": 0.0,
-      "ci95": null
+      "n": 2,
+      "games": 2,
+      "mean": 0.5,
+      "ci95": 3.1765
      },
      "accuracy": null,
      "expected_hits": 0,
      "choices": {
-      "roll20": 1
+      "roll30": 2
      }
     },
     "level_roll10": {
      "regret": {
-      "n": 1,
-      "games": 1,
-      "mean": 0.25,
-      "ci95": null
+      "n": 2,
+      "games": 2,
+      "mean": 0.125,
+      "ci95": 1.58825
      },
      "accuracy": null,
      "expected_hits": 0,
      "choices": {
-      "level_roll10": 1
+      "level_roll10": 2
      }
     },
     "save": {
      "regret": {
-      "n": 1,
-      "games": 1,
-      "mean": 0.5,
-      "ci95": null
+      "n": 2,
+      "games": 2,
+      "mean": 0.375,
+      "ci95": 1.58825
      },
      "accuracy": null,
      "expected_hits": 0,
      "choices": {
-      "save": 1
+      "save": 2
      }
     }
    },
    "best_fixed": {
     "regret": {
-     "n": 1,
-     "games": 1,
-     "mean": 0.0,
-     "ci95": null
+     "n": 2,
+     "games": 2,
+     "mean": 0.5,
+     "ci95": 3.1765
     },
     "accuracy": null,
     "expected_hits": 0,
     "choices": {
-     "roll0": 1
+     "roll_all": 1,
+     "level_roll10": 1
     }
    },
    "threshold": {
     "hp": {
      "regret": {
-      "n": 1,
-      "games": 1,
-      "mean": 0.0,
-      "ci95": null
+      "n": 2,
+      "games": 2,
+      "mean": 0.5,
+      "ci95": 3.1765
      },
      "accuracy": null,
      "expected_hits": 0,
      "choices": {
-      "roll0": 1
+      "roll_all": 1,
+      "level_roll10": 1
      },
      "rule_on_all": {
       "kind": "threshold",
       "feature": "hp",
-      "t": null,
-      "a": "roll0",
-      "b": "roll0"
+      "t": 63.0,
+      "a": "roll_all",
+      "b": "level_roll10"
      }
     },
     "gold": {
      "regret": {
-      "n": 1,
-      "games": 1,
-      "mean": 0.0,
-      "ci95": null
+      "n": 2,
+      "games": 2,
+      "mean": 0.5,
+      "ci95": 3.1765
      },
      "accuracy": null,
      "expected_hits": 0,
      "choices": {
-      "roll0": 1
+      "roll_all": 1,
+      "level_roll10": 1
      },
      "rule_on_all": {
       "kind": "threshold",
       "feature": "gold",
-      "t": null,
-      "a": "roll0",
-      "b": "roll0"
+      "t": 52.5,
+      "a": "roll_all",
+      "b": "level_roll10"
      }
     },
     "pairs": {
      "regret": {
-      "n": 1,
-      "games": 1,
-      "mean": 0.0,
-      "ci95": null
+      "n": 2,
+      "games": 2,
+      "mean": 0.5,
+      "ci95": 3.1765
      },
      "accuracy": null,
      "expected_hits": 0,
      "choices": {
-      "roll0": 1
+      "roll_all": 1,
+      "level_roll10": 1
      },
      "rule_on_all": {
       "kind": "threshold",
       "feature": "pairs",
-      "t": null,
-      "a": "roll0",
-      "b": "roll0"
+      "t": 2.5,
+      "a": "level_roll10",
+      "b": "roll_all"
      }
     },
     "streak": {
      "regret": {
-      "n": 1,
-      "games": 1,
-      "mean": 0.0,
-      "ci95": null
+      "n": 2,
+      "games": 2,
+      "mean": 0.5,
+      "ci95": 3.1765
      },
      "accuracy": null,
      "expected_hits": 0,
      "choices": {
-      "roll0": 1
+      "roll_all": 1,
+      "level_roll10": 1
      },
      "rule_on_all": {
       "kind": "threshold",
       "feature": "streak",
-      "t": null,
-      "a": "roll0",
-      "b": "roll0"
+      "t": 5.5,
+      "a": "roll_all",
+      "b": "level_roll10"
      }
     },
     "level": {
      "regret": {
-      "n": 1,
-      "games": 1,
-      "mean": 0.0,
-      "ci95": null
+      "n": 2,
+      "games": 2,
+      "mean": 0.5,
+      "ci95": 3.1765
      },
      "accuracy": null,
      "expected_hits": 0,
      "choices": {
-      "roll0": 1
+      "roll_all": 1,
+      "level_roll10": 1
      },
      "rule_on_all": {
       "kind": "threshold",
       "feature": "level",
       "t": null,
-      "a": "roll0",
-      "b": "roll0"
+      "a": "level_roll10",
+      "b": "level_roll10"
      }
     },
     "losses_to_death": {
      "regret": {
-      "n": 1,
-      "games": 1,
-      "mean": 0.0,
-      "ci95": null
+      "n": 2,
+      "games": 2,
+      "mean": 0.5,
+      "ci95": 3.1765
      },
      "accuracy": null,
      "expected_hits": 0,
      "choices": {
-      "roll0": 1
+      "roll_all": 1,
+      "level_roll10": 1
      },
      "rule_on_all": {
       "kind": "threshold",
       "feature": "losses_to_death",
-      "t": null,
-      "a": "roll0",
-      "b": "roll0"
+      "t": 5.5,
+      "a": "roll_all",
+      "b": "level_roll10"
      }
     }
    },
    "tree": {
     "regret": {
-     "n": 1,
-     "games": 1,
-     "mean": 0.0,
-     "ci95": null
+     "n": 2,
+     "games": 2,
+     "mean": 0.5,
+     "ci95": 3.1765
     },
     "accuracy": null,
     "expected_hits": 0,
     "choices": {
-     "roll0": 1
+     "roll_all": 1,
+     "level_roll10": 1
     },
     "rule_on_all": {
-     "leaf": "roll0"
+     "leaf": "level_roll10"
     }
    },
    "best_rule": "best_fixed",
-   "best_rule_regret": 0.0,
-   "headroom": -0.75,
-   "rule_stratum": true
+   "best_rule_regret": 0.5,
+   "headroom": 0.125,
+   "rule_stratum": false
   },
   "losing3": {
    "items": 1,

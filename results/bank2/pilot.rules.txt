@@ -1,35 +1,50 @@
+pairs3: 1 items, 1 games, 1 folds, 0 clear (ceiling 0.00); tau 0.26 (fallback)
+  xfit:oracle                    +0.00 (1 game)
+  xfit:worst                     +0.25 (1 game)
+  always:roll10                  +0.00 (1 game)  acc    -
+  always:level7                  +0.50 (1 game)  acc    -
+  always:save                    +0.75 (1 game)  acc    -
+  best fixed (cross-fit)         +0.00 (1 game)  acc    -
+  threshold:hp                   +0.00 (1 game)  acc    -  on all items: always roll10
+  threshold:gold                 +0.00 (1 game)  acc    -  on all items: always roll10
+  threshold:pairs                +0.00 (1 game)  acc    -  on all items: always roll10
+  threshold:streak               +0.00 (1 game)  acc    -  on all items: always roll10
+  threshold:level                +0.00 (1 game)  acc    -  on all items: always roll10
+  threshold:losses_to_death      +0.00 (1 game)  acc    -  on all items: always roll10
+  tree depth 2 (CV)              +0.00 (1 game)  acc    -  on all items: roll10
+  best rule best_fixed +0.00; headroom +0.00 -> RULE STRATUM
 lowhp4: 1 items, 1 games, 1 folds, 0 clear (ceiling 0.00); tau 0.26 (fallback)
   xfit:oracle                    +0.75 (1 game)
   xfit:worst                     -0.25 (1 game)
-  always:roll0                   +0.00 (1 game)  acc    -
-  always:roll20                  +0.00 (1 game)  acc    -
+  always:roll_all                +0.00 (1 game)  acc    -
+  always:roll30                  +0.25 (1 game)  acc    -
   always:level_roll10            +0.25 (1 game)  acc    -
   always:save                    +0.50 (1 game)  acc    -
   best fixed (cross-fit)         +0.00 (1 game)  acc    -
-  threshold:hp                   +0.00 (1 game)  acc    -  on all items: always roll0
-  threshold:gold                 +0.00 (1 game)  acc    -  on all items: always roll0
-  threshold:pairs                +0.00 (1 game)  acc    -  on all items: always roll0
-  threshold:streak               +0.00 (1 game)  acc    -  on all items: always roll0
-  threshold:level                +0.00 (1 game)  acc    -  on all items: always roll0
-  threshold:losses_to_death      +0.00 (1 game)  acc    -  on all items: always roll0
-  tree depth 2 (CV)              +0.00 (1 game)  acc    -  on all items: roll0
+  threshold:hp                   +0.00 (1 game)  acc    -  on all items: always roll_all
+  threshold:gold                 +0.00 (1 game)  acc    -  on all items: always roll_all
+  threshold:pairs                +0.00 (1 game)  acc    -  on all items: always roll_all
+  threshold:streak               +0.00 (1 game)  acc    -  on all items: always roll_all
+  threshold:level                +0.00 (1 game)  acc    -  on all items: always roll_all
+  threshold:losses_to_death      +0.00 (1 game)  acc    -  on all items: always roll_all
+  tree depth 2 (CV)              +0.00 (1 game)  acc    -  on all items: roll_all
   best rule best_fixed +0.00; headroom -0.75 -> RULE STRATUM
-ref41: 1 items, 1 games, 1 folds, 0 clear (ceiling 0.00); tau 0.26 (fallback)
-  xfit:oracle                    +0.75 (1 game)
-  xfit:worst                     -0.25 (1 game)
-  always:roll0                   +0.00 (1 game)  acc    -
-  always:roll20                  +0.00 (1 game)  acc    -
-  always:level_roll10            +0.25 (1 game)  acc    -
-  always:save                    +0.50 (1 game)  acc    -
-  best fixed (cross-fit)         +0.00 (1 game)  acc    -
-  threshold:hp                   +0.00 (1 game)  acc    -  on all items: always roll0
-  threshold:gold                 +0.00 (1 game)  acc    -  on all items: always roll0
-  threshold:pairs                +0.00 (1 game)  acc    -  on all items: always roll0
-  threshold:streak               +0.00 (1 game)  acc    -  on all items: always roll0
-  threshold:level                +0.00 (1 game)  acc    -  on all items: always roll0
-  threshold:losses_to_death      +0.00 (1 game)  acc    -  on all items: always roll0
-  tree depth 2 (CV)              +0.00 (1 game)  acc    -  on all items: roll0
-  best rule best_fixed +0.00; headroom -0.75 -> RULE STRATUM
+ref41: 2 items, 2 games, 2 folds, 0 clear (ceiling 0.00); tau 0.26 (fallback)
+  xfit:oracle                       +0.38 ±4.76
+  xfit:worst                        +0.25 ±6.35
+  always:roll_all                   +0.38 ±4.76  acc    -
+  always:roll30                     +0.50 ±3.18  acc    -
+  always:level_roll10               +0.12 ±1.59  acc    -
+  always:save                       +0.38 ±1.59  acc    -
+  best fixed (cross-fit)            +0.50 ±3.18  acc    -
+  threshold:hp                      +0.50 ±3.18  acc    -  on all items: roll_all if hp <= 63 else level_roll10
+  threshold:gold                    +0.50 ±3.18  acc    -  on all items: roll_all if gold <= 52.5 else level_roll10
+  threshold:pairs                   +0.50 ±3.18  acc    -  on all items: level_roll10 if pairs <= 2.5 else roll_all
+  threshold:streak                  +0.50 ±3.18  acc    -  on all items: roll_all if streak <= 5.5 else level_roll10
+  threshold:level                   +0.50 ±3.18  acc    -  on all items: always level_roll10
+  threshold:losses_to_death         +0.50 ±3.18  acc    -  on all items: roll_all if losses_to_death <= 5.5 else level_roll10
+  tree depth 2 (CV)                 +0.50 ±3.18  acc    -  on all items: level_roll10
+  best rule best_fixed +0.50; headroom +0.12 -> needs more than one feature
 losing3: 1 items, 1 games, 1 folds, 0 clear (ceiling 0.00); tau 0.26 (fallback)
   xfit:oracle                    +0.00 (1 game)
   xfit:worst                     +1.50 (1 game)

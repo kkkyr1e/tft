@@ -1,84 +1,31 @@
-2 items to build, 0 to race again (0 already in results/bank2/pilot.jsonl); racing {'k_start': 2, 'k_step': 2, 'k_min': 4, 'k_max': 4, 'budget': 16, 'z': 2.0, 'sd_floor': 1.0}; 1 workers; harness f01c26cf1a091e91614a1c5fd9384850335a30e0, rules set4, sim realistic {'pve_damage': True, 'fortune_orbs': True, 'carousel_fixes': True, 'hide_next_opponent': True, 'rng_streams': 'keyed'}, pickers on
-08:12:12 stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9402@lowhp4: 4-1: k_max, survivors roll0,roll20,level_roll10,save, branches roll0:4 roll20:4 level_roll10:4 save:4 (103.48s, 5.89s a branch; 1 left, 104s so far)
-08:12:23 stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9402@ref41: 4-1: k_max, survivors roll0,roll20,level_roll10,save, branches roll0:4 roll20:4 level_roll10:4 save:4 (copied from stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9402@lowhp4) (11.11s; 0 left, 115s so far)
+## build_bank2.py --seeds 9402 --strata pairs3 lowhp4 ref41 --k-start 2 --k-step 2 --k-min 4 --k-max 4 --budget-per-cand 4
+3 items to build, 0 to race again (0 already in results/bank2/pilot.jsonl); racing {'k_start': 2, 'k_step': 2, 'k_min': 4, 'k_max': 4, 'budget_per_cand': 4, 'z': 2.0, 'sd_floor': 1.0}; 1 workers; harness 743fcf881043cdf30c5a701f0f18760d0bc7348c, rules set4, sim realistic {'pve_damage': True, 'fortune_orbs': True, 'carousel_fixes': True, 'hide_next_opponent': True, 'rng_streams': 'keyed'}, pickers on
+08:54:54 stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9402@pairs3: 3-3: k_max, survivors roll10,level7,save, branches roll10:4 level7:4 save:4 (282.76s, 23.1s a branch; 2 left, 283s so far)
+08:56:33 stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9402@lowhp4: 4-1: k_max, survivors roll_all,roll30,level_roll10,save, branches roll_all:4 roll30:4 level_roll10:4 save:4 (99.1s, 5.63s a branch; 1 left, 382s so far)
+08:56:43 stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9402@ref41: 4-1: k_max, survivors roll_all,roll30,level_roll10,save, branches roll_all:4 roll30:4 level_roll10:4 save:4 (copied from stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9402@lowhp4) (9.61s; 0 left, 391s so far)
+## build_bank2.py --seeds 9408 --strata ref41 --k-start 2 --k-step 2 --k-min 4 --k-max 4 --budget-per-cand 4
+1 items to build, 0 to race again (3 already in results/bank2/pilot.jsonl); racing {'k_start': 2, 'k_step': 2, 'k_min': 4, 'k_max': 4, 'budget_per_cand': 4, 'z': 2.0, 'sd_floor': 1.0}; 1 workers; harness 743fcf881043cdf30c5a701f0f18760d0bc7348c, rules set4, sim realistic {'pve_damage': True, 'fortune_orbs': True, 'carousel_fixes': True, 'hide_next_opponent': True, 'rng_streams': 'keyed'}, pickers on
+09:02:26 stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9408@ref41: 4-1: k_max, survivors roll_all,level_roll10,save, branches roll_all:4 roll30:2 level_roll10:4 save:4 (343.2s, 23.83s a branch; 0 left, 343s so far)
+## build_bank2.py --seeds 9411 --strata losing3 --k-start 2 --k-step 2 --k-min 4 --k-max 4 --budget-per-cand 4
+1 items to build, 0 to race again (4 already in results/bank2/pilot.jsonl); racing {'k_start': 2, 'k_step': 2, 'k_min': 4, 'k_max': 4, 'budget_per_cand': 4, 'z': 2.0, 'sd_floor': 1.0}; 1 workers; harness 743fcf881043cdf30c5a701f0f18760d0bc7348c, rules set4, sim realistic {'pve_damage': True, 'fortune_orbs': True, 'carousel_fixes': True, 'hide_next_opponent': True, 'rng_streams': 'keyed'}, pickers on
+09:08:07 stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9411@losing3: 3-1: k_max, survivors streak,roll20,level_roll10, branches streak:4 roll20:4 level_roll10:4 (340.54s, 28.02s a branch; 0 left, 341s so far)
+## build_bank2.py --seeds 9400 --strata streak4 --k-start 2 --k-step 2 --k-min 4 --k-max 4 --budget-per-cand 4
+1 items to build, 0 to race again (5 already in results/bank2/pilot.jsonl); racing {'k_start': 2, 'k_step': 2, 'k_min': 4, 'k_max': 4, 'budget_per_cand': 4, 'z': 2.0, 'sd_floor': 1.0}; 1 workers; harness 743fcf881043cdf30c5a701f0f18760d0bc7348c, rules set4, sim realistic {'pve_damage': True, 'fortune_orbs': True, 'carousel_fixes': True, 'hide_next_opponent': True, 'rng_streams': 'keyed'}, pickers on
+09:12:00 stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9400@streak4: 4-1: k_max, survivors level8,roll30,save, branches level8:4 roll30:4 save:4 (233.11s, 18.56s a branch; 0 left, 233s so far)
 {
- "built": 2,
+ "built": 6,
  "strata": {
-  "lowhp4": {
+  "pairs3": {
    "games": 1,
    "fired": 1,
    "rounds": {
-    "4-1": 1
-   },
-   "dropped": {},
-   "usable": 1,
-   "branches": 16,
-   "copied": 0
-  },
-  "ref41": {
-   "games": 1,
-   "fired": 1,
-   "rounds": {
-    "4-1": 1
-   },
-   "dropped": {},
-   "usable": 1,
-   "branches": 0,
-   "copied": 1
-  }
- },
- "usable": 2,
- "games": 1,
- "branch_seconds_mean": 5.88625
-}
-1 items to build, 0 to race again (2 already in results/bank2/pilot.jsonl); racing {'k_start': 2, 'k_step': 2, 'k_min': 4, 'k_max': 4, 'budget': 16, 'z': 2.0, 'sd_floor': 1.0}; 1 workers; harness 2be0ab0989dccc5778156992c9011864c0ee67a2, rules set4, sim realistic {'pve_damage': True, 'fortune_orbs': True, 'carousel_fixes': True, 'hide_next_opponent': True, 'rng_streams': 'keyed'}, pickers on
-08:18:14 stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9411@losing3: 3-1: k_max, survivors streak,roll20,level_roll10, branches streak:4 roll20:4 level_roll10:4 (350.31s, 28.73s a branch; 0 left, 350s so far)
-{
- "built": 3,
- "strata": {
-  "losing3": {
-   "games": 1,
-   "fired": 1,
-   "rounds": {
-    "3-1": 1
+    "3-3": 1
    },
    "dropped": {},
    "usable": 1,
    "branches": 12,
    "copied": 0
   },
-  "lowhp4": {
-   "games": 1,
-   "fired": 1,
-   "rounds": {
-    "4-1": 1
-   },
-   "dropped": {},
-   "usable": 1,
-   "branches": 16,
-   "copied": 0
-  },
-  "ref41": {
-   "games": 1,
-   "fired": 1,
-   "rounds": {
-    "4-1": 1
-   },
-   "dropped": {},
-   "usable": 1,
-   "branches": 0,
-   "copied": 1
-  }
- },
- "usable": 3,
- "games": 2,
- "branch_seconds_mean": 15.677857142857144
-}
-1 items to build, 0 to race again (3 already in results/bank2/pilot.jsonl); racing {'k_start': 2, 'k_step': 2, 'k_min': 4, 'k_max': 4, 'budget': 16, 'z': 2.0, 'sd_floor': 1.0}; 1 workers; harness 2be0ab0989dccc5778156992c9011864c0ee67a2, rules set4, sim realistic {'pve_damage': True, 'fortune_orbs': True, 'carousel_fixes': True, 'hide_next_opponent': True, 'rng_streams': 'keyed'}, pickers on
-08:22:17 stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9400@streak4: 4-1: k_max, survivors level8,roll30,save, branches level8:4 roll30:4 save:4 (242.64s, 19.32s a branch; 0 left, 243s so far)
-{
- "built": 4,
- "strata": {
   "streak4": {
    "games": 1,
    "fired": 1,
@@ -113,18 +60,18 @@
    "copied": 0
   },
   "ref41": {
-   "games": 1,
-   "fired": 1,
+   "games": 2,
+   "fired": 2,
    "rounds": {
-    "4-1": 1
+    "4-1": 2
    },
    "dropped": {},
-   "usable": 1,
-   "branches": 0,
+   "usable": 2,
+   "branches": 14,
    "copied": 1
   }
  },
- "usable": 4,
- "games": 3,
- "branch_seconds_mean": 16.771499999999996
+ "usable": 6,
+ "games": 4,
+ "branch_seconds_mean": 19.087727272727268
 }
