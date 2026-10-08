@@ -122,8 +122,8 @@ def main():
         for a, b, why in pairs:
             d = bank2.paired(cards[a], cards[b])
             result["differences"].append({"a": a, "b": b, "why": why, "diff": d, "verdict": verdict(d["equal"])})
-            per = "  ".join(f"{s} {bank.fmt_ci(e)}" for s, e in d["strata"].items())
-            print(f"  {a:>15} vs {b:<15} {bank.fmt_ci(d['equal']):>16}  {verdict(d['equal']):22} {per}")
+            per = "  ".join(f"{s} {bank2.fmt_ci(e)}" for s, e in d["strata"].items())
+            print(f"  {a:>15} vs {b:<15} {bank2.fmt_ci(d['equal']):>16}  {verdict(d['equal']):22} {per}")
     out = Path(args.out) if args.out else path.with_suffix(".sanity.json" if args.sanity else ".score.json")
     out.write_text(json.dumps(result, indent=1))
     print(f"scorecard: {out}")

@@ -767,16 +767,19 @@ def label_items(items: list[dict], prior: str = "candidate", draws: int = POSTER
 def stratified_mean_ci(values, clusters, strata) -> dict:
     """The mean of the strata's means (each stratum weighs the same) with a 95% t interval clustered by
     source game (a game can have items in several strata): cluster-robust variance of the linearized
-    estimator, G - 1 degrees of freedom. One stratum: bank.clustered_mean_ci."""
+    estimator, G - 1 degrees of freedom. One stratum: bank.clustered_mean_ci. No interval when a stratum
+    has items from one source game only (its variance cannot be estimated; the formula would give 0)."""
     values = np.asarray(values, float)
     n = len(values)
     if n == 0:
         return {"n": 0, "games": 0, "strata": 0, "mean": None, "ci95": None}
     count = defaultdict(int)
     total = defaultdict(float)
-    for v, s in zip(values, strata):
+    games_in = defaultdict(set)
+    for v, c, s in zip(values, clusters, strata):
         count[s] += 1
         total[s] += v
+        games_in[s].add(c)
     means = {s: total[s] / count[s] for s in count}
     k = len(means)
     mean = float(np.mean(list(means.values())))
@@ -784,10 +787,17 @@ def stratified_mean_ci(values, clusters, strata) -> dict:
     for v, c, s in zip(values, clusters, strata):
         contrib[c] += (v - means[s]) / (k * count[s])
     g = len(contrib)
-    if g < 2:
+    if g < 2 or min(len(v) for v in games_in.values()) < 2:
         return {"n": n, "games": g, "strata": k, "mean": mean, "ci95": None}
     se = math.sqrt(sum(x * x for x in contrib.values()) * g / (g - 1))
     return {"n": n, "games": g, "strata": k, "mean": mean, "ci95": bank.t975(g - 1) * se}
+
+
+def fmt_ci(entry: dict | None) -> str:
+    """bank.fmt_ci, but an interval that cannot be estimated says so (one game, or a stratum with one)."""
+    if entry and entry.get("mean") is not None and entry.get("ci95") is None:
+        return f"{entry['mean']:+.2f} " + ("(1 game)" if entry.get("games", 0) < 2 else "(no CI)")
+    return bank.fmt_ci(entry)
 
 
 def score_rows(items: list[dict], labels: dict, choices: dict) -> list[dict]:
@@ -886,7 +896,7 @@ def table(card: dict, split: str = "all") -> str:
         if not s.get("items"):
             continue
         acc = f"{s['accuracy']:>5.0%}" if s.get("accuracy") is not None else f"{'-':>5}"
-        lines.append(f"{name:10} {s['items']:>5} {s['games']:>5}  {bank.fmt_ci(s['regret']):24} {s['clear']:>5} "
+        lines.append(f"{name:10} {s['items']:>5} {s['games']:>5}  {fmt_ci(s['regret']):24} {s['clear']:>5} "
                      f"{s['ceiling']:>7.2f} {s['expected_hits']:>8.2f} {acc}  "
                      + " ".join(f"{c}:{n}" for c, n in s["choices"].items()))
     return "\n".join(lines)

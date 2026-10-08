@@ -370,12 +370,16 @@ def test_stratified_ci_reduces_to_the_clustered_ci_and_weights_strata_equally():
     one = bank2.stratified_mean_ci(vals, games, ["s"] * 5)
     ref = bank.clustered_mean_ci(vals, games)
     assert one["mean"] == pytest.approx(ref["mean"]) and one["ci95"] == pytest.approx(ref["ci95"])
-    two = bank2.stratified_mean_ci(vals, games, ["s", "s", "s", "t", "t"])
+    two = bank2.stratified_mean_ci(vals, ["g1", "g1", "g2", "g3", "g1"], ["s", "s", "s", "t", "t"])
     assert two["mean"] == pytest.approx((7 / 3 + 1.5) / 2)
-    # by hand: contributions (x - m_s) / (2 n_s) summed per game
-    c = {"g1": (1 - 7 / 3) / 6 + (2 - 7 / 3) / 6, "g2": (4 - 7 / 3) / 6, "g3": (3 - 1.5) / 4 + (0 - 1.5) / 4}
+    # by hand: contributions (x - m_s) / (2 n_s) summed per game (g1 has items in both strata)
+    c = {"g1": (1 - 7 / 3) / 6 + (2 - 7 / 3) / 6 + (0 - 1.5) / 4, "g2": (4 - 7 / 3) / 6, "g3": (3 - 1.5) / 4}
     se = math.sqrt(sum(v * v for v in c.values()) * 3 / 2)
     assert two["ci95"] == pytest.approx(bank.t975(2) * se)
+    # a stratum with one source game: its variance is unknown, so no interval (the formula would give 0)
+    lone = bank2.stratified_mean_ci([1.0, 2.0, 4.0], ["g1", "g2", "g3"], ["s", "s", "t"])
+    assert lone["mean"] == pytest.approx((1.5 + 4.0) / 2) and lone["ci95"] is None
+    assert bank2.fmt_ci(lone) == "+2.75 (no CI)" and bank2.fmt_ci({"mean": 1.0, "ci95": None, "games": 1}) == "+1.00 (1 game)"
 
 
 # --------------------------------------------------------------------------- rule check

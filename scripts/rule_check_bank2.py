@@ -49,17 +49,17 @@ def main():
     for stratum, e in report.items():
         print(f"{stratum}: {e['items']} items, {e['games']} games, {e['folds']} folds, {e['clear']} clear "
               f"(ceiling {e['ceiling']:.2f}); tau {fits[stratum]['tau2'] ** 0.5:.2f} ({fits[stratum]['tau_source']})")
-        print(f"  {'xfit:oracle':28} {bank.fmt_ci(e['xfit_oracle']):>16}")
-        print(f"  {'xfit:worst':28} {bank.fmt_ci(e['xfit_worst']):>16}")
+        print(f"  {'xfit:oracle':28} {bank2.fmt_ci(e['xfit_oracle']):>16}")
+        print(f"  {'xfit:worst':28} {bank2.fmt_ci(e['xfit_worst']):>16}")
         for c, s in e["fixed"].items():
             acc = "-" if s["accuracy"] is None else f"{s['accuracy']:.0%}"
-            print(f"  {'always:' + c:28} {bank.fmt_ci(s['regret']):>16}  acc {acc:>4}")
+            print(f"  {'always:' + c:28} {bank2.fmt_ci(s['regret']):>16}  acc {acc:>4}")
         rows = [("best fixed (cross-fit)", e["best_fixed"], None)]
         rows += [(f"threshold:{f}", s, s["rule_on_all"]) for f, s in e["threshold"].items()]
         rows += [("tree depth 2 (CV)", e["tree"], e["tree"]["rule_on_all"])]
         for name, s, rule in rows:
             acc = "-" if s["accuracy"] is None else f"{s['accuracy']:.0%}"
-            print(f"  {name:28} {bank.fmt_ci(s['regret']):>16}  acc {acc:>4}"
+            print(f"  {name:28} {bank2.fmt_ci(s['regret']):>16}  acc {acc:>4}"
                   + (f"  on all items: {describe_rule(rule)}" if rule else ""))
         print(f"  best rule {e['best_rule']} {e['best_rule_regret']:+.2f}; headroom {e['headroom']:+.2f} -> "
               f"{'RULE STRATUM' if e['rule_stratum'] else 'needs more than one feature'}")
