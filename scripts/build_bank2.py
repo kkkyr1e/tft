@@ -63,6 +63,15 @@ def parse_seeds(text: str) -> list[int]:
     return [int(s) for s in text.split(",")]
 
 
+def make_pool(args) -> ProcessPoolExecutor:
+    if args.fresh_workers:
+        import multiprocessing
+
+        return ProcessPoolExecutor(max_workers=args.workers, mp_context=multiprocessing.get_context("spawn"),
+                                   max_tasks_per_child=1)
+    return ProcessPoolExecutor(max_workers=args.workers)
+
+
 def run_job(job):
     kind = job[0]
     if kind == "scan":
@@ -70,7 +79,12 @@ def run_job(job):
         return bank2.scan_game(lineup, seed, config["settings"], last=config["last"], first=config["first"])
     if kind == "rerace":
         _, item, config = job
-        return bank2.rerace_item(item, config["racing"], config["harness"])
+        try:
+            return bank2.rerace_item(item, config["racing"], config["harness"])
+        except RuntimeError as err:  # the state no longer rebuilds: keep the item out of the scores
+            if "rebuilt state differs" not in str(err):
+                raise
+            return {**item, "dropped": f"does not rebuild: {err}"}
     _, lineup, seed, stratum, config, donors = job
     return bank2.build_item(lineup, seed, stratum, config["racing"], config["continuation"], config["settings"],
                             config["harness"], donors)
@@ -117,7 +131,11 @@ def main():
         parser.add_argument("--" + key.replace("_", "-"), type=int, help=f"racing: {key} (default {bank2.RACING[key]})")
     parser.add_argument("--z", type=float, help=f"racing: elimination at z paired SEs (default {bank2.ELIM_Z})")
     parser.add_argument("--extend", action="store_true",
-                        help="race items built with other racing settings again with these (reusing branches)")
+                        help="race items built with other racing settings, or with a menu the stratum has since grown, "
+                             "again with these (reusing branches)")
+    parser.add_argument("--fresh-workers", action="store_true",
+                        help="run every job in a new (spawned) process, so nothing a job leaves in a process "
+                             "reaches the next one (docs/BANK_V2.md, interim results: reproducibility)")
     parser.add_argument("--scan-only", action="store_true",
                         help="only play the source games through the windows and record the trigger features")
     parser.add_argument("--out", required=True, help="JSONL, appended to")
@@ -152,7 +170,7 @@ def main():
         print(f"{len(jobs)} source games to scan ({len(done)} already in {out}), rounds "
               f"{stages.label(first)}..{stages.label(last)}, {args.workers} workers; harness {harness}", flush=True)
         started = time.time()
-        with ProcessPoolExecutor(max_workers=args.workers) as pool, out.open("a") as fh:
+        with make_pool(args) as pool, out.open("a") as fh:
             pending = set()
             while jobs or pending:
                 while jobs and len(pending) < args.workers:
@@ -175,21 +193,33 @@ def main():
         return
 
     items = bank.load_items(out) if out.exists() else []
-    stale = []
+    stale, extended = [], {}
     for it in items:
         mismatch = [] if it.get("continuation") == args.continuation else ["continuation"]
         built = bank.recipe_settings(it["recipe"])
         mismatch += [key for key in bank.SETTING_KEYS if built[key] != settings[key]]
+        grown = False
         if it.get("trigger") != bank2.trigger_spec(it["stratum"]):
-            mismatch.append(f"stratum {it['stratum']} definition")
+            only_menu = ({k: v for k, v in it["trigger"].items() if k != "menu"}
+                         == {k: v for k, v in bank2.trigger_spec(it["stratum"]).items() if k != "menu"})
+            if only_menu and args.extend and it.get("fingerprint_hash"):
+                try:
+                    it = extended[it["id"]] = bank2.extend_menu(it)
+                    grown = True
+                except ValueError:
+                    pass
+            if not grown:
+                mismatch.append(f"stratum {it['stratum']} definition"
+                                + (" (a menu that only adds candidates is raced again with --extend)" if only_menu else ""))
         if mismatch:
             raise SystemExit(f"{out} holds {it['id']} built with other settings ({', '.join(mismatch)}); "
                              f"use another --out")
-        if it.get("racing") != racing and it.get("fingerprint_hash"):
+        if (it.get("racing") != racing or grown) and it.get("fingerprint_hash"):
             stale.append(it)
     if stale and not args.extend:
         raise SystemExit(f"{out} holds {len(stale)} items raced with other settings (e.g. {stale[0]['racing']}); "
                          f"give the same racing settings, or --extend to race them again with these")
+    items = [extended.get(it["id"], it) for it in items]
     done = {it["id"]: it for it in items}
     order = {s: i for i, s in enumerate(JOB_ORDER)}
     wanted = [(lineup, seed, s) for lineup in args.lineups for seed in seeds
@@ -206,7 +236,7 @@ def main():
     for it in items:
         by_game[it["game"]].append(it)
     queue = [("build",) + w for w in todo] + [("rerace", it) for it in rerace]
-    with ProcessPoolExecutor(max_workers=args.workers) as pool, out.open("a") as fh:
+    with make_pool(args) as pool, out.open("a") as fh:
         pending = set()
         while queue or pending:
             while queue and len(pending) < args.workers:

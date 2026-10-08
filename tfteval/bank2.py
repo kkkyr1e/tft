@@ -113,6 +113,10 @@ STREAK8_MAX_LEVEL = 7         # "level to 8 now / hold 7": the menu assumes leve
 LOSING_WINDOW = ("3-1", "3-3")
 LOSING_LOSSES = 2             # streak <= -2
 LOSING_HP = 60
+# `streak` fields the weakest units; `save` (no rerolls, xp only toward the lobby curve with the gold above 50)
+# is the same economy on the usual board, which is what stance's keep_streak does (docs/BANK_V2.md, interim
+# results): without it, nearest_candidate maps that plan to `streak`. Added after the first 20 items.
+LOSING_MENU = ("streak", "save", "roll20", "level_roll10")
 LOWHP_WINDOW = ("4-1", "5-1")
 LOWHP_HP = 50
 LOWHP_GOLD = 40
@@ -135,7 +139,7 @@ STRATA = {
                                                    "level_max": STREAK8_MAX_LEVEL},
                 "menu": ("level8", "roll30", "save"), "rounds": COMMIT_ROUNDS, "sample_mod": 1},
     "losing3": {"window": LOSING_WINDOW, "when": {"lose_streak_min": LOSING_LOSSES, "hp_min": LOSING_HP},
-                "menu": ("streak", "roll20", "level_roll10"), "rounds": COMMIT_ROUNDS, "sample_mod": 1},
+                "menu": LOSING_MENU, "rounds": COMMIT_ROUNDS, "sample_mod": 1},
     "lowhp4": {"window": LOWHP_WINDOW, "when": {"hp_max": LOWHP_HP, "gold_min": LOWHP_GOLD},
                "menu": LOWHP_MENU, "rounds": COMMIT_ROUNDS, "sample_mod": 1},
     "ref41": {"window": REF_WINDOW, "when": {}, "menu": LOWHP_MENU, "rounds": COMMIT_ROUNDS,
@@ -190,6 +194,30 @@ def menu(stratum: str) -> list[dict]:
     s = STRATA[stratum]
     return [{"name": name, "desc": CANDIDATES[name]["desc"], "rounds": int(s["rounds"]),
              "spec": {k: v for k, v in CANDIDATES[name].items() if k != "desc"}} for name in s["menu"]]
+
+
+def extend_menu(item: dict) -> dict:
+    """The item with its stratum's current menu when that only adds candidates to the stored one (same
+    order): stored candidates and their branches kept, the new ones without branches (race them with
+    rerace_item), the trigger spec updated. ValueError when the menus differ otherwise."""
+    old = [c["name"] for c in item["candidates"]]
+    new = list(STRATA[item["stratum"]]["menu"])
+    if [c for c in new if c in old] != old:
+        raise ValueError(f"{item['id']}: menu {old} is not part of the current {new}")
+    if old == new:
+        return item
+    have = {c["name"]: c for c in item["candidates"]}
+    cands = []
+    for c in menu(item["stratum"]):
+        if c["name"] in have:
+            cands.append(have[c["name"]])
+        else:
+            if item.get("public_state") is not None:
+                c["now"] = bank.resolve(c["spec"], item["public_state"])
+            cands.append(c)
+    out = {**item, "candidates": cands, "trigger": trigger_spec(item["stratum"])}
+    out["menu_extended"] = list(item.get("menu_extended", [])) + [{"from": old, "to": new}]
+    return out
 
 
 def first_fire(rows: list[dict], stratum: str) -> int | None:

@@ -83,6 +83,21 @@ def test_strata_menus_and_specs():
     assert bank2.CANDIDATES["save"] == bank.CANDIDATES["save"]
 
 
+def test_extend_menu_adds_candidates_and_keeps_branches():
+    old_menu = ["streak", "roll20", "level_roll10"]
+    item = {"id": "x#1@losing3", "stratum": "losing3", "public_state": state(gold=56, round=L("3-1")),
+            "candidates": [c for c in bank2.menu("losing3") if c["name"] in old_menu],
+            "branches": [{"cand": "streak", "k": 0, "place": 3}], "trigger": {"menu": old_menu}}
+    out = bank2.extend_menu(item)
+    assert [c["name"] for c in out["candidates"]] == list(bank2.LOSING_MENU)
+    assert out["branches"] == item["branches"] and out["trigger"] == bank2.trigger_spec("losing3")
+    assert next(c for c in out["candidates"] if c["name"] == "save")["now"]["roll_floor"] == 999
+    assert out["menu_extended"] == [{"from": old_menu, "to": list(bank2.LOSING_MENU)}]
+    assert bank2.extend_menu(out) is out
+    with pytest.raises(ValueError):
+        bank2.extend_menu({**item, "candidates": list(reversed(item["candidates"]))})
+
+
 def test_ref41_is_sampled_every_third_seed():
     assert bank2.REF_SAMPLE_MOD == 3
     assert [s for s in range(9400, 9410) if bank2.sampled("ref41", s)] == [9402, 9405, 9408]
@@ -145,7 +160,7 @@ def test_nearest_candidate_v2_maps_plans_with_fodder():
     st = state(round=L("3-1"), level=5, xp=0, gold=40)
     cands = bank2.menu("losing3")
     plan = {"comp": None, "level_to": 5, "roll_floor": 999, "carry": None}
-    assert bank2.nearest_candidate(plan, st, cands) == "streak"  # saves: closest to keeping the streak
+    assert bank2.nearest_candidate(plan, st, cands) == "save"  # saves on the usual board (stance's keep_streak)
     assert bank2.nearest_candidate(dict(plan, fodder=True), st, cands) == "streak"
     assert bank2.nearest_candidate(dict(plan, roll_floor=20), st, cands) == "roll20"
     assert bank2.nearest_candidate(dict(plan, roll_floor=10, xp_buys=5), st, cands) == "level_roll10"
