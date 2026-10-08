@@ -18,10 +18,16 @@ a small declarative spec (CANDIDATES) resolved against the round-start state of 
 
     level     the level to buy xp toward: "hold" (none), "curve" (stance.LEVEL_CURVE, the lobby's
               curve), "+1" (one above the level at the decision point), "8+" (8, or one above the
-              decision point's level when that is already 8 or more) or a number
+              decision point's level when that is already 8 or more; any "N+" works the same way)
+              or a number
     keep      xp is bought only with the gold above this (xp_buys, partial levels allowed)
     roll_floor            reroll while gold - 2 >= this (999: no rerolls)
     roll_floor_at_target  the roll floor once the target level is reached
+    fodder    true: the plan field `fodder` is set (field the weakest units: lose on purpose)
+    then      "base": once the target level is reached at the start of a committed round, that round
+              is the base planner's own (no overrides); the commitment is "get there, then play on"
+
+(`fodder` and `then` are only used by the bank v2 candidates, tfteval/bank2.py.)
 
 Menus per decision point are in POINTS (one table); the five points are 3-2, 3-5, 4-1, 4-5 and 5-1.
 
@@ -130,26 +136,33 @@ def target_level(spec: dict, state: dict, anchor_level: int) -> int:
         target = max(level, level_curve(int(state["round"])))
     elif want == "+1":
         target = anchor_level + 1
-    elif want == "8+":
-        target = 8 if anchor_level < 8 else anchor_level + 1
+    elif isinstance(want, str) and want.endswith("+") and want[:-1].isdigit():  # "8+": 8, or one above
+        floor = int(want[:-1])
+        target = floor if anchor_level < floor else anchor_level + 1
     else:
         target = int(want)
     return min(target, max_level(state))
 
 
-def resolve(spec: dict, state: dict, anchor_level: int | None = None) -> dict:
+def resolve(spec: dict, state: dict, anchor_level: int | None = None) -> dict | None:
     """The economy plan fields of a candidate spec for this round's state (describe() output);
-    `anchor_level` is the hero's level at the decision point (default: the current level)."""
+    `anchor_level` is the hero's level at the decision point (default: the current level). None (only
+    for a spec with `then: "base"`) when the target level is already reached: the round is the base
+    planner's own."""
     level, xp, gold = int(state["level"]), int(state["xp"]), int(state["gold"])
     target = target_level(spec, state, level if anchor_level is None else anchor_level)
     fields = {"level_to": level, "roll_floor": int(spec.get("roll_floor", 999))}
     need = xp_to_level(level, xp, target, state.get("rules"))
+    if need <= 0 and spec.get("then") == "base":
+        return None
     if need > 0:
         buys = min(math.ceil(need / 4), max(0, (gold - int(spec.get("keep", 0))) // 4))
         if buys:
             fields["xp_buys"] = buys
     elif "roll_floor_at_target" in spec:
         fields["roll_floor"] = int(spec["roll_floor_at_target"])
+    if spec.get("fodder"):
+        fields["fodder"] = True
     return fields
 
 
@@ -192,6 +205,8 @@ class CommitPlanner:
         if not self.committed(idx):
             return plan
         fields = resolve(self.candidate, state, self.anchor["level"])
+        if fields is None:  # `then: "base"` and the target is reached: this round is the base's own
+            return plan
         new = override(plan, fields)
         new["commit"] = self.candidate.get("name")
         self.applied.append(idx)
@@ -643,6 +658,8 @@ class PlannerAgent:
     whose hero runs the same planner kind, a copy of the hero's own planner is asked (it keeps the
     game's history, e.g. stance's fast 8 commitment); otherwise a fresh planner of that kind."""
 
+    NOTE_FIELDS = ("stance",)  # plan fields noted besides the economy ones
+
     def __init__(self, kind: str):
         self.kind = kind
         self.name = kind
@@ -663,8 +680,13 @@ class PlannerAgent:
         finally:
             np.random.set_state(np_state)
             _random.setstate(py_state)
-        view.setdefault("notes", {})["plan"] = {k: plan.get(k) for k in ECONOMY_FIELDS + ("stance",) if k in plan}
-        return nearest_candidate(plan, view["state"], view["candidates"])
+        view.setdefault("notes", {})["plan"] = {k: plan.get(k) for k in ECONOMY_FIELDS + self.NOTE_FIELDS if k in plan}
+        return self.nearest(plan, view["state"], view["candidates"])
+
+    @staticmethod
+    def nearest(plan: dict, state: dict, candidates: list[dict]) -> str:
+        """How a plan is mapped to a candidate (bank v2 overrides this, tfteval/bank2.py)."""
+        return nearest_candidate(plan, state, candidates)
 
 
 class CallableAgent:
