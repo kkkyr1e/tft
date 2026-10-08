@@ -1,0 +1,107 @@
+lowhp4: 20 items, 20 games, 14.2 shared branches per candidate; tau 0.23; VPI 0.13
+  policy                              score        vs oracle
+  oracle (held-out)             -0.10 ±0.18                 
+  best fixed (cross-fit)        -0.13 ±0.16      -0.03 ±0.17
+  tree depth 2 (CV)             +0.02 ±0.17      +0.12 ±0.27
+  threshold:hp                  -0.05 ±0.18      +0.05 ±0.22
+  threshold:gold                -0.06 ±0.15      +0.04 ±0.22
+  threshold:pairs               -0.12 ±0.16      -0.02 ±0.16
+  threshold:streak              -0.15 ±0.16      -0.05 ±0.17
+  threshold:level               -0.20 ±0.14      -0.10 ±0.14
+  threshold:losses_to_death      -0.04 ±0.18      +0.05 ±0.23
+  always:roll_all               +0.03 ±0.15      +0.12 ±0.26
+  always:roll30                 +0.02 ±0.14      +0.11 ±0.25
+  always:level_roll10           -0.13 ±0.16      -0.03 ±0.17
+  always:save                   +0.13 ±0.12      +0.23 ±0.25
+  stance                        -0.10 ±0.15      -0.00 ±0.21
+  mimic                         +0.07 ±0.15      +0.16 ±0.25
+  noisy50:stance                +0.03 ±0.17      +0.12 ±0.26
+  random                        -0.05 ±0.15      +0.05 ±0.15
+  best rule threshold:level: vs oracle -0.10 ±0.14
+pairs3: 16 items, 16 games, 15.8 shared branches per candidate; tau 0.00; VPI 0.00
+  policy                              score        vs oracle
+  oracle (held-out)             +0.02 ±0.18                 
+  best fixed (cross-fit)        -0.14 ±0.13      -0.16 ±0.21
+  tree depth 2 (CV)             -0.12 ±0.13      -0.14 ±0.21
+  threshold:hp                  -0.11 ±0.14      -0.13 ±0.21
+  threshold:gold                -0.20 ±0.10      -0.22 ±0.15
+  threshold:pairs               -0.21 ±0.10      -0.23 ±0.14
+  threshold:streak              -0.14 ±0.13      -0.16 ±0.21
+  threshold:level               -0.09 ±0.15      -0.11 ±0.25
+  threshold:losses_to_death      -0.07 ±0.15      -0.08 ±0.23
+  always:roll10                 +0.04 ±0.13      +0.02 ±0.23
+  always:level7                 -0.14 ±0.13      -0.16 ±0.21
+  always:save                   +0.10 ±0.10      +0.08 ±0.21
+  stance                        -0.04 ±0.12      -0.06 ±0.19
+  mimic                         +0.10 ±0.10      +0.08 ±0.21
+  noisy50:stance                -0.07 ±0.11      -0.09 ±0.19
+  random                        +0.01 ±0.13      -0.00 ±0.18
+  best rule threshold:pairs: vs oracle -0.23 ±0.14
+losing3: 20 items, 20 games, 13.6 shared branches per candidate; tau 0.49; VPI 0.19
+  policy                              score        vs oracle
+  oracle (held-out)             -0.30 ±0.37                 
+  best fixed (cross-fit)        -0.41 ±0.35      -0.11 ±0.19
+  tree depth 2 (CV)             -0.34 ±0.36      -0.04 ±0.25
+  threshold:hp                  +0.06 ±0.25      +0.36 ±0.51
+  threshold:gold                -0.34 ±0.36      -0.04 ±0.25
+  threshold:pairs               -0.32 ±0.33      -0.02 ±0.27
+  threshold:streak              -0.20 ±0.29      +0.10 ±0.34
+  threshold:level               -0.39 ±0.35      -0.09 ±0.19
+  threshold:losses_to_death      +0.06 ±0.25      +0.36 ±0.51
+  always:streak                 +0.47 ±0.30      +0.77 ±0.63
+  always:roll20                 -0.06 ±0.16      +0.24 ±0.45
+  always:level_roll10           -0.41 ±0.35      -0.11 ±0.19
+  stance                        +0.28 ±0.28      +0.58 ±0.59
+  mimic                         +0.46 ±0.30      +0.76 ±0.63
+  noisy50:stance                +0.12 ±0.38      +0.42 ±0.53
+  random                        +0.10 ±0.31      +0.40 ±0.54
+  best rule best_fixed: vs oracle -0.11 ±0.19
+streak4: 12 items, 12 games, 14.0 shared branches per candidate; tau 0.15; VPI 0.02
+  policy                              score        vs oracle
+  oracle (held-out)             -0.17 ±0.22                 
+  best fixed (cross-fit)        -0.19 ±0.20      -0.02 ±0.18
+  tree depth 2 (CV)             -0.16 ±0.19      +0.01 ±0.17
+  threshold:hp                  -0.18 ±0.20      -0.01 ±0.18
+  threshold:gold                -0.06 ±0.21      +0.11 ±0.26
+  threshold:pairs               -0.09 ±0.21      +0.08 ±0.28
+  threshold:streak              -0.16 ±0.19      +0.01 ±0.17
+  threshold:level               -0.19 ±0.20      -0.02 ±0.18
+  threshold:losses_to_death      -0.18 ±0.20      -0.01 ±0.18
+  always:level8                 +0.10 ±0.18      +0.27 ±0.32
+  always:roll30                 -0.19 ±0.20      -0.02 ±0.18
+  always:save                   +0.09 ±0.10      +0.26 ±0.29
+  stance                        +0.00 ±0.19      +0.17 ±0.29
+  mimic                         +0.07 ±0.16      +0.24 ±0.31
+  noisy50:stance                -0.02 ±0.19      +0.15 ±0.29
+  random                        +0.06 ±0.18      +0.23 ±0.32
+  best rule best_fixed: vs oracle -0.02 ±0.18
+ref41: 12 items, 12 games, 13.7 shared branches per candidate; tau 0.31; VPI 0.23
+  policy                              score        vs oracle
+  oracle (held-out)             -0.22 ±0.18                 
+  best fixed (cross-fit)        +0.09 ±0.22      +0.32 ±0.30
+  tree depth 2 (CV)             +0.07 ±0.26      +0.29 ±0.36
+  threshold:hp                  +0.04 ±0.23      +0.27 ±0.30
+  threshold:gold                -0.05 ±0.26      +0.17 ±0.27
+  threshold:pairs               +0.15 ±0.17      +0.38 ±0.31
+  threshold:streak              +0.18 ±0.19      +0.41 ±0.33
+  threshold:level               +0.09 ±0.22      +0.32 ±0.30
+  threshold:losses_to_death      +0.04 ±0.24      +0.26 ±0.31
+  always:roll_all               -0.11 ±0.25      +0.12 ±0.28
+  always:roll30                 -0.09 ±0.22      +0.14 ±0.29
+  always:level_roll10           +0.11 ±0.27      +0.34 ±0.36
+  always:save                   -0.00 ±0.19      +0.22 ±0.23
+  stance                        -0.21 ±0.21      +0.02 ±0.22
+  mimic                         -0.13 ±0.18      +0.09 ±0.22
+  noisy50:stance                -0.10 ±0.22      +0.12 ±0.30
+  random                        -0.10 ±0.21      +0.13 ±0.22
+  best rule threshold:gold: vs oracle +0.17 ±0.27
+equal-weighted over strata:
+  oracle (held-out)             -0.15 ±0.11                 
+  best fixed (cross-fit)        -0.15 ±0.11      +0.00 ±0.09
+  tree depth 2 (CV)             -0.11 ±0.10      +0.05 ±0.10
+  stance                        -0.01 ±0.08      +0.14 ±0.15
+  noisy50:stance                -0.01 ±0.12      +0.15 ±0.16
+  mimic                         +0.11 ±0.07      +0.27 ±0.16
+  random                        +0.00 ±0.10      +0.16 ±0.16
+  mean VPI 0.11
+report: results/bank2/interim80/heldout80.json

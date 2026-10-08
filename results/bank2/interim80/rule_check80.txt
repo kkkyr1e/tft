@@ -1,0 +1,78 @@
+lowhp4: 20 items, 20 games, 5 folds, 3 clear (ceiling 2.76); tau 0.23 (moments)
+  xfit:oracle                       +0.19 ±0.12
+  xfit:worst                        +0.32 ±0.29
+  always:roll_all                   +0.29 ±0.22  acc   2%
+  always:roll30                     +0.27 ±0.21  acc   3%
+  always:level_roll10               +0.15 ±0.11  acc 100%
+  always:save                       +0.43 ±0.19  acc   4%
+  best fixed (cross-fit)            +0.15 ±0.11  acc 100%
+  threshold:hp                      +0.33 ±0.21  acc   2%  on all items: roll_all if hp <= 37 else level_roll10
+  threshold:gold                    +0.23 ±0.17  acc  33%  on all items: roll30 if gold <= 44.5 else level_roll10
+  threshold:pairs                   +0.16 ±0.10  acc 100%  on all items: roll_all if pairs <= 1.5 else level_roll10
+  threshold:streak                  +0.13 ±0.10  acc 100%  on all items: level_roll10 if streak <= 1.5 else roll_all
+  threshold:level                   +0.08 ±0.08  acc 100%  on all items: level_roll10 if level <= 7.5 else roll_all
+  threshold:losses_to_death         +0.23 ±0.18  acc  69%  on all items: roll_all if losses_to_death <= 3.5 else level_roll10
+  tree depth 2 (CV)                 +0.31 ±0.21  acc   2%  on all items: (level <= 7.5 ? (gold <= 42.5 ? roll30 : level_roll10) : roll_all)
+  best rule threshold:level +0.08; headroom -0.12 -> RULE STRATUM
+pairs3: 16 items, 16 games, 5 folds, 15 clear (ceiling 14.19); tau 0.00 (moments)
+  xfit:oracle                       +0.09 ±0.14
+  xfit:worst                        +0.25 ±0.27
+  always:roll10                     +0.18 ±0.24  acc   5%
+  always:level7                     +0.00 ±0.00  acc 100%
+  always:save                       +0.22 ±0.19  acc   0%
+  best fixed (cross-fit)            +0.00 ±0.00  acc 100%
+  threshold:hp                      +0.03 ±0.06  acc  93%  on all items: level7 if hp <= 94 else roll10
+  threshold:gold                    -0.07 ±0.11  acc  88%  on all items: roll10 if gold <= 36 else level7
+  threshold:pairs                   -0.07 ±0.11  acc  89%  on all items: level7 if pairs <= 4 else roll10
+  threshold:streak                  +0.00 ±0.00  acc 100%  on all items: roll10 if streak <= -2.5 else level7
+  threshold:level                   +0.05 ±0.11  acc  93%  on all items: level7 if level <= 6.5 else roll10
+  threshold:losses_to_death         +0.07 ±0.12  acc  87%  on all items: always level7
+  tree depth 2 (CV)                 +0.02 ±0.03  acc  94%  on all items: (gold <= 36 ? roll10 : level7)
+  best rule threshold:pairs -0.07; headroom -0.16 -> RULE STRATUM
+losing3: 20 items, 20 games, 5 folds, 3 clear (ceiling 2.86); tau 0.49 (moments)
+  xfit:oracle                       +0.33 ±0.17
+  xfit:worst                        +1.00 ±0.58
+  always:streak                     +1.03 ±0.55  acc   0%
+  always:roll20                     +0.46 ±0.34  acc   5%
+  always:level_roll10               +0.16 ±0.16  acc 100%
+  best fixed (cross-fit)            +0.16 ±0.16  acc 100%
+  threshold:hp                      +0.56 ±0.43  acc   4%  on all items: always level_roll10
+  threshold:gold                    +0.30 ±0.21  acc 100%  on all items: always level_roll10
+  threshold:pairs                   +0.26 ±0.23  acc  66%  on all items: level_roll10 if pairs <= 3.5 else roll20
+  threshold:streak                  +0.31 ±0.23  acc  38%  on all items: always level_roll10
+  threshold:level                   +0.18 ±0.16  acc 100%  on all items: level_roll10 if level <= 5.5 else roll20
+  threshold:losses_to_death         +0.56 ±0.43  acc   4%  on all items: roll20 if losses_to_death <= 6.5 else level_roll10
+  tree depth 2 (CV)                 +0.43 ±0.32  acc  67%  on all items: level_roll10
+  best rule best_fixed +0.16; headroom -0.16 -> RULE STRATUM
+streak4: 12 items, 12 games, 5 folds, 6 clear (ceiling 5.52); tau 0.15 (moments)
+  xfit:oracle                       +0.17 ±0.12
+  xfit:worst                        +0.40 ±0.30
+  always:level8                     +0.39 ±0.28  acc   5%
+  always:roll30                     +0.10 ±0.15  acc 100%
+  always:save                       +0.34 ±0.21  acc   4%
+  best fixed (cross-fit)            +0.10 ±0.15  acc 100%
+  threshold:hp                      +0.10 ±0.15  acc 100%  on all items: roll30 if hp <= 86 else level8
+  threshold:gold                    +0.23 ±0.23  acc  68%  on all items: always roll30
+  threshold:pairs                   +0.19 ±0.24  acc  83%  on all items: always roll30
+  threshold:streak                  +0.12 ±0.16  acc  84%  on all items: level8 if streak <= 3.5 else roll30
+  threshold:level                   +0.10 ±0.15  acc 100%  on all items: always roll30
+  threshold:losses_to_death         +0.10 ±0.15  acc 100%  on all items: roll30 if losses_to_death <= 7.5 else level8
+  tree depth 2 (CV)                 +0.12 ±0.16  acc  84%  on all items: (streak <= 3.5 ? level8 : roll30)
+  best rule best_fixed +0.10; headroom -0.07 -> RULE STRATUM
+ref41: 12 items, 12 games, 5 folds, 1 clear (ceiling 0.90); tau 0.31 (moments)
+  xfit:oracle                       +0.12 ±0.10
+  xfit:worst                        +0.62 ±0.34
+  always:roll_all                   +0.26 ±0.23  acc 100%
+  always:roll30                     +0.31 ±0.26  acc 100%
+  always:level_roll10               +0.49 ±0.37  acc   4%
+  always:save                       +0.40 ±0.32  acc   7%
+  best fixed (cross-fit)            +0.45 ±0.34  acc 100%
+  threshold:hp                      +0.44 ±0.23  acc   4%  on all items: roll_all if hp <= 51.5 else roll30
+  threshold:gold                    +0.26 ±0.18  acc 100%  on all items: roll_all if gold <= 57 else level_roll10
+  threshold:pairs                   +0.52 ±0.34  acc   4%  on all items: level_roll10 if pairs <= 2.5 else roll_all
+  threshold:streak                  +0.64 ±0.36  acc   4%  on all items: roll_all if streak <= -1.5 else save
+  threshold:level                   +0.45 ±0.34  acc 100%  on all items: level_roll10 if level <= 6.5 else roll_all
+  threshold:losses_to_death         +0.38 ±0.25  acc   4%  on all items: roll_all if losses_to_death <= 5 else roll30
+  tree depth 2 (CV)                 +0.43 ±0.35  acc   4%  on all items: (gold <= 57 ? (hp <= 69 ? roll_all : save) : level_roll10)
+  best rule threshold:gold +0.26; headroom +0.14 -> needs more than one feature
+report: /tmp/claude-0/-home-claude/c10acc4e-9037-548a-8e3c-11ca43d76ee0/scratchpad/bank2/prelim/rule_check80.json
