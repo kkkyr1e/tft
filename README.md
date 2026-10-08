@@ -613,7 +613,7 @@ python scripts/branch_compare.py --a mimic --b mimicfc --round 3-3 --seeds 25000
 
 得分是所选候选遗憾值的平均，95% 区间按源对局聚类（同一局的几道题共享前面的整局）；另报所选候选落在最优候选标注区间之内的题占比、选中最优（或与它重复的）候选的占比。全部、明确题、模糊题、各决策点分别报，开发集、保留集也分别报。选了菜单里没有的名字按该题最大的遗憾值算，计入 `invalid`。
 
-**题库自检**（`score_bank.py --sanity`，是报告不是测试）：oracle ≤ stance ≤ noisy50:stance ≤ random ≤ worst，以及 stance ≤ mimic（fork 冒烟里 `stance` 的名次比 `mimic` 好）。每一对给出遗憾值之差和按源对局聚类的区间。顺序不对，说明题库没有量到决策好坏，先修题库（方针第 3 节）。
+**题库自检**（`score_bank.py --sanity`，是报告不是测试）：oracle ≤ stance ≤ noisy50:stance ≤ random ≤ worst，以及 stance ≤ mimic（注意 `oracle` 和 `worst` 读同一批标注分叉，`random` ≤ `worst` 是赢家诅咒造成的，不算证据）（fork 冒烟里 `stance` 的名次比 `mimic` 好）。每一对给出遗憾值之差和按源对局聚类的区间。顺序不对，说明题库没有量到决策好坏，先修题库（方针第 3 节）。
 
 ```bash
 python scripts/build_bank.py --lineups stance@rule:7 --seeds 9101,9102 --points 3-2 4-1 --kd 2 --kl 2 \
@@ -652,9 +652,10 @@ python scripts/score_bank.py results/bank/pilot.jsonl --agent stance mimic --sto
 | 噪声 | 同一 k 上两个候选的名次之差，标准差 1.68 名（试跑时 2.2）；同一候选内 1.35 名；公共随机数的相关约 0.2 |
 | 候选之间差多少 | 每道题标注集上最好与最差候选的平均名次之差，中位数 0.75 名；Kl=4 时两个候选平均名次之差的噪声约 0.84 名，所以单题上的差别大多是噪声 |
 | 发现集选出的最优 | `save` 80、`roll` 47、`fast8` 17、`level` 17、`cap_out` 11 |
-| 自检（全部 172 题，按源对局聚类的 95% 区间） | `oracle` 0；`stance` −0.06 ±0.10；`noisy50:stance` −0.08 ±0.09；`random` −0.02 ±0.12；`mimic`（与 `rule` 相同）+0.07 ±0.11；`worst` +0.52 ±0.11。`stance` − `mimic` −0.13 ±0.12（显著，与循环赛一致）；`random` − `worst` −0.54 ±0.10（显著）；`oracle` ≤ `stance`、`stance` ≤ `noisy50:stance` 两条不成立（差都在 0.1 名以内） |
+| 自检（全部 172 题，按源对局聚类的 95% 区间） | `oracle` 0；`stance` −0.06 ±0.10；`noisy50:stance` −0.08 ±0.09；`random` −0.02 ±0.12；`mimic`（与 `rule` 相同）+0.07 ±0.11；`worst` +0.52 ±0.11。`stance` − `mimic` −0.13 ±0.12（显著，与循环赛一致）；`oracle` ≤ `stance`、`stance` ≤ `noisy50:stance` 两条不成立（差都在 0.1 名以内） |
+| 不读标签的参照（交叉拟合：标注集拆成两半，一半上挑、另一半上算） | 交叉拟合的 `oracle` +0.00 ±0.10，交叉拟合的 `worst` +0.12 ±0.13；`always:save` +0.16 ±0.10，`always:roll` +0.00 ±0.12，`always:` 第二个候选 −0.03 ±0.11 |
 
-怎么读：题库 v1 分得出明显差的决定（`worst`），也分得出 `stance` 对 `mimic` 这一档的差别（每个 agent 的区间约 ±0.1 名）；分不出 `stance`、它的一半随机扰动和均匀随机。原因是这三个决策点上 5 种经济承诺本来差别就小，Kd=2 选出的"最优"接近随机，所以 `oracle` 不比 `stance` 好。用它比两个 agent 时，看两者遗憾值之差（与发现集选了谁无关），不看相对 `oracle` 的绝对值。下一版要更多信号：赌注更大的决策点（例如 4-2 搜牌搜多深、要不要转阵容），或者更细的候选。
+怎么读：`worst` 的 +0.52 是在同一批标注分叉上挑最差再报它（赢家诅咒），不说明题库能抓坏决定；不读标签的交叉拟合 `worst` 只有 +0.12 ±0.13，不显著。题库 v1 真正量出来的只有一件事：一直存钱（`save`，`mimic` 多半这样选）比别的候选平均差约 0.15 名，所以 `stance` 对 `mimic` 显著；`stance`、它的一半随机扰动、均匀随机和交叉拟合的最优彼此分不出。原因是这三个决策点上候选之间的真实差别很小：按随机效应估计，同一局面两个候选的真实差的标准差 3-2 约 0，4-1、5-1 约 0.37 名；血少（≤52）、钱少（≤45）、局面差（标注平均名次 > 5.5）时大一些（0.47、0.50、0.65）。用它比两个 agent 时，看两者遗憾值之差，不看相对 `oracle` 的绝对值，也不用读标签的 `worst`。下一版见 `docs/BANK_V2.md`。
 
 ## Rubric v1 与 Benchmark v1
 
@@ -753,10 +754,25 @@ python scripts/benchmark.py --agent stance --track set4 --heldout --record --out
 
 冒烟（`--agent stance --record --games 1`，种子 30000，房间里 1 个姿态家族对手，1 个进程）：第 6 名，31 秒，`items_on_non_carries` 标记，`level_short` 2 次，其余门槛 0，记分卡各块都出来了；重跑时跳过已有的局，换 agent 或换赛道续写同一个文件都被拒绝。
 
+**第一次正式跑**（2026-10-08，set4、开发池、种子 30000～30311、每个 agent 312 局、`--record`，3 个进程，模拟器 2ba01d5、harness 1354633；结果在 `results/bench/`，整局文件是 gzip 过的 JSON，`gunzip` 后可以给 `--scorecard` 续用）：
+
+| agent | 平均名次 | 前四 | 吃鸡 | 实测每局标准差 | `died_with_gold` | `banked_without_leveling` | `items_on_non_carries` |
+|---|---|---|---|---|---|---|---|
+| `stance+hold` | 3.83 ±0.24 | 63% | 18% | 2.16 | 28% | 28% | 71% |
+| `stance` | 3.87 ±0.23 | 62% | 14% | 2.06 | 27% | 36% | 71% |
+| `mimic` | 4.59 ±0.27 | 48% | 13% | 2.40 | 71% | 96% | 55% |
+
+按种子配对的名次差（同一种子房间和座位相同，配对相关 0.29～0.42）：`stance+hold` − `stance` −0.04 ±0.28（分不出）；`mimic` − `stance` +0.72 ±0.27；`mimic` − `stance+hold` +0.76 ±0.30。
+
+- 和循环赛一致：姿态家族比规则 bot 的经济好约 0.7 名。循环赛里 `stance+hold` 在 set4 上显著最好（3.74），混合房间里它和 `stance` 分不出。
+- Rubric 的两项经济指标把 `mimic` 和姿态家族分得很开（`mimic` 七成的局带着 20 金以上出局，几乎每局都有攒钱不升级），这正是它输的地方；`items_on_non_carries` 反而是姿态家族高，要看 `validate_rubric.py` 它和名次有没有关系。
+- `level_short`（动作数用完没升到计划等级）`mimic` 737 次、`stance` 389 次：每回合 15 个动作的上限经常卡住执行器。
+- 多样性：姿态家族前四的局里 8 个阵容都出现，等效约 7 个；对"手里的天选"的响应显著（p=0.001），对散件和别人的阵容不显著。`stance+hold` 和 `stance` 非劣（差的上界 +0.24 ≤ 0.25），但不比它更多样。
+
 **还没做的**：
 
-- 没有大规模跑过。三项都还没有用 `validate_rubric.py` 验证和名次的关系，阈值是第一版的猜测；按方针，验证后和名次无关的项要删掉。
-- 每局标准差 2.25 是旧模拟器上"1 个规则 bot 对 7 个规则 bot"测的，混合房间、`realistic` 下要实测（`--sd`）。
+- 三项都还没有用 `validate_rubric.py` 验证和名次的关系，阈值是第一版的猜测；按方针，验证后和名次无关的项要删掉。
+- 每局标准差 2.25 是旧模拟器上"1 个规则 bot 对 7 个规则 bot"测的；混合房间、`realistic` 下实测 2.06～2.40，312 局的计划不用改。
 - 多样性的三个信号是第一版，互信息在几百局上很粗；最终阵容对规则 bot 以外的打法（比如大模型）只能从场上推。
 
 ## 对模拟器的修正
