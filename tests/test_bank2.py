@@ -49,8 +49,8 @@ def test_trigger_features_count_pairs_and_split_the_streak():
     ("streak4", dict(round=L("4-1"), gold=55, streak=2, level=7), dict(round=L("4-1"), gold=49, streak=3, level=7)),
     ("streak4", dict(round=L("4-2"), gold=60, streak=5, level=6), dict(round=L("4-1"), gold=60, streak=5, level=8)),
     ("streak4", dict(round=L("4-1"), gold=60, streak=2, level=7), dict(round=L("4-1"), gold=60, streak=-2, level=7)),
-    ("losing3", dict(round=L("3-1"), streak=-3, hp=70), dict(round=L("3-1"), streak=-2, hp=90)),
-    ("losing3", dict(round=L("3-1"), streak=-5, hp=88), dict(round=L("3-1"), streak=-5, hp=69)),
+    ("losing3", dict(round=L("3-1"), streak=-2, hp=60), dict(round=L("3-1"), streak=-1, hp=90)),
+    ("losing3", dict(round=L("3-3"), streak=-5, hp=88), dict(round=L("3-3"), streak=-5, hp=59)),
     ("lowhp4", dict(round=L("4-5"), hp=50, gold=40), dict(round=L("4-5"), hp=51, gold=80)),
     ("lowhp4", dict(round=L("5-1"), hp=12, gold=45), dict(round=L("5-1"), hp=12, gold=39)),
     ("ref41", dict(round=L("4-1")), None),
@@ -67,7 +67,7 @@ def test_first_fire_takes_the_first_round_inside_the_window():
     assert bank2.first_fire(rows, "pairs3") == 11  # 3-1 fires but is outside 3-2..3-5; 3-2 has 60 gold
     assert bank2.first_fire(rows[:3], "pairs3") == 11 and bank2.first_fire(rows[:2], "pairs3") is None
     assert bank2.window_rounds("lowhp4") == list(range(L("4-1"), L("5-1") + 1))
-    assert bank2.window_rounds("ref41") == [15] and bank2.window_rounds("losing3") == [9, 10]
+    assert bank2.window_rounds("ref41") == [15] and bank2.window_rounds("losing3") == [9, 10, 11]
     with pytest.raises(ValueError):
         bank2.fires({"mana_min": 3}, rows[0])
 
@@ -77,8 +77,18 @@ def test_strata_menus_and_specs():
         assert 3 <= len(s["menu"]) <= 4 and s["rounds"] == 2
         assert all(c in bank2.CANDIDATES and bank2.CANDIDATES[c]["desc"] for c in s["menu"])
         assert bank2.trigger_spec(name)["menu"] == list(s["menu"])
+        assert bank2.trigger_spec(name)["sample_mod"] == (bank2.REF_SAMPLE_MOD if name == "ref41" else 1)
     assert bank2.STRATA["ref41"]["menu"] == bank2.STRATA["lowhp4"]["menu"]
+    assert bank2.STRATA["lowhp4"]["menu"] == ("roll_all", "roll30", "level_roll10", "save")
     assert bank2.CANDIDATES["save"] == bank.CANDIDATES["save"]
+
+
+def test_ref41_is_sampled_every_third_seed():
+    assert bank2.REF_SAMPLE_MOD == 3
+    assert [s for s in range(9400, 9410) if bank2.sampled("ref41", s)] == [9402, 9405, 9408]
+    assert all(bank2.sampled(s, 9401) for s in bank2.STRATA if s != "ref41")
+    with pytest.raises(ValueError):
+        bank2.build_item("stance@rule:7", 9401, "ref41")
 
 
 # --------------------------------------------------------------------------- candidates
@@ -104,7 +114,7 @@ def test_v2_candidates_compile_to_their_knobs():
     assert knobs("streak", state(round=L("3-1"), level=5, xp=0, gold=62))[0]["xp_buys"] == 0  # no curve before 3-2
     k, _ = knobs("level_roll10", state(round=L("4-1"), level=7, xp=20, gold=50))
     assert k["xp_buys"] == 9 and k["roll_floor"] == 10  # 36 xp to 8 with the gold above 10, then roll to 10
-    k, _ = knobs("roll0", state(round=L("4-1"), level=7, gold=50))
+    k, _ = knobs("roll_all", state(round=L("4-1"), level=7, gold=50))
     assert k["roll_floor"] == 0 and k["xp_buys"] == 0
     st8 = state(round=L("4-1"), level=7, xp=20, gold=60)
     k, fields = knobs("level8", st8)
@@ -145,13 +155,15 @@ def test_nearest_candidate_v2_maps_plans_with_fodder():
     assert bank2.nearest_candidate(dict(plan, roll_floor=30), st41, cands41) == "roll30"
     assert bank2.nearest_candidate(plan, st41, cands41) == "save"
     cands4 = bank2.menu("lowhp4")
-    assert bank2.nearest_candidate(dict(plan, survival=9), state(round=L("4-5"), level=7, gold=40), cands4) == "roll0"
+    st45 = state(round=L("4-5"), level=7, gold=40)
+    assert bank2.nearest_candidate(dict(plan, survival=9), st45, cands4) == "roll_all"
+    assert bank2.nearest_candidate(dict(plan, roll_floor=30), st45, cands4) == "roll30"
 
 
 def test_agents_on_v2_menus():
     view = {"id": "x", "candidates": bank2.menu("lowhp4")}
-    assert bank2.make_agent("always:roll20").choose(view) == "roll20"
-    assert bank2.make_agent("always:level8").choose(view) == "roll0"  # not on the menu: the first one
+    assert bank2.make_agent("always:roll30").choose(view) == "roll30"
+    assert bank2.make_agent("always:level8").choose(view) == "roll_all"  # not on the menu: the first one
     assert bank2.make_agent("random").choose(view) in bank2.STRATA["lowhp4"]["menu"]
     assert isinstance(bank2.make_agent("noisy50:stance").inner, bank2.PlannerAgent)
     assert isinstance(bank2.make_agent("mimic"), bank2.PlannerAgent)
@@ -193,24 +205,29 @@ def fake_play(true, log=None):
 
 def test_race_budget_elimination_and_stopping():
     cfg = bank2.racing_config()
-    assert cfg == bank2.RACING and cfg["budget"] == 56
-    # four equal candidates: nobody is eliminated, the budget stops the race at 14 each (56 = 4 x 14)
+    assert cfg == bank2.RACING and cfg["budget_per_cand"] == 16
+    # four equal candidates: nobody is eliminated, the budget (4 x 16 = 64) stops the race at 16 each
     even = {c: 4.0 for c in "abcd"}
     r = bank2.race(list(even), fake_play(even), cfg)
-    assert r["stop"] == "budget spent" and set(r["survivors"]) == set("abcd")
-    assert sum(r["n"].values()) <= 56 and set(r["n"].values()) == {14}
+    assert r["stop"] == "budget spent" and set(r["survivors"]) == set("abcd") and r["merged"] == {}
+    assert set(r["n"].values()) == {16}
     assert [b["k"] for b in r["branches"][:8]] == [0, 0, 0, 0, 1, 1, 1, 1]  # k-major
-    # three candidates, one far behind: eliminated at the first look, the two others get 24 each
+    # four candidates, two far behind: out at the first look, the two others reach K_MIN (8 x 4 + 2 x 16 = 64)
+    four = {"a": 3.0, "b": 3.1, "c": 7.0, "d": 7.5}
+    r = bank2.race(list(four), fake_play(four), cfg)
+    assert r["looks"][0]["eliminated"] == ["c", "d"] and r["n"] == {"a": 24, "b": 24, "c": 8, "d": 8}
+    assert r["stop"] == "k_min, budget spent" and sum(r["n"].values()) == 64
+    # three candidates (48 branches), one far behind: the two others get 20 each
     three = {"a": 3.0, "b": 3.1, "c": 7.0}
     r = bank2.race(list(three), fake_play(three), cfg)
-    assert r["looks"][0]["eliminated"] == ["c"] and r["n"] == {"a": 24, "b": 24, "c": 8}
-    assert r["stop"] == "k_min, budget spent" and sum(r["n"].values()) == 56
+    assert r["looks"][0]["eliminated"] == ["c"] and r["n"] == {"a": 20, "b": 20, "c": 8}
+    assert r["stop"] == "budget spent" and sum(r["n"].values()) == 48
     # one clearly best: everyone else out, the race stops with one left
     solo = {"a": 1.0, "b": 6.0, "c": 6.5}
     r = bank2.race(list(solo), fake_play(solo), cfg)
     assert r["stop"] == "one left" and r["survivors"] == ["a"] and r["n"] == {"a": 8, "b": 8, "c": 8}
     # a larger budget lets two survivors reach K_MAX
-    r = bank2.race(list(three), fake_play(three), bank2.racing_config(budget=200))
+    r = bank2.race(list(three), fake_play(three), bank2.racing_config(budget_per_cand=100))
     assert r["stop"] == "k_max" and r["n"] == {"a": 32, "b": 32, "c": 8}
     with pytest.raises(ValueError):
         bank2.racing_config(k_min=40)
@@ -225,7 +242,7 @@ def test_race_drops_all_duplicates_and_replays():
     assert r["stop"] == "all candidates duplicate" and r["n"] == {"a": 8, "b": 8, "c": 8}
 
     three = {"a": 3.0, "b": 3.1, "c": 7.0}
-    small = bank2.racing_config(k_start=2, k_step=2, k_min=4, k_max=4, budget=16)
+    small = bank2.racing_config(k_start=2, k_step=2, k_min=4, k_max=4, budget_per_cand=6)
     r = bank2.race(list(three), fake_play(three), small)
     item = {"id": "x", "candidates": [{"name": c} for c in three], "branches": r["branches"], "racing": small}
     again = bank2.replay_race(item)
@@ -241,6 +258,44 @@ def test_race_drops_all_duplicates_and_replays():
     again = bank2.race(list(three), fake_play(three, log=log), bank2.RACING, cache)
     assert again["n"] == fresh["n"] and [b["place"] for b in again["branches"]] == [b["place"] for b in fresh["branches"]]
     assert not set(log) & {(b["cand"], b["k"]) for b in r["branches"]}
+
+
+def merged_play(true, same):
+    """fake_play where candidate `later` plays exactly like `earlier` (same: later -> earlier)."""
+    inner = fake_play(true)
+
+    def play(c, k):
+        b = inner(same.get(c, c), k)
+        return {**b, "cand": c}
+    return play
+
+
+def test_race_merges_duplicates_at_the_first_look_and_labels_share():
+    true = {"a": 4.0, "b": 4.0, "c": 4.0, "d": 4.0}
+    play = merged_play(true, {"b": "a"})
+    r = bank2.race(list(true), play, bank2.RACING)
+    # b repeats a: merged at the first look, no more branches; the budget is 3 x 16 for a, c, d
+    assert r["merged"] == {"b": "a"} and r["looks"][0]["merged"] == {"b": "a"}
+    assert r["looks"][0]["active"] == ["a", "c", "d"] and "merged" not in r["looks"][1]
+    assert r["n"] == {"a": 16, "b": 8, "c": 16, "d": 16} and r["stop"] == "budget spent"
+    item = make_item({c: {} for c in true})
+    item.update(branches=r["branches"], racing=dict(bank2.RACING),
+                race={k: r[k] for k in ("looks", "stop", "survivors", "n", "merged")})
+    again = bank2.replay_race(item)
+    assert again["looks"] == r["looks"] and again["merged"] == r["merged"]
+    # one decision: the groups, P, regret and the cross-fit picks treat b as a
+    assert bank2.candidate_groups(item) == [["a", "b"], ["c"], ["d"]]
+    assert bank.duplicate_groups(item["branches"], list(true)) != bank2.candidate_groups(item)  # b lacks a's ks
+    labels, _ = bank2.label_items(bank2.usable([item]), draws=500)
+    lab = labels[item["id"]]
+    assert lab["P"]["b"] == lab["P"]["a"] and lab["regret"]["b"] == lab["regret"]["a"] and lab["n"]["b"] == 16
+    assert lab["merged"] == {"b": "a"} and sum(lab["P"][g[0]] for g in lab["duplicates"]) == pytest.approx(1.0)
+    assert "b" not in lab["xfit"]["oracle"]["picks"] + lab["xfit"]["worst"]["picks"]
+    rows = bank2.score_rows([item], labels, {item["id"]: {"choice": "b"}})
+    assert rows[0]["regret"] == lab["regret"]["a"] and rows[0]["hit"] == float("a" in lab["best_group"])
+    # a merge that leaves two distinct candidates still races them
+    r = bank2.race(["a", "b", "c"], merged_play({"a": 3.0, "b": 3.0, "c": 3.2}, {"b": "a"}), bank2.RACING)
+    assert r["merged"] == {"b": "a"} and r["n"]["b"] == 8 and r["n"]["a"] == r["n"]["c"] == 16
 
 
 # --------------------------------------------------------------------------- labels
@@ -319,12 +374,12 @@ def synthetic_stratum(n_games=60, tau=0.5, alpha=None, noise=1.2, stratum="lowhp
 
 
 def test_stratum_fit_recovers_tau_and_alpha_and_the_posterior_is_calibrated():
-    alpha = {"roll0": 0.3, "roll20": -0.3, "level_roll10": 0.0, "save": 0.0}
+    alpha = {"roll_all": 0.3, "roll30": -0.3, "level_roll10": 0.0, "save": 0.0}
     items, truth = synthetic_stratum(n_games=300, tau=0.6, alpha=alpha)
     labels, fits = bank2.label_items(items, draws=2000)
     fit = fits["lowhp4"]
     assert fit["tau_source"] == "moments" and abs(math.sqrt(fit["tau2"]) - 0.6) < 0.12
-    assert fit["alpha"]["roll20"] < fit["alpha"]["roll0"] - 0.3
+    assert fit["alpha"]["roll30"] < fit["alpha"]["roll_all"] - 0.3
     assert fit["pooled_sd_d"] == pytest.approx(1.2 * math.sqrt(2), abs=0.15)
     clear = [i for i, lab in labels.items() if lab["clear"]]
     hits = np.mean([labels[i]["best"] == truth[i] for i in clear])
@@ -385,20 +440,20 @@ def test_stratified_ci_reduces_to_the_clustered_ci_and_weights_strata_equally():
 # --------------------------------------------------------------------------- rule check
 
 def test_rule_check_finds_a_single_feature_rule():
-    # roll0 is 1.5 places better below 30 HP, save 1.5 better above: one HP threshold solves the stratum
+    # roll_all is 1.5 places better below 30 HP, save 1.5 better above: one HP threshold solves the stratum
     items, truth = synthetic_stratum(n_games=80, tau=0.1, noise=0.8, seed=4,
-                                     rule=lambda f: {"roll0": -1.5} if f["hp"] <= 30 else {"save": -1.5})
+                                     rule=lambda f: {"roll_all": -1.5} if f["hp"] <= 30 else {"save": -1.5})
     labels, _ = bank2.label_items(items, draws=1000)
     rep = bank2.rule_check(items, labels)["lowhp4"]
     thr = rep["threshold"]["hp"]
-    assert thr["rule_on_all"]["a"] == "roll0" and thr["rule_on_all"]["b"] == "save"
+    assert thr["rule_on_all"]["a"] == "roll_all" and thr["rule_on_all"]["b"] == "save"
     assert 25 <= thr["rule_on_all"]["t"] <= 35
     assert thr["regret"]["mean"] < rep["best_fixed"]["regret"]["mean"] - 0.5
-    assert rep["fixed"]["roll20"]["regret"]["mean"] > thr["regret"]["mean"]
+    assert rep["fixed"]["roll30"]["regret"]["mean"] > thr["regret"]["mean"]
     assert rep["headroom"] < bank2.RULE_HEADROOM and rep["rule_stratum"]
     assert rep["tree"]["regret"]["mean"] < rep["best_fixed"]["regret"]["mean"]
     assert bank2.apply_rule(rep["tree"]["rule_on_all"], {"hp": 12, "gold": 45, "pairs": 2, "streak": 0, "level": 6,
-                                                         "losses_to_death": 8}) == "roll0"
+                                                         "losses_to_death": 8}) == "roll_all"
     # gold carries no information here: its cross-fitted rule is no better than the best fixed one
     assert rep["threshold"]["gold"]["regret"]["mean"] >= rep["best_fixed"]["regret"]["mean"] - 0.1
 
@@ -472,6 +527,7 @@ def test_pilot_items_replay_their_races_and_label():
     for it in raced:
         again = bank2.replay_race(it)
         assert again["looks"] == it["race"]["looks"] and again["n"] == it["race"]["n"]
+        assert again["merged"] == it["race"]["merged"]
     good = bank2.usable(items)
     if good:
         labels, _ = bank2.label_items(good, draws=500)

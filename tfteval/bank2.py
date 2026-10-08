@@ -22,10 +22,15 @@ Paired racing labels (`race`). Every candidate gets k = 0 .. K_START-1. Then, at
 is the candidate with the lowest mean place over the ks all active candidates share; a candidate whose
 paired mean difference to the leader exceeds ELIM_Z paired standard errors is eliminated (standard error
 max(SD, RACE_SD_FLOOR) / sqrt(n): with a few branches a sample SD of 0 happens by chance). The survivors
-get K_STEP more ks each while the item's BUDGET (branches in all) allows, until one is left or they
-reach K_MIN (and, budget permitting, at most K_MAX). Branches are k-prefixes per candidate: an eliminated
-candidate keeps the ks it had. The race is a deterministic function of the outcomes, so a stored item
-can be re-raced (e.g. with a larger budget) by replaying its stored branches and playing the missing ones.
+get K_STEP more ks each while the item's budget (BUDGET_PER_CAND branches per distinct candidate) allows,
+until one is left or they reach K_MIN (and, budget permitting, at most K_MAX). Branches are k-prefixes per
+candidate: an eliminated candidate keeps the ks it had. At the first look, a candidate whose hero actions
+are identical to an earlier candidate's (menu order) in all its branches is merged into it: it gets no
+more branches, its first ones do not count toward the budget (the item is raced as if the menu were its
+distinct candidates), and it shares the earlier one's labels (`race.merged`; e.g. two roll depths that
+a round's 15 actions cannot tell apart). The race is a deterministic function of the outcomes, so a
+stored item can be re-raced (e.g. with a larger budget) by replaying its stored branches and playing the
+missing ones.
 
 Labels (`fit_stratum`, `label_items`), computed at scoring time from the stored branches:
 
@@ -39,8 +44,8 @@ Labels (`fit_stratum`, `label_items`), computed at scoring time from the stored 
   items' centred contrast vectors; tau^2 from the spread of the paired contrasts across items minus their
   sampling variance. With fewer than MIN_FIT_ITEMS items alpha is 0 and tau is TAU_FALLBACK.
 * Posterior: Gaussian on the contrasts; P(candidate is truly best) by Monte Carlo (POSTERIOR_DRAWS, seeded
-  by the item id). Duplicate candidates (identical hero actions in every shared branch) are one group and
-  share its probability. Clear item: max P >= CLEAR_P. Accuracy ceiling: the sum of max P over clear
+  by the item id). Duplicate candidates (identical hero actions in every branch, or merged at the race's
+  first look) are one group and share its probability and its representative's regret. Clear item: max P >= CLEAR_P. Accuracy ceiling: the sum of max P over clear
   items; an agent's expected hits are the sum of P(its choice) over the clear items.
 * Regret of a candidate: its paired mean difference to the posterior-best candidate over the ks both
   have (all branches; an eliminated candidate is compared on its own ks).
@@ -91,8 +96,9 @@ CANDIDATES = {
     "level_roll10": {"level": "+1", "keep": 10, "roll_floor": 10,
                      "desc": "Level, then roll: buy xp toward one level up with the gold above 10, then reroll "
                              "down to 10 gold."},
-    "roll0": {"level": "hold", "roll_floor": 0,
-              "desc": "All in: reroll down to 0 gold every round at the current level, no xp."},
+    "roll_all": {"level": "hold", "roll_floor": 0,
+                 "desc": "All in: reroll at the current level as much as the round's actions allow (down to 0 "
+                         "gold) every round, no xp."},
 }
 
 # --------------------------------------------------------------------------- strata (triggers)
@@ -104,30 +110,36 @@ STREAK8_WINDOW = ("4-1", "4-2")
 STREAK8_GOLD = 50
 STREAK8_WINS = 2
 STREAK8_MAX_LEVEL = 7         # "level to 8 now / hold 7": the menu assumes level 7 or below
-LOSING_WINDOW = ("3-1", "3-2")
-LOSING_LOSSES = 3
-LOSING_HP = 70
+LOSING_WINDOW = ("3-1", "3-3")
+LOSING_LOSSES = 2             # streak <= -2
+LOSING_HP = 60
 LOWHP_WINDOW = ("4-1", "5-1")
 LOWHP_HP = 50
 LOWHP_GOLD = 40
 REF_WINDOW = ("4-1", "4-1")
+REF_SAMPLE_MOD = 3            # ref41 items only for source games with seed % REF_SAMPLE_MOD == 0
 
-LOWHP_MENU = ("roll0", "roll20", "level_roll10", "save")
+# Roll depths that the round's 15 actions (planner.ACTIONS_PER_ROUND) cannot tell apart are one decision:
+# at 40 gold "roll to 0" and "roll to 20" both rolled 10 times in the pilot. The deep option is therefore
+# "as much as the cap allows" (roll_all), the shallow one roll30 (5 rolls at 40 gold).
+LOWHP_MENU = ("roll_all", "roll30", "level_roll10", "save")
 
 # name -> round window (first, last stage label), trigger (feature_min / feature_max bounds over
-# trigger_features), menu in tie-break order, commitment length
+# trigger_features), menu in tie-break order, commitment length, and sample_mod: only source games with
+# seed % sample_mod == 0 get an item of the stratum (1: every game)
 STRATA = {
     "pairs3": {"window": PAIRS_WINDOW, "when": {"pairs_min": PAIRS_MIN, "gold_min": PAIRS_GOLD[0],
                                                  "gold_max": PAIRS_GOLD[1]},
-               "menu": ("roll10", "level7", "save"), "rounds": COMMIT_ROUNDS},
+               "menu": ("roll10", "level7", "save"), "rounds": COMMIT_ROUNDS, "sample_mod": 1},
     "streak4": {"window": STREAK8_WINDOW, "when": {"gold_min": STREAK8_GOLD, "win_streak_min": STREAK8_WINS,
                                                    "level_max": STREAK8_MAX_LEVEL},
-                "menu": ("level8", "roll30", "save"), "rounds": COMMIT_ROUNDS},
+                "menu": ("level8", "roll30", "save"), "rounds": COMMIT_ROUNDS, "sample_mod": 1},
     "losing3": {"window": LOSING_WINDOW, "when": {"lose_streak_min": LOSING_LOSSES, "hp_min": LOSING_HP},
-                "menu": ("streak", "roll20", "level_roll10"), "rounds": COMMIT_ROUNDS},
+                "menu": ("streak", "roll20", "level_roll10"), "rounds": COMMIT_ROUNDS, "sample_mod": 1},
     "lowhp4": {"window": LOWHP_WINDOW, "when": {"hp_max": LOWHP_HP, "gold_min": LOWHP_GOLD},
-               "menu": LOWHP_MENU, "rounds": COMMIT_ROUNDS},
-    "ref41": {"window": REF_WINDOW, "when": {}, "menu": LOWHP_MENU, "rounds": COMMIT_ROUNDS},
+               "menu": LOWHP_MENU, "rounds": COMMIT_ROUNDS, "sample_mod": 1},
+    "ref41": {"window": REF_WINDOW, "when": {}, "menu": LOWHP_MENU, "rounds": COMMIT_ROUNDS,
+              "sample_mod": REF_SAMPLE_MOD},
 }
 
 TRIGGER_FEATURES = ("round", "hp", "gold", "level", "streak", "win_streak", "lose_streak", "pairs",
@@ -165,7 +177,13 @@ def window_rounds(stratum: str) -> list[int]:
 def trigger_spec(stratum: str) -> dict:
     """What an item records of its stratum's definition (a build refuses a file whose items differ)."""
     s = STRATA[stratum]
-    return {"window": list(s["window"]), "when": dict(s["when"]), "menu": list(s["menu"]), "rounds": int(s["rounds"])}
+    return {"window": list(s["window"]), "when": dict(s["when"]), "menu": list(s["menu"]), "rounds": int(s["rounds"]),
+            "sample_mod": int(s["sample_mod"])}
+
+
+def sampled(stratum: str, seed: int) -> bool:
+    """Whether the source game with this seed gets an item of the stratum (ref41: every REF_SAMPLE_MOD-th)."""
+    return int(seed) % int(STRATA[stratum]["sample_mod"]) == 0
 
 
 def menu(stratum: str) -> list[dict]:
@@ -247,11 +265,11 @@ K_START = 8         # branches every candidate gets first
 K_STEP = 4          # branches added to each survivor per look
 K_MIN = 24          # survivors stop here when the budget is spent (or one is left) ...
 K_MAX = 32          # ... and never get more than this
-BUDGET = 56         # branches per item in all (docs/BANK_V2.md: about 56)
+BUDGET_PER_CAND = 16  # an item's budget is this times its distinct candidates (3 -> 48, 4 -> 64 branches)
 ELIM_Z = 2.0        # eliminate at a paired mean difference > ELIM_Z standard errors behind the leader
 RACE_SD_FLOOR = bank.SD_FLOOR  # floor of the paired SD in the standard error (places)
 
-RACING = {"k_start": K_START, "k_step": K_STEP, "k_min": K_MIN, "k_max": K_MAX, "budget": BUDGET,
+RACING = {"k_start": K_START, "k_step": K_STEP, "k_min": K_MIN, "k_max": K_MAX, "budget_per_cand": BUDGET_PER_CAND,
           "z": ELIM_Z, "sd_floor": RACE_SD_FLOOR}
 
 
@@ -290,8 +308,12 @@ def eliminate(places: dict, active: list[str], ks: list[int], z: float, sd_floor
 
 def race(names: list[str], play, cfg: dict, cache: dict | None = None) -> dict:
     """Successive elimination over paired branches. `play(name, k)` returns a branch dict with "place";
-    `cache` (name -> k -> branch) is used before playing (re-racing a stored item). Returns the branches
-    used (k-major order), the looks, why it stopped, the survivors and the ks per candidate."""
+    `cache` (name -> k -> branch) is used before playing (re-racing a stored item). At the first look,
+    a candidate whose hero actions equal an earlier candidate's (menu order) in every branch so far is
+    merged into it (`merged`: later -> earlier) and gets no more branches; the budget is
+    budget_per_cand times the distinct candidates, the merged ones' first branches not counted. Returns
+    the branches used (k-major order), the looks, why it stopped, the survivors, the ks per candidate
+    and the merges."""
     have = {c: {} for c in names}
     used: dict[str, int] = {c: 0 for c in names}
     branches: list[dict] = []
@@ -306,7 +328,7 @@ def race(names: list[str], play, cfg: dict, cache: dict | None = None) -> dict:
         branches.append(b)
         return b
 
-    active, looks, stop = list(names), [], None
+    active, looks, stop, merged = list(names), [], None, {}
     n = 0
     target = cfg["k_start"]
     while True:
@@ -320,12 +342,19 @@ def race(names: list[str], play, cfg: dict, cache: dict | None = None) -> dict:
         if any(p is None for c in active for p in places[c].values()):
             stop = "unfinished branch"
             break
-        if len(looks) == 0 and len(bank.duplicate_groups(branches, names)) == 1:
-            looks.append({"n": n, "active": list(active), "leader": None, "eliminated": []})
-            stop = "all candidates duplicate"
-            break
+        first = not looks
+        if first:  # merge duplicates (identical hero actions in every branch so far) into the earlier one
+            groups = bank.duplicate_groups(branches, names)
+            if len(groups) == 1:
+                looks.append({"n": n, "active": list(active), "merged": {}, "leader": None, "eliminated": []})
+                stop = "all candidates duplicate"
+                break
+            merged = {later: g[0] for g in groups for later in g[1:]}
+            active = [c for c in active if c not in merged]
+        budget = cfg["budget_per_cand"] * (len(names) - len(merged))
         leader, stats, out = eliminate(places, active, list(range(n)), cfg["z"], cfg["sd_floor"], names)
-        looks.append({"n": n, "active": list(active), "leader": leader, **stats, "eliminated": out})
+        looks.append({"n": n, "active": list(active), **({"merged": dict(merged)} if first else {}),
+                      "leader": leader, **stats, "eliminated": out})
         active = [c for c in active if c not in out]
         if len(active) == 1:
             stop = "one left"
@@ -334,7 +363,7 @@ def race(names: list[str], play, cfg: dict, cache: dict | None = None) -> dict:
             stop = "k_max"
             break
         step = min(cfg["k_step"], cfg["k_max"] - n)
-        room = cfg["budget"] - sum(used.values())
+        room = budget - sum(m for c, m in used.items() if c not in merged)
         if step * len(active) > room:
             if n >= cfg["k_min"]:
                 stop = "k_min, budget spent"
@@ -344,7 +373,7 @@ def race(names: list[str], play, cfg: dict, cache: dict | None = None) -> dict:
                 stop = "budget spent"
                 break
         target = n + step
-    return {"branches": branches, "looks": looks, "stop": stop, "survivors": active, "n": used}
+    return {"branches": branches, "looks": looks, "stop": stop, "survivors": active, "n": used, "merged": merged}
 
 
 def replay_race(item: dict, cfg: dict | None = None) -> dict:
@@ -374,7 +403,8 @@ def _alive(game, seat: str, rnd: int) -> bool:
 def scan_game(lineup: str, seed: int, settings: dict | None = None, last: str | int = "5-1",
               first: str | int = "3-1") -> dict:
     """Play a source game through the planning phases first..last and record trigger_features of the
-    hero at each one (no branches): the trigger hit rates of every stratum, in one game."""
+    hero at each one (no branches): the trigger hit rates of every stratum, in one game. `fired` is the
+    round an item would be made at, None for a stratum the seed is not sampled for (`sampled`)."""
     recipe = bank.make_recipe(lineup, seed, stages.label(stages.parse_label(first)), settings)
     game = bank.new_game(recipe)
     seat = recipe["hero_seat"]
@@ -387,9 +417,10 @@ def scan_game(lineup: str, seed: int, settings: dict | None = None, last: str | 
             break
         state, _, _ = bank.hero_view(game, seat)
         rows.append(trigger_features(state))
-    fired = {s: first_fire(rows, s) for s in STRATA}
+    fired = {s: first_fire(rows, s) if sampled(s, seed) else None for s in STRATA}
     return {"game": f"{lineup}#{seed}", "lineup": lineup, "seed": int(seed), "hero_seat": seat, "rows": rows,
-            "out_at": out_at, "fired": fired, "seconds": round(time.time() - started, 2),
+            "out_at": out_at, "fired": fired, "sampled": {s: sampled(s, seed) for s in STRATA},
+            "seconds": round(time.time() - started, 2),
             "settings": {k: recipe[k] for k in bank.SETTING_KEYS}}
 
 
@@ -411,6 +442,8 @@ def build_item(lineup: str, seed: int, stratum: str, cfg: dict | None = None, co
 
     if stratum not in STRATA:
         raise ValueError(f"no stratum {stratum!r}; choose from {list(STRATA)}")
+    if not sampled(stratum, seed):
+        raise ValueError(f"seed {seed} is not sampled for {stratum} (seed % {STRATA[stratum]['sample_mod']} != 0)")
     cfg = dict(cfg or RACING)
     started = time.time()
     rounds = window_rounds(stratum)
@@ -482,7 +515,7 @@ def build_item(lineup: str, seed: int, stratum: str, cfg: dict | None = None, co
 
 def _store_race(item: dict, result: dict) -> None:
     item["branches"] = result["branches"]
-    item["race"] = {k: result[k] for k in ("looks", "stop", "survivors", "n")}
+    item["race"] = {k: result[k] for k in ("looks", "stop", "survivors", "n", "merged")}
     if result["stop"] in ("all candidates duplicate", "unfinished branch"):
         item["dropped"] = result["stop"]
 
@@ -541,6 +574,18 @@ def places_of(item: dict) -> dict:
     return out
 
 
+def candidate_groups(item: dict) -> list[list[str]]:
+    """The item's candidates as groups of one decision, in menu order (a group's first is its
+    representative): the merges of the race's first look (`race.merged`, later -> earlier) and, as in v1,
+    candidates whose hero actions are identical in every branch (bank.duplicate_groups)."""
+    names = [c["name"] for c in item["candidates"]]
+    merged = (item.get("race") or {}).get("merged") or {}
+    groups = bank.duplicate_groups(item.get("branches", []), [c for c in names if c not in merged])
+    for later, earlier in merged.items():
+        next(g for g in groups if earlier in g).append(later)
+    return [sorted(g, key=names.index) for g in groups]
+
+
 def usable(items: list[dict]) -> list[dict]:
     """Items with a decision point and finished branches (dropped and all-duplicate ones left out)."""
     out = []
@@ -550,7 +595,7 @@ def usable(items: list[dict]) -> list[dict]:
         places = places_of(it)
         if any(p is None for ks in places.values() for p in ks.values()) or any(not ks for ks in places.values()):
             continue
-        if len(bank.duplicate_groups(it["branches"], [c["name"] for c in it["candidates"]])) < 2:
+        if len(candidate_groups(it)) < 2:
             continue
         out.append(it)
     return out
@@ -561,7 +606,7 @@ def _item_data(item: dict) -> dict:
     per-branch difference variance (pooled over the item's candidates)."""
     names = [c["name"] for c in item["candidates"]]
     places = places_of(item)
-    groups = bank.duplicate_groups(item["branches"], names)
+    groups = candidate_groups(item)
     reps = [g[0] for g in groups]
     group_of = {c: g for g in groups for c in g}
     ref = max(reps, key=lambda c: (len(places[c]), -names.index(c)))
@@ -741,7 +786,9 @@ def crossfit(places: dict, names: list[str], best: str, which: str = "oracle") -
 def label_items(items: list[dict], prior: str = "candidate", draws: int = POSTERIOR_DRAWS) -> tuple[dict, dict]:
     """Labels of usable items: (item id -> label, stratum -> fit). A label has the posterior (P, best,
     pmax, clear), regrets of every candidate against the posterior-best (paired, all shared ks), the
-    candidates' mean places and branch counts, and the cross-fit oracle / worst."""
+    candidates' mean places and branch counts, and the cross-fit oracle / worst. A duplicate or merged
+    candidate has its group's representative's label (regret, mean, n); the cross-fit anchors pick
+    among the representatives."""
     by_stratum = defaultdict(list)
     for it in items:
         by_stratum[it["stratum"]].append(it)
@@ -753,12 +800,15 @@ def label_items(items: list[dict], prior: str = "candidate", draws: int = POSTER
             post = posterior(it, fit, draws)
             places = places_of(it)
             names = [c["name"] for c in it["candidates"]]
+            rep = {c: g[0] for g in post["duplicates"] for c in g}
+            reps = [g[0] for g in post["duplicates"]]
             best = post["best"]
-            regret = {c: paired_mean(places, c, best) for c in names}
+            regret = {c: paired_mean(places, rep[c], best) for c in names}
             labels[it["id"]] = {**post, "clear": post["pmax"] >= CLEAR_P, "regret": regret,
-                                "mean": {c: float(np.mean(list(places[c].values()))) for c in names},
-                                "n": {c: len(places[c]) for c in names},
-                                "xfit": {w: crossfit(places, names, best, w) for w in ("oracle", "worst")}}
+                                "mean": {c: float(np.mean(list(places[rep[c]].values()))) for c in names},
+                                "n": {c: len(places[rep[c]]) for c in names},
+                                "merged": dict((it.get("race") or {}).get("merged") or {}),
+                                "xfit": {w: crossfit(places, reps, best, w) for w in ("oracle", "worst")}}
     return labels, fits
 
 

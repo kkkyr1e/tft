@@ -6,15 +6,17 @@
     # items: every stratum of every source game, the default racing (8 branches each, then elimination)
     python scripts/build_bank2.py --lineups stance@rule:7 --seeds 9400:30 --out results/bank2/bank.jsonl
     # small pilot budgets
-    python scripts/build_bank2.py ... --k-start 2 --k-step 2 --k-min 4 --k-max 4 --budget 16
+    python scripts/build_bank2.py ... --k-start 2 --k-step 2 --k-min 4 --k-max 4 --budget-per-cand 4
 
 A source game is a lineup (`HERO@OPPONENTS`, as in build_bank.py) and a seed. For every source game and
 stratum (tfteval.bank2.STRATA: pairs3, streak4, losing3, lowhp4, ref41) the game is played round by round
 through the stratum's window; the item is made at the first planning phase where the trigger fires
 (that round goes into the recipe). The menu's candidates are then raced (tfteval.bank2.race): K_START
-branches each, then the ones clearly behind the leader are dropped and the survivors get more branches
-up to the budget. A game whose trigger never fires (or whose hero is out first) is written too, with
+branches each, candidates identical to an earlier one merged into it, then the ones clearly behind the
+leader are dropped and the survivors get more branches up to the budget (BUDGET_PER_CAND per distinct
+candidate). A game whose trigger never fires (or whose hero is out first) is written too, with
 `dropped` and the scanned rounds, so the hit rates can be counted and the item is not tried again.
+ref41 is a reference stratum and only every REF_SAMPLE_MOD-th seed (seed % 3 == 0) gets an item of it.
 
 A rerun skips the items already in --out, so a build can be stopped and resumed. The settings (racing,
 continuation, simulator, strata definitions) must match the items already in the file, or the build is
@@ -75,15 +77,17 @@ def run_job(job):
 
 
 def scan_summary(rows: list[dict]) -> dict:
-    """Per stratum: games where the trigger fires and at which rounds; of the others, how many lost the
-    hero before the window ended and how many reached the window but never met the trigger."""
+    """Per stratum: the source games sampled for it (bank2.sampled), the ones where the trigger fires and
+    at which rounds (`rate`: items per source game scanned); of the other sampled games, how many lost
+    the hero before the window ended and how many reached the window but never met the trigger."""
     out = {"games": len(rows), "strata": {}}
     for s in bank2.STRATA:
         last = max(bank2.window_rounds(s))
-        fired = [r["fired"][s] for r in rows if r["fired"].get(s) is not None]
-        missed = [r for r in rows if r["fired"].get(s) is None]
+        mine = [r for r in rows if bank2.sampled(s, r["seed"])]
+        fired = [r["fired"][s] for r in mine if r["fired"].get(s) is not None]
+        missed = [r for r in mine if r["fired"].get(s) is None]
         out_first = sum(1 for r in missed if r["out_at"] is not None and r["out_at"] <= last)
-        out["strata"][s] = {"fired": len(fired), "rate": len(fired) / len(rows) if rows else None,
+        out["strata"][s] = {"sampled": len(mine), "fired": len(fired), "rate": len(fired) / len(rows) if rows else None,
                             "rounds": dict(sorted(Counter(stages.label(x) for x in fired).items(),
                                                   key=lambda kv: stages.parse_label(kv[0]))),
                             "hero_out": out_first, "no_fire": len(missed) - out_first}
@@ -96,8 +100,8 @@ def print_scan(summary: dict) -> None:
     print(f"{summary['games']} source games scanned ({summary['seconds_per_game']:.0f}s a game)")
     for s, e in summary["strata"].items():
         rounds = " ".join(f"{k}:{v}" for k, v in e["rounds"].items())
-        print(f"  {s:8} fired in {e['fired']:3} games ({e['rate']:.0%})  rounds {rounds or '-'}  "
-              f"(not fired: {e['no_fire']} reached the window, {e['hero_out']} hero out first)")
+        print(f"  {s:8} fired in {e['fired']:3} of {e['sampled']} sampled games ({e['rate']:.0%} of all)  "
+              f"rounds {rounds or '-'}  (not fired: {e['no_fire']} reached the window, {e['hero_out']} hero out first)")
 
 
 def main():
@@ -109,7 +113,7 @@ def main():
     parser.add_argument("--workers", type=int, default=1)
     parser.add_argument("--rules", choices=["set4", "set18"], help="economy profile (default set4, or TFT_RULES)")
     parser.add_argument("--sim", help="simulator profile (default realistic, or TFT_SIM)")
-    for key in ("k_start", "k_step", "k_min", "k_max", "budget"):
+    for key in ("k_start", "k_step", "k_min", "k_max", "budget_per_cand"):
         parser.add_argument("--" + key.replace("_", "-"), type=int, help=f"racing: {key} (default {bank2.RACING[key]})")
     parser.add_argument("--z", type=float, help=f"racing: elimination at z paired SEs (default {bank2.ELIM_Z})")
     parser.add_argument("--extend", action="store_true",
@@ -126,7 +130,7 @@ def main():
         bank.plan_kind(hero)
     bank.plan_kind(args.continuation)
     racing = bank2.racing_config(k_start=args.k_start, k_step=args.k_step, k_min=args.k_min, k_max=args.k_max,
-                                 budget=args.budget, z=args.z)
+                                 budget_per_cand=args.budget_per_cand, z=args.z)
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
     seeds = parse_seeds(args.seeds)
@@ -189,7 +193,7 @@ def main():
     done = {it["id"]: it for it in items}
     order = {s: i for i, s in enumerate(JOB_ORDER)}
     wanted = [(lineup, seed, s) for lineup in args.lineups for seed in seeds
-              for s in sorted(args.strata, key=lambda s: order.get(s, 99))]
+              for s in sorted(args.strata, key=lambda s: order.get(s, 99)) if bank2.sampled(s, seed)]
     config = {"racing": racing, "continuation": args.continuation, "settings": settings, "harness": harness}
     todo = [w for w in wanted if bank2.item_id(*w) not in done]
     stale_ids = {it["id"] for it in stale}
