@@ -1,0 +1,106 @@
+results/bank/pilot.jsonl: 4 items built, 4 usable (0 clear) from 2 source games; items dev 2, held-out 2; dropped 0
+oracle: 4 items
+split    subset     items games  regret (95% CI by game)  within CI  best  choices
+all      all            4     2  +0.00 ±0.00                   100%  100%  fast8:1 roll:1 save:2
+all      ambiguous      4     2  +0.00 ±0.00                   100%  100%  fast8:1 roll:1 save:2
+all      3-2            2     2  +0.00 ±0.00                   100%  100%  save:2
+all      4-1            2     2  +0.00 ±0.00                   100%  100%  fast8:1 roll:1
+dev      all            2     1  +0.00 (1 game)                100%  100%  fast8:1 save:1
+dev      ambiguous      2     1  +0.00 (1 game)                100%  100%  fast8:1 save:1
+dev      3-2            1     1  +0.00 (1 game)                100%  100%  save:1
+dev      4-1            1     1  +0.00 (1 game)                100%  100%  fast8:1
+heldout  all            2     1  +0.00 (1 game)                100%  100%  roll:1 save:1
+heldout  ambiguous      2     1  +0.00 (1 game)                100%  100%  roll:1 save:1
+heldout  3-2            1     1  +0.00 (1 game)                100%  100%  save:1
+heldout  4-1            1     1  +0.00 (1 game)                100%  100%  roll:1
+stance: 4 items
+split    subset     items games  regret (95% CI by game)  within CI  best  choices
+all      all            4     2  +0.62 ±11.12                  100%   50%  fast8:2 level:1 save:1
+all      ambiguous      4     2  +0.62 ±11.12                  100%   50%  fast8:2 level:1 save:1
+all      3-2            2     2  +1.50 ±19.06                  100%   50%  level:1 save:1
+all      4-1            2     2  -0.25 ±3.18                   100%   50%  fast8:2
+dev      all            2     1  +1.50 (1 game)                100%   50%  fast8:1 level:1
+dev      ambiguous      2     1  +1.50 (1 game)                100%   50%  fast8:1 level:1
+dev      3-2            1     1  +3.00 (1 game)                100%    0%  level:1
+dev      4-1            1     1  +0.00 (1 game)                100%  100%  fast8:1
+heldout  all            2     1  -0.25 (1 game)                100%   50%  fast8:1 save:1
+heldout  ambiguous      2     1  -0.25 (1 game)                100%   50%  fast8:1 save:1
+heldout  3-2            1     1  +0.00 (1 game)                100%  100%  save:1
+heldout  4-1            1     1  -0.50 (1 game)                100%    0%  fast8:1
+mimic: 4 items
+split    subset     items games  regret (95% CI by game)  within CI  best  choices
+all      all            4     2  -0.12 ±1.59                   100%   75%  fast8:2 save:2
+all      ambiguous      4     2  -0.12 ±1.59                   100%   75%  fast8:2 save:2
+all      3-2            2     2  +0.00 ±0.00                   100%  100%  save:2
+all      4-1            2     2  -0.25 ±3.18                   100%   50%  fast8:2
+dev      all            2     1  +0.00 (1 game)                100%  100%  fast8:1 save:1
+dev      ambiguous      2     1  +0.00 (1 game)                100%  100%  fast8:1 save:1
+dev      3-2            1     1  +0.00 (1 game)                100%  100%  save:1
+dev      4-1            1     1  +0.00 (1 game)                100%  100%  fast8:1
+heldout  all            2     1  -0.25 (1 game)                100%   50%  fast8:1 save:1
+heldout  ambiguous      2     1  -0.25 (1 game)                100%   50%  fast8:1 save:1
+heldout  3-2            1     1  +0.00 (1 game)                100%  100%  save:1
+heldout  4-1            1     1  -0.50 (1 game)                100%    0%  fast8:1
+rule: 4 items
+split    subset     items games  regret (95% CI by game)  within CI  best  choices
+all      all            4     2  -0.12 ±1.59                   100%   75%  fast8:2 save:2
+all      ambiguous      4     2  -0.12 ±1.59                   100%   75%  fast8:2 save:2
+all      3-2            2     2  +0.00 ±0.00                   100%  100%  save:2
+all      4-1            2     2  -0.25 ±3.18                   100%   50%  fast8:2
+dev      all            2     1  +0.00 (1 game)                100%  100%  fast8:1 save:1
+dev      ambiguous      2     1  +0.00 (1 game)                100%  100%  fast8:1 save:1
+dev      3-2            1     1  +0.00 (1 game)                100%  100%  save:1
+dev      4-1            1     1  +0.00 (1 game)                100%  100%  fast8:1
+heldout  all            2     1  -0.25 (1 game)                100%   50%  fast8:1 save:1
+heldout  ambiguous      2     1  -0.25 (1 game)                100%   50%  fast8:1 save:1
+heldout  3-2            1     1  +0.00 (1 game)                100%  100%  save:1
+heldout  4-1            1     1  -0.50 (1 game)                100%    0%  fast8:1
+noisy50:stance: 4 items
+split    subset     items games  regret (95% CI by game)  within CI  best  choices
+all      all            4     2  +0.62 ±11.12                  100%   50%  fast8:2 level:1 save:1
+all      ambiguous      4     2  +0.62 ±11.12                  100%   50%  fast8:2 level:1 save:1
+all      3-2            2     2  +1.50 ±19.06                  100%   50%  level:1 save:1
+all      4-1            2     2  -0.25 ±3.18                   100%   50%  fast8:2
+dev      all            2     1  +1.50 (1 game)                100%   50%  fast8:1 level:1
+dev      ambiguous      2     1  +1.50 (1 game)                100%   50%  fast8:1 level:1
+dev      3-2            1     1  +3.00 (1 game)                100%    0%  level:1
+dev      4-1            1     1  +0.00 (1 game)                100%  100%  fast8:1
+heldout  all            2     1  -0.25 (1 game)                100%   50%  fast8:1 save:1
+heldout  ambiguous      2     1  -0.25 (1 game)                100%   50%  fast8:1 save:1
+heldout  3-2            1     1  +0.00 (1 game)                100%  100%  save:1
+heldout  4-1            1     1  -0.50 (1 game)                100%    0%  fast8:1
+random: 4 items
+split    subset     items games  regret (95% CI by game)  within CI  best  choices
+all      all            4     2  +0.88 ±14.29                  100%    0%  fast8:1 level:1 roll:2
+all      ambiguous      4     2  +0.88 ±14.29                  100%    0%  fast8:1 level:1 roll:2
+all      3-2            2     2  +1.50 ±19.06                  100%    0%  level:1 roll:1
+all      4-1            2     2  +0.25 ±9.53                   100%    0%  fast8:1 roll:1
+dev      all            2     1  +2.00 (1 game)                100%    0%  level:1 roll:1
+dev      ambiguous      2     1  +2.00 (1 game)                100%    0%  level:1 roll:1
+dev      3-2            1     1  +3.00 (1 game)                100%    0%  level:1
+dev      4-1            1     1  +1.00 (1 game)                100%    0%  roll:1
+heldout  all            2     1  -0.25 (1 game)                100%    0%  fast8:1 roll:1
+heldout  ambiguous      2     1  -0.25 (1 game)                100%    0%  fast8:1 roll:1
+heldout  3-2            1     1  +0.00 (1 game)                100%    0%  roll:1
+heldout  4-1            1     1  -0.50 (1 game)                100%    0%  fast8:1
+worst: 4 items
+split    subset     items games  regret (95% CI by game)  within CI  best  choices
+all      all            4     2  +1.38 ±17.47                  100%   50%  level:1 roll:1 save:2
+all      ambiguous      4     2  +1.38 ±17.47                  100%   50%  level:1 roll:1 save:2
+all      3-2            2     2  +1.50 ±19.06                  100%   50%  level:1 save:1
+all      4-1            2     2  +1.25 ±15.88                  100%   50%  roll:1 save:1
+dev      all            2     1  +2.75 (1 game)                100%    0%  level:1 save:1
+dev      ambiguous      2     1  +2.75 (1 game)                100%    0%  level:1 save:1
+dev      3-2            1     1  +3.00 (1 game)                100%    0%  level:1
+dev      4-1            1     1  +2.50 (1 game)                100%    0%  save:1
+heldout  all            2     1  +0.00 (1 game)                100%  100%  roll:1 save:1
+heldout  ambiguous      2     1  +0.00 (1 game)                100%  100%  roll:1 save:1
+heldout  3-2            1     1  +0.00 (1 game)                100%  100%  save:1
+heldout  4-1            1     1  +0.00 (1 game)                100%  100%  roll:1
+sanity: lower regret expected for the first of each pair (difference A - B, CI by game)
+           oracle vs stance              -0.62 ±11.12  holds                    by construction: the oracle has regret 0
+           stance vs noisy50:stance       +0.00 ±0.00  tie                      half of stance's choices made at random should not help
+   noisy50:stance vs random               -0.25 ±3.18  holds                    a rule policy should beat uniform choice
+           random vs worst                -0.50 ±3.18  holds                    by construction
+           stance vs mimic                +0.75 ±9.53  VIOLATED                 stance placed better than mimic in the fork smoke (2.25 vs 4.38, 8 games)
+scorecard: results/bank/pilot.sanity.json

@@ -5,6 +5,15 @@
 
 Seats are `policy:count`, comma separated, 8 in total. `alias=policy` reports a seat under its
 own name so the seat under test can be told apart from identical opponents.
+
+`--sim` picks the simulator profile (tfteval.runner.SIM_PROFILES): `realistic` (the default: PvE
+damage, Fortune orbs, carousel fixes, hidden next opponent, keyed random streams) or `default` (the
+fork's options all off), optionally with overrides, e.g. `realistic,rng_streams=shared`. Every
+result records the profile and the exact options (`sim`, `sim_options`).
+
+`--record` keeps per-round trajectory rows (tfteval/record.py) of every seat in each result's `records`
+(`--record hero` only the seats of that policy name, or a comma list of seats); tfteval/rubric.py scores
+them. Recording does not change the games.
 """
 
 from __future__ import annotations
@@ -51,10 +60,21 @@ def main():
     parser.add_argument("--workers", type=int, default=1)
     parser.add_argument("--no-rotate", action="store_true", help="keep policies on fixed seats")
     parser.add_argument("--rules", choices=["set4", "set18"], help="economy profile (default set4, or TFT_RULES)")
+    parser.add_argument("--sim", help="simulator profile: realistic (default) or default, optionally with overrides "
+                                      "such as realistic,rng_streams=shared (or TFT_SIM)")
+    parser.add_argument("--record", nargs="?", const="all", metavar="WHO",
+                        help="record per-round rows: all seats (no value), or seats / policy names, comma separated")
     parser.add_argument("--out", required=True)
     args = parser.parse_args()
+    if args.record:
+        os.environ["TFT_RECORD"] = args.record  # read by the runner in every worker
     if args.rules:
         os.environ["TFT_RULES"] = args.rules  # read by play_game in every worker
+    if args.sim:
+        from tfteval.runner import sim_options
+
+        sim_options(args.sim)  # fail early on a bad profile
+        os.environ["TFT_SIM"] = args.sim  # read by play_game in every worker
 
     names = parse_lobby(args.lobby)
     jobs = [(names, args.seed + i, not args.no_rotate) for i in range(args.games)]

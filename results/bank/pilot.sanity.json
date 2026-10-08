@@ -1,0 +1,2628 @@
+{
+ "bank": "results/bank/pilot.jsonl",
+ "summary": {
+  "built": 4,
+  "dropped": {},
+  "usable": 4,
+  "clear": 0,
+  "per_point": {
+   "3-2": {
+    "clear": 0,
+    "ambiguous": 2
+   },
+   "3-5": {
+    "clear": 0,
+    "ambiguous": 0
+   },
+   "4-1": {
+    "clear": 0,
+    "ambiguous": 2
+   },
+   "4-5": {
+    "clear": 0,
+    "ambiguous": 0
+   },
+   "5-1": {
+    "clear": 0,
+    "ambiguous": 0
+   }
+  },
+  "games": 2,
+  "splits": {
+   "dev": 2,
+   "heldout": 2
+  },
+  "branch_seconds_mean": 60.07729166666667
+ },
+ "rebuilt": true,
+ "sd_floor": 1.0,
+ "cards": {
+  "oracle": {
+   "agent": "oracle",
+   "bank": "results/bank/pilot.jsonl",
+   "items": 4,
+   "splits": {
+    "all": {
+     "all": {
+      "items": 4,
+      "games": 2,
+      "regret": {
+       "n": 4,
+       "games": 2,
+       "mean": 0.0,
+       "ci95": 0.0
+      },
+      "within_ci": {
+       "n": 4,
+       "games": 2,
+       "mean": 1.0,
+       "ci95": 0.0
+      },
+      "best_choice": 1.0,
+      "invalid": 0,
+      "choices": {
+       "fast8": 1,
+       "roll": 1,
+       "save": 2
+      }
+     },
+     "clear": {
+      "items": 0
+     },
+     "ambiguous": {
+      "items": 4,
+      "games": 2,
+      "regret": {
+       "n": 4,
+       "games": 2,
+       "mean": 0.0,
+       "ci95": 0.0
+      },
+      "within_ci": {
+       "n": 4,
+       "games": 2,
+       "mean": 1.0,
+       "ci95": 0.0
+      },
+      "best_choice": 1.0,
+      "invalid": 0,
+      "choices": {
+       "fast8": 1,
+       "roll": 1,
+       "save": 2
+      }
+     },
+     "points": {
+      "3-2": {
+       "items": 2,
+       "games": 2,
+       "regret": {
+        "n": 2,
+        "games": 2,
+        "mean": 0.0,
+        "ci95": 0.0
+       },
+       "within_ci": {
+        "n": 2,
+        "games": 2,
+        "mean": 1.0,
+        "ci95": 0.0
+       },
+       "best_choice": 1.0,
+       "invalid": 0,
+       "choices": {
+        "save": 2
+       }
+      },
+      "4-1": {
+       "items": 2,
+       "games": 2,
+       "regret": {
+        "n": 2,
+        "games": 2,
+        "mean": 0.0,
+        "ci95": 0.0
+       },
+       "within_ci": {
+        "n": 2,
+        "games": 2,
+        "mean": 1.0,
+        "ci95": 0.0
+       },
+       "best_choice": 1.0,
+       "invalid": 0,
+       "choices": {
+        "fast8": 1,
+        "roll": 1
+       }
+      }
+     }
+    },
+    "dev": {
+     "all": {
+      "items": 2,
+      "games": 1,
+      "regret": {
+       "n": 2,
+       "games": 1,
+       "mean": 0.0,
+       "ci95": null
+      },
+      "within_ci": {
+       "n": 2,
+       "games": 1,
+       "mean": 1.0,
+       "ci95": null
+      },
+      "best_choice": 1.0,
+      "invalid": 0,
+      "choices": {
+       "fast8": 1,
+       "save": 1
+      }
+     },
+     "clear": {
+      "items": 0
+     },
+     "ambiguous": {
+      "items": 2,
+      "games": 1,
+      "regret": {
+       "n": 2,
+       "games": 1,
+       "mean": 0.0,
+       "ci95": null
+      },
+      "within_ci": {
+       "n": 2,
+       "games": 1,
+       "mean": 1.0,
+       "ci95": null
+      },
+      "best_choice": 1.0,
+      "invalid": 0,
+      "choices": {
+       "fast8": 1,
+       "save": 1
+      }
+     },
+     "points": {
+      "3-2": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.0,
+        "ci95": null
+       },
+       "within_ci": {
+        "n": 1,
+        "games": 1,
+        "mean": 1.0,
+        "ci95": null
+       },
+       "best_choice": 1.0,
+       "invalid": 0,
+       "choices": {
+        "save": 1
+       }
+      },
+      "4-1": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.0,
+        "ci95": null
+       },
+       "within_ci": {
+        "n": 1,
+        "games": 1,
+        "mean": 1.0,
+        "ci95": null
+       },
+       "best_choice": 1.0,
+       "invalid": 0,
+       "choices": {
+        "fast8": 1
+       }
+      }
+     }
+    },
+    "heldout": {
+     "all": {
+      "items": 2,
+      "games": 1,
+      "regret": {
+       "n": 2,
+       "games": 1,
+       "mean": 0.0,
+       "ci95": null
+      },
+      "within_ci": {
+       "n": 2,
+       "games": 1,
+       "mean": 1.0,
+       "ci95": null
+      },
+      "best_choice": 1.0,
+      "invalid": 0,
+      "choices": {
+       "roll": 1,
+       "save": 1
+      }
+     },
+     "clear": {
+      "items": 0
+     },
+     "ambiguous": {
+      "items": 2,
+      "games": 1,
+      "regret": {
+       "n": 2,
+       "games": 1,
+       "mean": 0.0,
+       "ci95": null
+      },
+      "within_ci": {
+       "n": 2,
+       "games": 1,
+       "mean": 1.0,
+       "ci95": null
+      },
+      "best_choice": 1.0,
+      "invalid": 0,
+      "choices": {
+       "roll": 1,
+       "save": 1
+      }
+     },
+     "points": {
+      "3-2": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.0,
+        "ci95": null
+       },
+       "within_ci": {
+        "n": 1,
+        "games": 1,
+        "mean": 1.0,
+        "ci95": null
+       },
+       "best_choice": 1.0,
+       "invalid": 0,
+       "choices": {
+        "save": 1
+       }
+      },
+      "4-1": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.0,
+        "ci95": null
+       },
+       "within_ci": {
+        "n": 1,
+        "games": 1,
+        "mean": 1.0,
+        "ci95": null
+       },
+       "best_choice": 1.0,
+       "invalid": 0,
+       "choices": {
+        "roll": 1
+       }
+      }
+     }
+    }
+   },
+   "rows": [
+    {
+     "id": "stance@rule:7#9101@4-1",
+     "game": "stance@rule:7#9101",
+     "split": "dev",
+     "point": "4-1",
+     "kind": "ambiguous",
+     "choice": "fast8",
+     "valid": true,
+     "best": "fast8",
+     "regret": 0.0,
+     "within_ci": true,
+     "best_group": true,
+     "notes": null
+    },
+    {
+     "id": "stance@rule:7#9101@3-2",
+     "game": "stance@rule:7#9101",
+     "split": "dev",
+     "point": "3-2",
+     "kind": "ambiguous",
+     "choice": "save",
+     "valid": true,
+     "best": "save",
+     "regret": 0.0,
+     "within_ci": true,
+     "best_group": true,
+     "notes": null
+    },
+    {
+     "id": "stance@rule:7#9102@4-1",
+     "game": "stance@rule:7#9102",
+     "split": "heldout",
+     "point": "4-1",
+     "kind": "ambiguous",
+     "choice": "roll",
+     "valid": true,
+     "best": "roll",
+     "regret": 0.0,
+     "within_ci": true,
+     "best_group": true,
+     "notes": null
+    },
+    {
+     "id": "stance@rule:7#9102@3-2",
+     "game": "stance@rule:7#9102",
+     "split": "heldout",
+     "point": "3-2",
+     "kind": "ambiguous",
+     "choice": "save",
+     "valid": true,
+     "best": "save",
+     "regret": 0.0,
+     "within_ci": true,
+     "best_group": true,
+     "notes": null
+    }
+   ]
+  },
+  "stance": {
+   "agent": "stance",
+   "bank": "results/bank/pilot.jsonl",
+   "items": 4,
+   "splits": {
+    "all": {
+     "all": {
+      "items": 4,
+      "games": 2,
+      "regret": {
+       "n": 4,
+       "games": 2,
+       "mean": 0.625,
+       "ci95": 11.11775
+      },
+      "within_ci": {
+       "n": 4,
+       "games": 2,
+       "mean": 1.0,
+       "ci95": 0.0
+      },
+      "best_choice": 0.5,
+      "invalid": 0,
+      "choices": {
+       "fast8": 2,
+       "level": 1,
+       "save": 1
+      }
+     },
+     "clear": {
+      "items": 0
+     },
+     "ambiguous": {
+      "items": 4,
+      "games": 2,
+      "regret": {
+       "n": 4,
+       "games": 2,
+       "mean": 0.625,
+       "ci95": 11.11775
+      },
+      "within_ci": {
+       "n": 4,
+       "games": 2,
+       "mean": 1.0,
+       "ci95": 0.0
+      },
+      "best_choice": 0.5,
+      "invalid": 0,
+      "choices": {
+       "fast8": 2,
+       "level": 1,
+       "save": 1
+      }
+     },
+     "points": {
+      "3-2": {
+       "items": 2,
+       "games": 2,
+       "regret": {
+        "n": 2,
+        "games": 2,
+        "mean": 1.5,
+        "ci95": 19.058999999999997
+       },
+       "within_ci": {
+        "n": 2,
+        "games": 2,
+        "mean": 1.0,
+        "ci95": 0.0
+       },
+       "best_choice": 0.5,
+       "invalid": 0,
+       "choices": {
+        "level": 1,
+        "save": 1
+       }
+      },
+      "4-1": {
+       "items": 2,
+       "games": 2,
+       "regret": {
+        "n": 2,
+        "games": 2,
+        "mean": -0.25,
+        "ci95": 3.1765
+       },
+       "within_ci": {
+        "n": 2,
+        "games": 2,
+        "mean": 1.0,
+        "ci95": 0.0
+       },
+       "best_choice": 0.5,
+       "invalid": 0,
+       "choices": {
+        "fast8": 2
+       }
+      }
+     }
+    },
+    "dev": {
+     "all": {
+      "items": 2,
+      "games": 1,
+      "regret": {
+       "n": 2,
+       "games": 1,
+       "mean": 1.5,
+       "ci95": null
+      },
+      "within_ci": {
+       "n": 2,
+       "games": 1,
+       "mean": 1.0,
+       "ci95": null
+      },
+      "best_choice": 0.5,
+      "invalid": 0,
+      "choices": {
+       "fast8": 1,
+       "level": 1
+      }
+     },
+     "clear": {
+      "items": 0
+     },
+     "ambiguous": {
+      "items": 2,
+      "games": 1,
+      "regret": {
+       "n": 2,
+       "games": 1,
+       "mean": 1.5,
+       "ci95": null
+      },
+      "within_ci": {
+       "n": 2,
+       "games": 1,
+       "mean": 1.0,
+       "ci95": null
+      },
+      "best_choice": 0.5,
+      "invalid": 0,
+      "choices": {
+       "fast8": 1,
+       "level": 1
+      }
+     },
+     "points": {
+      "3-2": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 3.0,
+        "ci95": null
+       },
+       "within_ci": {
+        "n": 1,
+        "games": 1,
+        "mean": 1.0,
+        "ci95": null
+       },
+       "best_choice": 0.0,
+       "invalid": 0,
+       "choices": {
+        "level": 1
+       }
+      },
+      "4-1": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.0,
+        "ci95": null
+       },
+       "within_ci": {
+        "n": 1,
+        "games": 1,
+        "mean": 1.0,
+        "ci95": null
+       },
+       "best_choice": 1.0,
+       "invalid": 0,
+       "choices": {
+        "fast8": 1
+       }
+      }
+     }
+    },
+    "heldout": {
+     "all": {
+      "items": 2,
+      "games": 1,
+      "regret": {
+       "n": 2,
+       "games": 1,
+       "mean": -0.25,
+       "ci95": null
+      },
+      "within_ci": {
+       "n": 2,
+       "games": 1,
+       "mean": 1.0,
+       "ci95": null
+      },
+      "best_choice": 0.5,
+      "invalid": 0,
+      "choices": {
+       "fast8": 1,
+       "save": 1
+      }
+     },
+     "clear": {
+      "items": 0
+     },
+     "ambiguous": {
+      "items": 2,
+      "games": 1,
+      "regret": {
+       "n": 2,
+       "games": 1,
+       "mean": -0.25,
+       "ci95": null
+      },
+      "within_ci": {
+       "n": 2,
+       "games": 1,
+       "mean": 1.0,
+       "ci95": null
+      },
+      "best_choice": 0.5,
+      "invalid": 0,
+      "choices": {
+       "fast8": 1,
+       "save": 1
+      }
+     },
+     "points": {
+      "3-2": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.0,
+        "ci95": null
+       },
+       "within_ci": {
+        "n": 1,
+        "games": 1,
+        "mean": 1.0,
+        "ci95": null
+       },
+       "best_choice": 1.0,
+       "invalid": 0,
+       "choices": {
+        "save": 1
+       }
+      },
+      "4-1": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": -0.5,
+        "ci95": null
+       },
+       "within_ci": {
+        "n": 1,
+        "games": 1,
+        "mean": 1.0,
+        "ci95": null
+       },
+       "best_choice": 0.0,
+       "invalid": 0,
+       "choices": {
+        "fast8": 1
+       }
+      }
+     }
+    }
+   },
+   "rows": [
+    {
+     "id": "stance@rule:7#9101@4-1",
+     "game": "stance@rule:7#9101",
+     "split": "dev",
+     "point": "4-1",
+     "kind": "ambiguous",
+     "choice": "fast8",
+     "valid": true,
+     "best": "fast8",
+     "regret": 0.0,
+     "within_ci": true,
+     "best_group": true,
+     "notes": {
+      "plan": {
+       "level_to": 8,
+       "roll_floor": 10,
+       "survival": 2,
+       "stance": "stabilize"
+      }
+     }
+    },
+    {
+     "id": "stance@rule:7#9101@3-2",
+     "game": "stance@rule:7#9101",
+     "split": "dev",
+     "point": "3-2",
+     "kind": "ambiguous",
+     "choice": "level",
+     "valid": true,
+     "best": "save",
+     "regret": 3.0,
+     "within_ci": true,
+     "best_group": false,
+     "notes": {
+      "plan": {
+       "level_to": 6,
+       "roll_floor": 999,
+       "stance": "standard"
+      }
+     }
+    },
+    {
+     "id": "stance@rule:7#9102@4-1",
+     "game": "stance@rule:7#9102",
+     "split": "heldout",
+     "point": "4-1",
+     "kind": "ambiguous",
+     "choice": "fast8",
+     "valid": true,
+     "best": "roll",
+     "regret": -0.5,
+     "within_ci": true,
+     "best_group": false,
+     "notes": {
+      "plan": {
+       "level_to": 7,
+       "roll_floor": 999,
+       "level_by": {
+        "level": 8,
+        "by": "4-1"
+       },
+       "xp_buys": 3,
+       "stance": "fast8"
+      }
+     }
+    },
+    {
+     "id": "stance@rule:7#9102@3-2",
+     "game": "stance@rule:7#9102",
+     "split": "heldout",
+     "point": "3-2",
+     "kind": "ambiguous",
+     "choice": "save",
+     "valid": true,
+     "best": "save",
+     "regret": 0.0,
+     "within_ci": true,
+     "best_group": true,
+     "notes": {
+      "plan": {
+       "level_to": 6,
+       "roll_floor": 999,
+       "stance": "standard"
+      }
+     }
+    }
+   ]
+  },
+  "mimic": {
+   "agent": "mimic",
+   "bank": "results/bank/pilot.jsonl",
+   "items": 4,
+   "splits": {
+    "all": {
+     "all": {
+      "items": 4,
+      "games": 2,
+      "regret": {
+       "n": 4,
+       "games": 2,
+       "mean": -0.125,
+       "ci95": 1.58825
+      },
+      "within_ci": {
+       "n": 4,
+       "games": 2,
+       "mean": 1.0,
+       "ci95": 0.0
+      },
+      "best_choice": 0.75,
+      "invalid": 0,
+      "choices": {
+       "fast8": 2,
+       "save": 2
+      }
+     },
+     "clear": {
+      "items": 0
+     },
+     "ambiguous": {
+      "items": 4,
+      "games": 2,
+      "regret": {
+       "n": 4,
+       "games": 2,
+       "mean": -0.125,
+       "ci95": 1.58825
+      },
+      "within_ci": {
+       "n": 4,
+       "games": 2,
+       "mean": 1.0,
+       "ci95": 0.0
+      },
+      "best_choice": 0.75,
+      "invalid": 0,
+      "choices": {
+       "fast8": 2,
+       "save": 2
+      }
+     },
+     "points": {
+      "3-2": {
+       "items": 2,
+       "games": 2,
+       "regret": {
+        "n": 2,
+        "games": 2,
+        "mean": 0.0,
+        "ci95": 0.0
+       },
+       "within_ci": {
+        "n": 2,
+        "games": 2,
+        "mean": 1.0,
+        "ci95": 0.0
+       },
+       "best_choice": 1.0,
+       "invalid": 0,
+       "choices": {
+        "save": 2
+       }
+      },
+      "4-1": {
+       "items": 2,
+       "games": 2,
+       "regret": {
+        "n": 2,
+        "games": 2,
+        "mean": -0.25,
+        "ci95": 3.1765
+       },
+       "within_ci": {
+        "n": 2,
+        "games": 2,
+        "mean": 1.0,
+        "ci95": 0.0
+       },
+       "best_choice": 0.5,
+       "invalid": 0,
+       "choices": {
+        "fast8": 2
+       }
+      }
+     }
+    },
+    "dev": {
+     "all": {
+      "items": 2,
+      "games": 1,
+      "regret": {
+       "n": 2,
+       "games": 1,
+       "mean": 0.0,
+       "ci95": null
+      },
+      "within_ci": {
+       "n": 2,
+       "games": 1,
+       "mean": 1.0,
+       "ci95": null
+      },
+      "best_choice": 1.0,
+      "invalid": 0,
+      "choices": {
+       "fast8": 1,
+       "save": 1
+      }
+     },
+     "clear": {
+      "items": 0
+     },
+     "ambiguous": {
+      "items": 2,
+      "games": 1,
+      "regret": {
+       "n": 2,
+       "games": 1,
+       "mean": 0.0,
+       "ci95": null
+      },
+      "within_ci": {
+       "n": 2,
+       "games": 1,
+       "mean": 1.0,
+       "ci95": null
+      },
+      "best_choice": 1.0,
+      "invalid": 0,
+      "choices": {
+       "fast8": 1,
+       "save": 1
+      }
+     },
+     "points": {
+      "3-2": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.0,
+        "ci95": null
+       },
+       "within_ci": {
+        "n": 1,
+        "games": 1,
+        "mean": 1.0,
+        "ci95": null
+       },
+       "best_choice": 1.0,
+       "invalid": 0,
+       "choices": {
+        "save": 1
+       }
+      },
+      "4-1": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.0,
+        "ci95": null
+       },
+       "within_ci": {
+        "n": 1,
+        "games": 1,
+        "mean": 1.0,
+        "ci95": null
+       },
+       "best_choice": 1.0,
+       "invalid": 0,
+       "choices": {
+        "fast8": 1
+       }
+      }
+     }
+    },
+    "heldout": {
+     "all": {
+      "items": 2,
+      "games": 1,
+      "regret": {
+       "n": 2,
+       "games": 1,
+       "mean": -0.25,
+       "ci95": null
+      },
+      "within_ci": {
+       "n": 2,
+       "games": 1,
+       "mean": 1.0,
+       "ci95": null
+      },
+      "best_choice": 0.5,
+      "invalid": 0,
+      "choices": {
+       "fast8": 1,
+       "save": 1
+      }
+     },
+     "clear": {
+      "items": 0
+     },
+     "ambiguous": {
+      "items": 2,
+      "games": 1,
+      "regret": {
+       "n": 2,
+       "games": 1,
+       "mean": -0.25,
+       "ci95": null
+      },
+      "within_ci": {
+       "n": 2,
+       "games": 1,
+       "mean": 1.0,
+       "ci95": null
+      },
+      "best_choice": 0.5,
+      "invalid": 0,
+      "choices": {
+       "fast8": 1,
+       "save": 1
+      }
+     },
+     "points": {
+      "3-2": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.0,
+        "ci95": null
+       },
+       "within_ci": {
+        "n": 1,
+        "games": 1,
+        "mean": 1.0,
+        "ci95": null
+       },
+       "best_choice": 1.0,
+       "invalid": 0,
+       "choices": {
+        "save": 1
+       }
+      },
+      "4-1": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": -0.5,
+        "ci95": null
+       },
+       "within_ci": {
+        "n": 1,
+        "games": 1,
+        "mean": 1.0,
+        "ci95": null
+       },
+       "best_choice": 0.0,
+       "invalid": 0,
+       "choices": {
+        "fast8": 1
+       }
+      }
+     }
+    }
+   },
+   "rows": [
+    {
+     "id": "stance@rule:7#9101@4-1",
+     "game": "stance@rule:7#9101",
+     "split": "dev",
+     "point": "4-1",
+     "kind": "ambiguous",
+     "choice": "fast8",
+     "valid": true,
+     "best": "fast8",
+     "regret": 0.0,
+     "within_ci": true,
+     "best_group": true,
+     "notes": {
+      "plan": {
+       "level_to": 8,
+       "roll_floor": 999
+      }
+     }
+    },
+    {
+     "id": "stance@rule:7#9101@3-2",
+     "game": "stance@rule:7#9101",
+     "split": "dev",
+     "point": "3-2",
+     "kind": "ambiguous",
+     "choice": "save",
+     "valid": true,
+     "best": "save",
+     "regret": 0.0,
+     "within_ci": true,
+     "best_group": true,
+     "notes": {
+      "plan": {
+       "level_to": 5,
+       "roll_floor": 999
+      }
+     }
+    },
+    {
+     "id": "stance@rule:7#9102@4-1",
+     "game": "stance@rule:7#9102",
+     "split": "heldout",
+     "point": "4-1",
+     "kind": "ambiguous",
+     "choice": "fast8",
+     "valid": true,
+     "best": "roll",
+     "regret": -0.5,
+     "within_ci": true,
+     "best_group": false,
+     "notes": {
+      "plan": {
+       "level_to": 8,
+       "roll_floor": 999
+      }
+     }
+    },
+    {
+     "id": "stance@rule:7#9102@3-2",
+     "game": "stance@rule:7#9102",
+     "split": "heldout",
+     "point": "3-2",
+     "kind": "ambiguous",
+     "choice": "save",
+     "valid": true,
+     "best": "save",
+     "regret": 0.0,
+     "within_ci": true,
+     "best_group": true,
+     "notes": {
+      "plan": {
+       "level_to": 5,
+       "roll_floor": 999
+      }
+     }
+    }
+   ]
+  },
+  "rule": {
+   "agent": "rule",
+   "bank": "results/bank/pilot.jsonl",
+   "items": 4,
+   "splits": {
+    "all": {
+     "all": {
+      "items": 4,
+      "games": 2,
+      "regret": {
+       "n": 4,
+       "games": 2,
+       "mean": -0.125,
+       "ci95": 1.58825
+      },
+      "within_ci": {
+       "n": 4,
+       "games": 2,
+       "mean": 1.0,
+       "ci95": 0.0
+      },
+      "best_choice": 0.75,
+      "invalid": 0,
+      "choices": {
+       "fast8": 2,
+       "save": 2
+      }
+     },
+     "clear": {
+      "items": 0
+     },
+     "ambiguous": {
+      "items": 4,
+      "games": 2,
+      "regret": {
+       "n": 4,
+       "games": 2,
+       "mean": -0.125,
+       "ci95": 1.58825
+      },
+      "within_ci": {
+       "n": 4,
+       "games": 2,
+       "mean": 1.0,
+       "ci95": 0.0
+      },
+      "best_choice": 0.75,
+      "invalid": 0,
+      "choices": {
+       "fast8": 2,
+       "save": 2
+      }
+     },
+     "points": {
+      "3-2": {
+       "items": 2,
+       "games": 2,
+       "regret": {
+        "n": 2,
+        "games": 2,
+        "mean": 0.0,
+        "ci95": 0.0
+       },
+       "within_ci": {
+        "n": 2,
+        "games": 2,
+        "mean": 1.0,
+        "ci95": 0.0
+       },
+       "best_choice": 1.0,
+       "invalid": 0,
+       "choices": {
+        "save": 2
+       }
+      },
+      "4-1": {
+       "items": 2,
+       "games": 2,
+       "regret": {
+        "n": 2,
+        "games": 2,
+        "mean": -0.25,
+        "ci95": 3.1765
+       },
+       "within_ci": {
+        "n": 2,
+        "games": 2,
+        "mean": 1.0,
+        "ci95": 0.0
+       },
+       "best_choice": 0.5,
+       "invalid": 0,
+       "choices": {
+        "fast8": 2
+       }
+      }
+     }
+    },
+    "dev": {
+     "all": {
+      "items": 2,
+      "games": 1,
+      "regret": {
+       "n": 2,
+       "games": 1,
+       "mean": 0.0,
+       "ci95": null
+      },
+      "within_ci": {
+       "n": 2,
+       "games": 1,
+       "mean": 1.0,
+       "ci95": null
+      },
+      "best_choice": 1.0,
+      "invalid": 0,
+      "choices": {
+       "fast8": 1,
+       "save": 1
+      }
+     },
+     "clear": {
+      "items": 0
+     },
+     "ambiguous": {
+      "items": 2,
+      "games": 1,
+      "regret": {
+       "n": 2,
+       "games": 1,
+       "mean": 0.0,
+       "ci95": null
+      },
+      "within_ci": {
+       "n": 2,
+       "games": 1,
+       "mean": 1.0,
+       "ci95": null
+      },
+      "best_choice": 1.0,
+      "invalid": 0,
+      "choices": {
+       "fast8": 1,
+       "save": 1
+      }
+     },
+     "points": {
+      "3-2": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.0,
+        "ci95": null
+       },
+       "within_ci": {
+        "n": 1,
+        "games": 1,
+        "mean": 1.0,
+        "ci95": null
+       },
+       "best_choice": 1.0,
+       "invalid": 0,
+       "choices": {
+        "save": 1
+       }
+      },
+      "4-1": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.0,
+        "ci95": null
+       },
+       "within_ci": {
+        "n": 1,
+        "games": 1,
+        "mean": 1.0,
+        "ci95": null
+       },
+       "best_choice": 1.0,
+       "invalid": 0,
+       "choices": {
+        "fast8": 1
+       }
+      }
+     }
+    },
+    "heldout": {
+     "all": {
+      "items": 2,
+      "games": 1,
+      "regret": {
+       "n": 2,
+       "games": 1,
+       "mean": -0.25,
+       "ci95": null
+      },
+      "within_ci": {
+       "n": 2,
+       "games": 1,
+       "mean": 1.0,
+       "ci95": null
+      },
+      "best_choice": 0.5,
+      "invalid": 0,
+      "choices": {
+       "fast8": 1,
+       "save": 1
+      }
+     },
+     "clear": {
+      "items": 0
+     },
+     "ambiguous": {
+      "items": 2,
+      "games": 1,
+      "regret": {
+       "n": 2,
+       "games": 1,
+       "mean": -0.25,
+       "ci95": null
+      },
+      "within_ci": {
+       "n": 2,
+       "games": 1,
+       "mean": 1.0,
+       "ci95": null
+      },
+      "best_choice": 0.5,
+      "invalid": 0,
+      "choices": {
+       "fast8": 1,
+       "save": 1
+      }
+     },
+     "points": {
+      "3-2": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.0,
+        "ci95": null
+       },
+       "within_ci": {
+        "n": 1,
+        "games": 1,
+        "mean": 1.0,
+        "ci95": null
+       },
+       "best_choice": 1.0,
+       "invalid": 0,
+       "choices": {
+        "save": 1
+       }
+      },
+      "4-1": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": -0.5,
+        "ci95": null
+       },
+       "within_ci": {
+        "n": 1,
+        "games": 1,
+        "mean": 1.0,
+        "ci95": null
+       },
+       "best_choice": 0.0,
+       "invalid": 0,
+       "choices": {
+        "fast8": 1
+       }
+      }
+     }
+    }
+   },
+   "rows": [
+    {
+     "id": "stance@rule:7#9101@4-1",
+     "game": "stance@rule:7#9101",
+     "split": "dev",
+     "point": "4-1",
+     "kind": "ambiguous",
+     "choice": "fast8",
+     "valid": true,
+     "best": "fast8",
+     "regret": 0.0,
+     "within_ci": true,
+     "best_group": true,
+     "notes": {
+      "plan": {
+       "level_to": 8,
+       "roll_floor": 999
+      }
+     }
+    },
+    {
+     "id": "stance@rule:7#9101@3-2",
+     "game": "stance@rule:7#9101",
+     "split": "dev",
+     "point": "3-2",
+     "kind": "ambiguous",
+     "choice": "save",
+     "valid": true,
+     "best": "save",
+     "regret": 0.0,
+     "within_ci": true,
+     "best_group": true,
+     "notes": {
+      "plan": {
+       "level_to": 5,
+       "roll_floor": 999
+      }
+     }
+    },
+    {
+     "id": "stance@rule:7#9102@4-1",
+     "game": "stance@rule:7#9102",
+     "split": "heldout",
+     "point": "4-1",
+     "kind": "ambiguous",
+     "choice": "fast8",
+     "valid": true,
+     "best": "roll",
+     "regret": -0.5,
+     "within_ci": true,
+     "best_group": false,
+     "notes": {
+      "plan": {
+       "level_to": 8,
+       "roll_floor": 999
+      }
+     }
+    },
+    {
+     "id": "stance@rule:7#9102@3-2",
+     "game": "stance@rule:7#9102",
+     "split": "heldout",
+     "point": "3-2",
+     "kind": "ambiguous",
+     "choice": "save",
+     "valid": true,
+     "best": "save",
+     "regret": 0.0,
+     "within_ci": true,
+     "best_group": true,
+     "notes": {
+      "plan": {
+       "level_to": 5,
+       "roll_floor": 999
+      }
+     }
+    }
+   ]
+  },
+  "noisy50:stance": {
+   "agent": "noisy50:stance",
+   "bank": "results/bank/pilot.jsonl",
+   "items": 4,
+   "splits": {
+    "all": {
+     "all": {
+      "items": 4,
+      "games": 2,
+      "regret": {
+       "n": 4,
+       "games": 2,
+       "mean": 0.625,
+       "ci95": 11.11775
+      },
+      "within_ci": {
+       "n": 4,
+       "games": 2,
+       "mean": 1.0,
+       "ci95": 0.0
+      },
+      "best_choice": 0.5,
+      "invalid": 0,
+      "choices": {
+       "fast8": 2,
+       "level": 1,
+       "save": 1
+      }
+     },
+     "clear": {
+      "items": 0
+     },
+     "ambiguous": {
+      "items": 4,
+      "games": 2,
+      "regret": {
+       "n": 4,
+       "games": 2,
+       "mean": 0.625,
+       "ci95": 11.11775
+      },
+      "within_ci": {
+       "n": 4,
+       "games": 2,
+       "mean": 1.0,
+       "ci95": 0.0
+      },
+      "best_choice": 0.5,
+      "invalid": 0,
+      "choices": {
+       "fast8": 2,
+       "level": 1,
+       "save": 1
+      }
+     },
+     "points": {
+      "3-2": {
+       "items": 2,
+       "games": 2,
+       "regret": {
+        "n": 2,
+        "games": 2,
+        "mean": 1.5,
+        "ci95": 19.058999999999997
+       },
+       "within_ci": {
+        "n": 2,
+        "games": 2,
+        "mean": 1.0,
+        "ci95": 0.0
+       },
+       "best_choice": 0.5,
+       "invalid": 0,
+       "choices": {
+        "level": 1,
+        "save": 1
+       }
+      },
+      "4-1": {
+       "items": 2,
+       "games": 2,
+       "regret": {
+        "n": 2,
+        "games": 2,
+        "mean": -0.25,
+        "ci95": 3.1765
+       },
+       "within_ci": {
+        "n": 2,
+        "games": 2,
+        "mean": 1.0,
+        "ci95": 0.0
+       },
+       "best_choice": 0.5,
+       "invalid": 0,
+       "choices": {
+        "fast8": 2
+       }
+      }
+     }
+    },
+    "dev": {
+     "all": {
+      "items": 2,
+      "games": 1,
+      "regret": {
+       "n": 2,
+       "games": 1,
+       "mean": 1.5,
+       "ci95": null
+      },
+      "within_ci": {
+       "n": 2,
+       "games": 1,
+       "mean": 1.0,
+       "ci95": null
+      },
+      "best_choice": 0.5,
+      "invalid": 0,
+      "choices": {
+       "fast8": 1,
+       "level": 1
+      }
+     },
+     "clear": {
+      "items": 0
+     },
+     "ambiguous": {
+      "items": 2,
+      "games": 1,
+      "regret": {
+       "n": 2,
+       "games": 1,
+       "mean": 1.5,
+       "ci95": null
+      },
+      "within_ci": {
+       "n": 2,
+       "games": 1,
+       "mean": 1.0,
+       "ci95": null
+      },
+      "best_choice": 0.5,
+      "invalid": 0,
+      "choices": {
+       "fast8": 1,
+       "level": 1
+      }
+     },
+     "points": {
+      "3-2": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 3.0,
+        "ci95": null
+       },
+       "within_ci": {
+        "n": 1,
+        "games": 1,
+        "mean": 1.0,
+        "ci95": null
+       },
+       "best_choice": 0.0,
+       "invalid": 0,
+       "choices": {
+        "level": 1
+       }
+      },
+      "4-1": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.0,
+        "ci95": null
+       },
+       "within_ci": {
+        "n": 1,
+        "games": 1,
+        "mean": 1.0,
+        "ci95": null
+       },
+       "best_choice": 1.0,
+       "invalid": 0,
+       "choices": {
+        "fast8": 1
+       }
+      }
+     }
+    },
+    "heldout": {
+     "all": {
+      "items": 2,
+      "games": 1,
+      "regret": {
+       "n": 2,
+       "games": 1,
+       "mean": -0.25,
+       "ci95": null
+      },
+      "within_ci": {
+       "n": 2,
+       "games": 1,
+       "mean": 1.0,
+       "ci95": null
+      },
+      "best_choice": 0.5,
+      "invalid": 0,
+      "choices": {
+       "fast8": 1,
+       "save": 1
+      }
+     },
+     "clear": {
+      "items": 0
+     },
+     "ambiguous": {
+      "items": 2,
+      "games": 1,
+      "regret": {
+       "n": 2,
+       "games": 1,
+       "mean": -0.25,
+       "ci95": null
+      },
+      "within_ci": {
+       "n": 2,
+       "games": 1,
+       "mean": 1.0,
+       "ci95": null
+      },
+      "best_choice": 0.5,
+      "invalid": 0,
+      "choices": {
+       "fast8": 1,
+       "save": 1
+      }
+     },
+     "points": {
+      "3-2": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.0,
+        "ci95": null
+       },
+       "within_ci": {
+        "n": 1,
+        "games": 1,
+        "mean": 1.0,
+        "ci95": null
+       },
+       "best_choice": 1.0,
+       "invalid": 0,
+       "choices": {
+        "save": 1
+       }
+      },
+      "4-1": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": -0.5,
+        "ci95": null
+       },
+       "within_ci": {
+        "n": 1,
+        "games": 1,
+        "mean": 1.0,
+        "ci95": null
+       },
+       "best_choice": 0.0,
+       "invalid": 0,
+       "choices": {
+        "fast8": 1
+       }
+      }
+     }
+    }
+   },
+   "rows": [
+    {
+     "id": "stance@rule:7#9101@4-1",
+     "game": "stance@rule:7#9101",
+     "split": "dev",
+     "point": "4-1",
+     "kind": "ambiguous",
+     "choice": "fast8",
+     "valid": true,
+     "best": "fast8",
+     "regret": 0.0,
+     "within_ci": true,
+     "best_group": true,
+     "notes": {
+      "plan": {
+       "level_to": 8,
+       "roll_floor": 10,
+       "survival": 2,
+       "stance": "stabilize"
+      }
+     }
+    },
+    {
+     "id": "stance@rule:7#9101@3-2",
+     "game": "stance@rule:7#9101",
+     "split": "dev",
+     "point": "3-2",
+     "kind": "ambiguous",
+     "choice": "level",
+     "valid": true,
+     "best": "save",
+     "regret": 3.0,
+     "within_ci": true,
+     "best_group": false,
+     "notes": {
+      "plan": {
+       "level_to": 6,
+       "roll_floor": 999,
+       "stance": "standard"
+      }
+     }
+    },
+    {
+     "id": "stance@rule:7#9102@4-1",
+     "game": "stance@rule:7#9102",
+     "split": "heldout",
+     "point": "4-1",
+     "kind": "ambiguous",
+     "choice": "fast8",
+     "valid": true,
+     "best": "roll",
+     "regret": -0.5,
+     "within_ci": true,
+     "best_group": false,
+     "notes": {
+      "plan": {
+       "level_to": 7,
+       "roll_floor": 999,
+       "level_by": {
+        "level": 8,
+        "by": "4-1"
+       },
+       "xp_buys": 3,
+       "stance": "fast8"
+      }
+     }
+    },
+    {
+     "id": "stance@rule:7#9102@3-2",
+     "game": "stance@rule:7#9102",
+     "split": "heldout",
+     "point": "3-2",
+     "kind": "ambiguous",
+     "choice": "save",
+     "valid": true,
+     "best": "save",
+     "regret": 0.0,
+     "within_ci": true,
+     "best_group": true,
+     "notes": {
+      "plan": {
+       "level_to": 6,
+       "roll_floor": 999,
+       "stance": "standard"
+      }
+     }
+    }
+   ]
+  },
+  "random": {
+   "agent": "random",
+   "bank": "results/bank/pilot.jsonl",
+   "items": 4,
+   "splits": {
+    "all": {
+     "all": {
+      "items": 4,
+      "games": 2,
+      "regret": {
+       "n": 4,
+       "games": 2,
+       "mean": 0.875,
+       "ci95": 14.29425
+      },
+      "within_ci": {
+       "n": 4,
+       "games": 2,
+       "mean": 1.0,
+       "ci95": 0.0
+      },
+      "best_choice": 0.0,
+      "invalid": 0,
+      "choices": {
+       "fast8": 1,
+       "level": 1,
+       "roll": 2
+      }
+     },
+     "clear": {
+      "items": 0
+     },
+     "ambiguous": {
+      "items": 4,
+      "games": 2,
+      "regret": {
+       "n": 4,
+       "games": 2,
+       "mean": 0.875,
+       "ci95": 14.29425
+      },
+      "within_ci": {
+       "n": 4,
+       "games": 2,
+       "mean": 1.0,
+       "ci95": 0.0
+      },
+      "best_choice": 0.0,
+      "invalid": 0,
+      "choices": {
+       "fast8": 1,
+       "level": 1,
+       "roll": 2
+      }
+     },
+     "points": {
+      "3-2": {
+       "items": 2,
+       "games": 2,
+       "regret": {
+        "n": 2,
+        "games": 2,
+        "mean": 1.5,
+        "ci95": 19.058999999999997
+       },
+       "within_ci": {
+        "n": 2,
+        "games": 2,
+        "mean": 1.0,
+        "ci95": 0.0
+       },
+       "best_choice": 0.0,
+       "invalid": 0,
+       "choices": {
+        "level": 1,
+        "roll": 1
+       }
+      },
+      "4-1": {
+       "items": 2,
+       "games": 2,
+       "regret": {
+        "n": 2,
+        "games": 2,
+        "mean": 0.25,
+        "ci95": 9.529499999999999
+       },
+       "within_ci": {
+        "n": 2,
+        "games": 2,
+        "mean": 1.0,
+        "ci95": 0.0
+       },
+       "best_choice": 0.0,
+       "invalid": 0,
+       "choices": {
+        "fast8": 1,
+        "roll": 1
+       }
+      }
+     }
+    },
+    "dev": {
+     "all": {
+      "items": 2,
+      "games": 1,
+      "regret": {
+       "n": 2,
+       "games": 1,
+       "mean": 2.0,
+       "ci95": null
+      },
+      "within_ci": {
+       "n": 2,
+       "games": 1,
+       "mean": 1.0,
+       "ci95": null
+      },
+      "best_choice": 0.0,
+      "invalid": 0,
+      "choices": {
+       "level": 1,
+       "roll": 1
+      }
+     },
+     "clear": {
+      "items": 0
+     },
+     "ambiguous": {
+      "items": 2,
+      "games": 1,
+      "regret": {
+       "n": 2,
+       "games": 1,
+       "mean": 2.0,
+       "ci95": null
+      },
+      "within_ci": {
+       "n": 2,
+       "games": 1,
+       "mean": 1.0,
+       "ci95": null
+      },
+      "best_choice": 0.0,
+      "invalid": 0,
+      "choices": {
+       "level": 1,
+       "roll": 1
+      }
+     },
+     "points": {
+      "3-2": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 3.0,
+        "ci95": null
+       },
+       "within_ci": {
+        "n": 1,
+        "games": 1,
+        "mean": 1.0,
+        "ci95": null
+       },
+       "best_choice": 0.0,
+       "invalid": 0,
+       "choices": {
+        "level": 1
+       }
+      },
+      "4-1": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 1.0,
+        "ci95": null
+       },
+       "within_ci": {
+        "n": 1,
+        "games": 1,
+        "mean": 1.0,
+        "ci95": null
+       },
+       "best_choice": 0.0,
+       "invalid": 0,
+       "choices": {
+        "roll": 1
+       }
+      }
+     }
+    },
+    "heldout": {
+     "all": {
+      "items": 2,
+      "games": 1,
+      "regret": {
+       "n": 2,
+       "games": 1,
+       "mean": -0.25,
+       "ci95": null
+      },
+      "within_ci": {
+       "n": 2,
+       "games": 1,
+       "mean": 1.0,
+       "ci95": null
+      },
+      "best_choice": 0.0,
+      "invalid": 0,
+      "choices": {
+       "fast8": 1,
+       "roll": 1
+      }
+     },
+     "clear": {
+      "items": 0
+     },
+     "ambiguous": {
+      "items": 2,
+      "games": 1,
+      "regret": {
+       "n": 2,
+       "games": 1,
+       "mean": -0.25,
+       "ci95": null
+      },
+      "within_ci": {
+       "n": 2,
+       "games": 1,
+       "mean": 1.0,
+       "ci95": null
+      },
+      "best_choice": 0.0,
+      "invalid": 0,
+      "choices": {
+       "fast8": 1,
+       "roll": 1
+      }
+     },
+     "points": {
+      "3-2": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.0,
+        "ci95": null
+       },
+       "within_ci": {
+        "n": 1,
+        "games": 1,
+        "mean": 1.0,
+        "ci95": null
+       },
+       "best_choice": 0.0,
+       "invalid": 0,
+       "choices": {
+        "roll": 1
+       }
+      },
+      "4-1": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": -0.5,
+        "ci95": null
+       },
+       "within_ci": {
+        "n": 1,
+        "games": 1,
+        "mean": 1.0,
+        "ci95": null
+       },
+       "best_choice": 0.0,
+       "invalid": 0,
+       "choices": {
+        "fast8": 1
+       }
+      }
+     }
+    }
+   },
+   "rows": [
+    {
+     "id": "stance@rule:7#9101@4-1",
+     "game": "stance@rule:7#9101",
+     "split": "dev",
+     "point": "4-1",
+     "kind": "ambiguous",
+     "choice": "roll",
+     "valid": true,
+     "best": "fast8",
+     "regret": 1.0,
+     "within_ci": true,
+     "best_group": false,
+     "notes": null
+    },
+    {
+     "id": "stance@rule:7#9101@3-2",
+     "game": "stance@rule:7#9101",
+     "split": "dev",
+     "point": "3-2",
+     "kind": "ambiguous",
+     "choice": "level",
+     "valid": true,
+     "best": "save",
+     "regret": 3.0,
+     "within_ci": true,
+     "best_group": false,
+     "notes": null
+    },
+    {
+     "id": "stance@rule:7#9102@4-1",
+     "game": "stance@rule:7#9102",
+     "split": "heldout",
+     "point": "4-1",
+     "kind": "ambiguous",
+     "choice": "fast8",
+     "valid": true,
+     "best": "roll",
+     "regret": -0.5,
+     "within_ci": true,
+     "best_group": false,
+     "notes": null
+    },
+    {
+     "id": "stance@rule:7#9102@3-2",
+     "game": "stance@rule:7#9102",
+     "split": "heldout",
+     "point": "3-2",
+     "kind": "ambiguous",
+     "choice": "roll",
+     "valid": true,
+     "best": "save",
+     "regret": 0.0,
+     "within_ci": true,
+     "best_group": false,
+     "notes": null
+    }
+   ]
+  },
+  "worst": {
+   "agent": "worst",
+   "bank": "results/bank/pilot.jsonl",
+   "items": 4,
+   "splits": {
+    "all": {
+     "all": {
+      "items": 4,
+      "games": 2,
+      "regret": {
+       "n": 4,
+       "games": 2,
+       "mean": 1.375,
+       "ci95": 17.47075
+      },
+      "within_ci": {
+       "n": 4,
+       "games": 2,
+       "mean": 1.0,
+       "ci95": 0.0
+      },
+      "best_choice": 0.5,
+      "invalid": 0,
+      "choices": {
+       "level": 1,
+       "roll": 1,
+       "save": 2
+      }
+     },
+     "clear": {
+      "items": 0
+     },
+     "ambiguous": {
+      "items": 4,
+      "games": 2,
+      "regret": {
+       "n": 4,
+       "games": 2,
+       "mean": 1.375,
+       "ci95": 17.47075
+      },
+      "within_ci": {
+       "n": 4,
+       "games": 2,
+       "mean": 1.0,
+       "ci95": 0.0
+      },
+      "best_choice": 0.5,
+      "invalid": 0,
+      "choices": {
+       "level": 1,
+       "roll": 1,
+       "save": 2
+      }
+     },
+     "points": {
+      "3-2": {
+       "items": 2,
+       "games": 2,
+       "regret": {
+        "n": 2,
+        "games": 2,
+        "mean": 1.5,
+        "ci95": 19.058999999999997
+       },
+       "within_ci": {
+        "n": 2,
+        "games": 2,
+        "mean": 1.0,
+        "ci95": 0.0
+       },
+       "best_choice": 0.5,
+       "invalid": 0,
+       "choices": {
+        "level": 1,
+        "save": 1
+       }
+      },
+      "4-1": {
+       "items": 2,
+       "games": 2,
+       "regret": {
+        "n": 2,
+        "games": 2,
+        "mean": 1.25,
+        "ci95": 15.8825
+       },
+       "within_ci": {
+        "n": 2,
+        "games": 2,
+        "mean": 1.0,
+        "ci95": 0.0
+       },
+       "best_choice": 0.5,
+       "invalid": 0,
+       "choices": {
+        "roll": 1,
+        "save": 1
+       }
+      }
+     }
+    },
+    "dev": {
+     "all": {
+      "items": 2,
+      "games": 1,
+      "regret": {
+       "n": 2,
+       "games": 1,
+       "mean": 2.75,
+       "ci95": null
+      },
+      "within_ci": {
+       "n": 2,
+       "games": 1,
+       "mean": 1.0,
+       "ci95": null
+      },
+      "best_choice": 0.0,
+      "invalid": 0,
+      "choices": {
+       "level": 1,
+       "save": 1
+      }
+     },
+     "clear": {
+      "items": 0
+     },
+     "ambiguous": {
+      "items": 2,
+      "games": 1,
+      "regret": {
+       "n": 2,
+       "games": 1,
+       "mean": 2.75,
+       "ci95": null
+      },
+      "within_ci": {
+       "n": 2,
+       "games": 1,
+       "mean": 1.0,
+       "ci95": null
+      },
+      "best_choice": 0.0,
+      "invalid": 0,
+      "choices": {
+       "level": 1,
+       "save": 1
+      }
+     },
+     "points": {
+      "3-2": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 3.0,
+        "ci95": null
+       },
+       "within_ci": {
+        "n": 1,
+        "games": 1,
+        "mean": 1.0,
+        "ci95": null
+       },
+       "best_choice": 0.0,
+       "invalid": 0,
+       "choices": {
+        "level": 1
+       }
+      },
+      "4-1": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 2.5,
+        "ci95": null
+       },
+       "within_ci": {
+        "n": 1,
+        "games": 1,
+        "mean": 1.0,
+        "ci95": null
+       },
+       "best_choice": 0.0,
+       "invalid": 0,
+       "choices": {
+        "save": 1
+       }
+      }
+     }
+    },
+    "heldout": {
+     "all": {
+      "items": 2,
+      "games": 1,
+      "regret": {
+       "n": 2,
+       "games": 1,
+       "mean": 0.0,
+       "ci95": null
+      },
+      "within_ci": {
+       "n": 2,
+       "games": 1,
+       "mean": 1.0,
+       "ci95": null
+      },
+      "best_choice": 1.0,
+      "invalid": 0,
+      "choices": {
+       "roll": 1,
+       "save": 1
+      }
+     },
+     "clear": {
+      "items": 0
+     },
+     "ambiguous": {
+      "items": 2,
+      "games": 1,
+      "regret": {
+       "n": 2,
+       "games": 1,
+       "mean": 0.0,
+       "ci95": null
+      },
+      "within_ci": {
+       "n": 2,
+       "games": 1,
+       "mean": 1.0,
+       "ci95": null
+      },
+      "best_choice": 1.0,
+      "invalid": 0,
+      "choices": {
+       "roll": 1,
+       "save": 1
+      }
+     },
+     "points": {
+      "3-2": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.0,
+        "ci95": null
+       },
+       "within_ci": {
+        "n": 1,
+        "games": 1,
+        "mean": 1.0,
+        "ci95": null
+       },
+       "best_choice": 1.0,
+       "invalid": 0,
+       "choices": {
+        "save": 1
+       }
+      },
+      "4-1": {
+       "items": 1,
+       "games": 1,
+       "regret": {
+        "n": 1,
+        "games": 1,
+        "mean": 0.0,
+        "ci95": null
+       },
+       "within_ci": {
+        "n": 1,
+        "games": 1,
+        "mean": 1.0,
+        "ci95": null
+       },
+       "best_choice": 1.0,
+       "invalid": 0,
+       "choices": {
+        "roll": 1
+       }
+      }
+     }
+    }
+   },
+   "rows": [
+    {
+     "id": "stance@rule:7#9101@4-1",
+     "game": "stance@rule:7#9101",
+     "split": "dev",
+     "point": "4-1",
+     "kind": "ambiguous",
+     "choice": "save",
+     "valid": true,
+     "best": "fast8",
+     "regret": 2.5,
+     "within_ci": true,
+     "best_group": false,
+     "notes": null
+    },
+    {
+     "id": "stance@rule:7#9101@3-2",
+     "game": "stance@rule:7#9101",
+     "split": "dev",
+     "point": "3-2",
+     "kind": "ambiguous",
+     "choice": "level",
+     "valid": true,
+     "best": "save",
+     "regret": 3.0,
+     "within_ci": true,
+     "best_group": false,
+     "notes": null
+    },
+    {
+     "id": "stance@rule:7#9102@4-1",
+     "game": "stance@rule:7#9102",
+     "split": "heldout",
+     "point": "4-1",
+     "kind": "ambiguous",
+     "choice": "roll",
+     "valid": true,
+     "best": "roll",
+     "regret": 0.0,
+     "within_ci": true,
+     "best_group": true,
+     "notes": null
+    },
+    {
+     "id": "stance@rule:7#9102@3-2",
+     "game": "stance@rule:7#9102",
+     "split": "heldout",
+     "point": "3-2",
+     "kind": "ambiguous",
+     "choice": "save",
+     "valid": true,
+     "best": "save",
+     "regret": 0.0,
+     "within_ci": true,
+     "best_group": true,
+     "notes": null
+    }
+   ]
+  }
+ },
+ "sanity": [
+  {
+   "a": "oracle",
+   "b": "stance",
+   "why": "by construction: the oracle has regret 0",
+   "diff": {
+    "n": 4,
+    "games": 2,
+    "mean": -0.625,
+    "ci95": 11.11775
+   },
+   "verdict": "holds"
+  },
+  {
+   "a": "stance",
+   "b": "noisy50:stance",
+   "why": "half of stance's choices made at random should not help",
+   "diff": {
+    "n": 4,
+    "games": 2,
+    "mean": 0.0,
+    "ci95": 0.0
+   },
+   "verdict": "tie"
+  },
+  {
+   "a": "noisy50:stance",
+   "b": "random",
+   "why": "a rule policy should beat uniform choice",
+   "diff": {
+    "n": 4,
+    "games": 2,
+    "mean": -0.25,
+    "ci95": 3.1765
+   },
+   "verdict": "holds"
+  },
+  {
+   "a": "random",
+   "b": "worst",
+   "why": "by construction",
+   "diff": {
+    "n": 4,
+    "games": 2,
+    "mean": -0.5,
+    "ci95": 3.1765
+   },
+   "verdict": "holds"
+  },
+  {
+   "a": "stance",
+   "b": "mimic",
+   "why": "stance placed better than mimic in the fork smoke (2.25 vs 4.38, 8 games)",
+   "diff": {
+    "n": 4,
+    "games": 2,
+    "mean": 0.75,
+    "ci95": 9.529499999999999
+   },
+   "verdict": "VIOLATED"
+  }
+ ]
+}

@@ -1,0 +1,684 @@
+{
+ "config": {
+  "a": "mimic",
+  "b": "mimicfc",
+  "round": 11,
+  "opponents": [
+   "rule",
+   "rule",
+   "rule",
+   "rule",
+   "rule",
+   "rule",
+   "rule"
+  ]
+ },
+ "label": "3-3",
+ "states": 30,
+ "branches": 300,
+ "skipped_seeds": [],
+ "placement_b_minus_a": {
+  "n": 30,
+  "mean": -1.2400000000000004,
+  "sd": 1.1232956438303656,
+  "ci95": 0.41944547925466447,
+  "low": -1.659445479254665,
+  "high": -0.820554520745336,
+  "bootstrap95": [
+   -1.646666666666667,
+   -0.8533333333333334
+  ],
+  "place_a": 4.333333333333333,
+  "place_b": 3.0933333333333333,
+  "share_of_states_changed": 1.0,
+  "share_of_branch_pairs_changed": 0.9866666666666667,
+  "first_changed_round_after_branch": {
+   "median": 0.0,
+   "max": 7
+  },
+  "where_changed": {
+   "n": 30,
+   "mean": -1.2400000000000004,
+   "sd": 1.1232956438303656,
+   "ci95": 0.41944547925466447,
+   "low": -1.659445479254665,
+   "high": -0.820554520745336
+  },
+  "crn_correlation": 0.3214150552745694,
+  "paired_branch_sd": 2.0864643139371766,
+  "effect_sd_across_states": 0.62540102077116,
+  "effect_heterogeneity_p": 0.08745627186406797
+ },
+ "diff_vs_state": {
+  "hp": {
+   "pearson": 0.415,
+   "spearman": 0.487
+  },
+  "hp_rank": {
+   "pearson": -0.533,
+   "spearman": -0.51
+  },
+  "gold": {
+   "pearson": -0.027,
+   "spearman": 0.033
+  },
+  "level": {
+   "pearson": null,
+   "spearman": null
+  },
+  "unit_value": {
+   "pearson": 0.009,
+   "spearman": 0.052
+  },
+  "board_strength": {
+   "pearson": 0.212,
+   "spearman": 0.221
+  },
+  "strength_rank": {
+   "pearson": -0.326,
+   "spearman": -0.32
+  }
+ },
+ "per_state": [
+  {
+   "seed": 9700,
+   "k": 5,
+   "diff": -2.9999999999999996,
+   "place_a": 6.6,
+   "place_b": 3.6,
+   "changed": true,
+   "hp": 49.0,
+   "gold": 73,
+   "level": 5,
+   "unit_value": 20,
+   "board_strength": 13,
+   "hp_rank": 8.0,
+   "strength_rank": 8.0
+  },
+  {
+   "seed": 9701,
+   "k": 5,
+   "diff": -0.20000000000000018,
+   "place_a": 8.0,
+   "place_b": 7.8,
+   "changed": true,
+   "hp": 37.0,
+   "gold": 64,
+   "level": 5,
+   "unit_value": 12,
+   "board_strength": 13,
+   "hp_rank": 8.0,
+   "strength_rank": 5.0
+  },
+  {
+   "seed": 9702,
+   "k": 5,
+   "diff": -0.19999999999999996,
+   "place_a": 1.2,
+   "place_b": 1.0,
+   "changed": true,
+   "hp": 67.0,
+   "gold": 70,
+   "level": 5,
+   "unit_value": 23,
+   "board_strength": 19,
+   "hp_rank": 4.5,
+   "strength_rank": 1.5
+  },
+  {
+   "seed": 9703,
+   "k": 5,
+   "diff": -0.3999999999999999,
+   "place_a": 2.4,
+   "place_b": 2.0,
+   "changed": true,
+   "hp": 80.0,
+   "gold": 62,
+   "level": 5,
+   "unit_value": 19,
+   "board_strength": 15,
+   "hp_rank": 2.0,
+   "strength_rank": 5.0
+  },
+  {
+   "seed": 9704,
+   "k": 5,
+   "diff": -0.40000000000000013,
+   "place_a": 1.6,
+   "place_b": 1.2,
+   "changed": true,
+   "hp": 100.0,
+   "gold": 80,
+   "level": 5,
+   "unit_value": 19,
+   "board_strength": 18,
+   "hp_rank": 1.0,
+   "strength_rank": 1.5
+  },
+  {
+   "seed": 9705,
+   "k": 5,
+   "diff": -2.5999999999999996,
+   "place_a": 6.6,
+   "place_b": 4.0,
+   "changed": true,
+   "hp": 36.0,
+   "gold": 87,
+   "level": 5,
+   "unit_value": 16,
+   "board_strength": 11,
+   "hp_rank": 8.0,
+   "strength_rank": 6.0
+  },
+  {
+   "seed": 9706,
+   "k": 5,
+   "diff": -0.20000000000000018,
+   "place_a": 2.2,
+   "place_b": 2.0,
+   "changed": true,
+   "hp": 59.0,
+   "gold": 77,
+   "level": 5,
+   "unit_value": 16,
+   "board_strength": 16,
+   "hp_rank": 7.0,
+   "strength_rank": 2.5
+  },
+  {
+   "seed": 9707,
+   "k": 5,
+   "diff": -1.4,
+   "place_a": 2.4,
+   "place_b": 1.0,
+   "changed": true,
+   "hp": 100.0,
+   "gold": 65,
+   "level": 5,
+   "unit_value": 17,
+   "board_strength": 17,
+   "hp_rank": 1.0,
+   "strength_rank": 1.0
+  },
+  {
+   "seed": 9708,
+   "k": 5,
+   "diff": -1.7999999999999998,
+   "place_a": 7.2,
+   "place_b": 5.4,
+   "changed": true,
+   "hp": 53.0,
+   "gold": 63,
+   "level": 5,
+   "unit_value": 21,
+   "board_strength": 16,
+   "hp_rank": 8.0,
+   "strength_rank": 3.5
+  },
+  {
+   "seed": 9709,
+   "k": 5,
+   "diff": -3.2,
+   "place_a": 5.2,
+   "place_b": 2.0,
+   "changed": true,
+   "hp": 63.0,
+   "gold": 62,
+   "level": 5,
+   "unit_value": 18,
+   "board_strength": 14,
+   "hp_rank": 7.0,
+   "strength_rank": 4.5
+  },
+  {
+   "seed": 9710,
+   "k": 5,
+   "diff": -1.6,
+   "place_a": 4.2,
+   "place_b": 2.6,
+   "changed": true,
+   "hp": 69.0,
+   "gold": 49,
+   "level": 5,
+   "unit_value": 16,
+   "board_strength": 16,
+   "hp_rank": 5.0,
+   "strength_rank": 4.0
+  },
+  {
+   "seed": 9711,
+   "k": 5,
+   "diff": -0.6000000000000001,
+   "place_a": 1.8,
+   "place_b": 1.2,
+   "changed": true,
+   "hp": 80.0,
+   "gold": 55,
+   "level": 5,
+   "unit_value": 14,
+   "board_strength": 18,
+   "hp_rank": 3.0,
+   "strength_rank": 2.0
+  },
+  {
+   "seed": 9712,
+   "k": 5,
+   "diff": -2.8,
+   "place_a": 5.0,
+   "place_b": 2.2,
+   "changed": true,
+   "hp": 59.0,
+   "gold": 81,
+   "level": 5,
+   "unit_value": 25,
+   "board_strength": 17,
+   "hp_rank": 7.0,
+   "strength_rank": 3.0
+  },
+  {
+   "seed": 9713,
+   "k": 5,
+   "diff": 0.0,
+   "place_a": 1.4,
+   "place_b": 1.4,
+   "changed": true,
+   "hp": 74.0,
+   "gold": 78,
+   "level": 5,
+   "unit_value": 15,
+   "board_strength": 13,
+   "hp_rank": 5.0,
+   "strength_rank": 7.0
+  },
+  {
+   "seed": 9714,
+   "k": 5,
+   "diff": -1.5999999999999996,
+   "place_a": 4.8,
+   "place_b": 3.2,
+   "changed": true,
+   "hp": 78.0,
+   "gold": 58,
+   "level": 5,
+   "unit_value": 16,
+   "board_strength": 16,
+   "hp_rank": 4.0,
+   "strength_rank": 2.0
+  },
+  {
+   "seed": 9715,
+   "k": 5,
+   "diff": -2.0,
+   "place_a": 4.0,
+   "place_b": 2.0,
+   "changed": true,
+   "hp": 63.0,
+   "gold": 70,
+   "level": 5,
+   "unit_value": 21,
+   "board_strength": 17,
+   "hp_rank": 6.0,
+   "strength_rank": 3.0
+  },
+  {
+   "seed": 9716,
+   "k": 5,
+   "diff": -1.2000000000000002,
+   "place_a": 8.0,
+   "place_b": 6.8,
+   "changed": true,
+   "hp": 66.0,
+   "gold": 60,
+   "level": 5,
+   "unit_value": 13,
+   "board_strength": 18,
+   "hp_rank": 6.5,
+   "strength_rank": 3.0
+  },
+  {
+   "seed": 9717,
+   "k": 5,
+   "diff": -2.5999999999999996,
+   "place_a": 8.0,
+   "place_b": 5.4,
+   "changed": true,
+   "hp": 33.0,
+   "gold": 71,
+   "level": 5,
+   "unit_value": 15,
+   "board_strength": 12,
+   "hp_rank": 8.0,
+   "strength_rank": 7.0
+  },
+  {
+   "seed": 9718,
+   "k": 5,
+   "diff": 0.20000000000000018,
+   "place_a": 3.8,
+   "place_b": 4.0,
+   "changed": true,
+   "hp": 78.0,
+   "gold": 52,
+   "level": 5,
+   "unit_value": 20,
+   "board_strength": 20,
+   "hp_rank": 3.5,
+   "strength_rank": 1.0
+  },
+  {
+   "seed": 9719,
+   "k": 5,
+   "diff": -3.6000000000000005,
+   "place_a": 5.4,
+   "place_b": 1.8,
+   "changed": true,
+   "hp": 66.0,
+   "gold": 66,
+   "level": 5,
+   "unit_value": 16,
+   "board_strength": 13,
+   "hp_rank": 6.0,
+   "strength_rank": 6.5
+  },
+  {
+   "seed": 9720,
+   "k": 5,
+   "diff": 0.0,
+   "place_a": 1.4,
+   "place_b": 1.4,
+   "changed": true,
+   "hp": 84.0,
+   "gold": 74,
+   "level": 5,
+   "unit_value": 18,
+   "board_strength": 14,
+   "hp_rank": 2.0,
+   "strength_rank": 3.0
+  },
+  {
+   "seed": 9721,
+   "k": 5,
+   "diff": -1.8000000000000003,
+   "place_a": 5.4,
+   "place_b": 3.6,
+   "changed": true,
+   "hp": 60.0,
+   "gold": 54,
+   "level": 5,
+   "unit_value": 15,
+   "board_strength": 17,
+   "hp_rank": 6.0,
+   "strength_rank": 2.5
+  },
+  {
+   "seed": 9722,
+   "k": 5,
+   "diff": -1.0,
+   "place_a": 8.0,
+   "place_b": 7.0,
+   "changed": true,
+   "hp": 43.0,
+   "gold": 61,
+   "level": 5,
+   "unit_value": 13,
+   "board_strength": 11,
+   "hp_rank": 8.0,
+   "strength_rank": 7.5
+  },
+  {
+   "seed": 9723,
+   "k": 5,
+   "diff": -2.4000000000000004,
+   "place_a": 5.2,
+   "place_b": 2.8,
+   "changed": true,
+   "hp": 59.0,
+   "gold": 69,
+   "level": 5,
+   "unit_value": 16,
+   "board_strength": 14,
+   "hp_rank": 7.0,
+   "strength_rank": 5.0
+  },
+  {
+   "seed": 9724,
+   "k": 5,
+   "diff": -0.5999999999999996,
+   "place_a": 6.6,
+   "place_b": 6.0,
+   "changed": true,
+   "hp": 39.0,
+   "gold": 76,
+   "level": 5,
+   "unit_value": 15,
+   "board_strength": 7,
+   "hp_rank": 8.0,
+   "strength_rank": 8.0
+  },
+  {
+   "seed": 9725,
+   "k": 5,
+   "diff": 0.0,
+   "place_a": 2.6,
+   "place_b": 2.6,
+   "changed": true,
+   "hp": 86.0,
+   "gold": 61,
+   "level": 5,
+   "unit_value": 26,
+   "board_strength": 17,
+   "hp_rank": 2.0,
+   "strength_rank": 2.0
+  },
+  {
+   "seed": 9726,
+   "k": 5,
+   "diff": -1.2000000000000002,
+   "place_a": 5.4,
+   "place_b": 4.2,
+   "changed": true,
+   "hp": 33.0,
+   "gold": 75,
+   "level": 5,
+   "unit_value": 14,
+   "board_strength": 19,
+   "hp_rank": 8.0,
+   "strength_rank": 2.0
+  },
+  {
+   "seed": 9727,
+   "k": 5,
+   "diff": -0.5999999999999999,
+   "place_a": 2.4,
+   "place_b": 1.8,
+   "changed": true,
+   "hp": 83.0,
+   "gold": 60,
+   "level": 5,
+   "unit_value": 17,
+   "board_strength": 16,
+   "hp_rank": 3.0,
+   "strength_rank": 2.5
+  },
+  {
+   "seed": 9728,
+   "k": 5,
+   "diff": -0.6000000000000001,
+   "place_a": 1.6,
+   "place_b": 1.0,
+   "changed": true,
+   "hp": 78.0,
+   "gold": 75,
+   "level": 5,
+   "unit_value": 20,
+   "board_strength": 12,
+   "hp_rank": 5.0,
+   "strength_rank": 6.5
+  },
+  {
+   "seed": 9729,
+   "k": 5,
+   "diff": 0.19999999999999996,
+   "place_a": 1.6,
+   "place_b": 1.8,
+   "changed": true,
+   "hp": 90.0,
+   "gold": 82,
+   "level": 5,
+   "unit_value": 18,
+   "board_strength": 15,
+   "hp_rank": 2.0,
+   "strength_rank": 4.0
+  }
+ ],
+ "checkpoints": {
+  "4-1": {
+   "A": {
+    "alive_share": 0.96,
+    "hp": 52.75,
+    "gold": 34.68055555555556,
+    "level": 7.381944444444445,
+    "unit_value": 28.34027777777778,
+    "board_units": 7.229166666666667,
+    "bench_units": 5.5625,
+    "board_strength": 22.59027777777778,
+    "gold_plus_unit_value": 63.020833333333336
+   },
+   "B": {
+    "alive_share": 0.96,
+    "hp": 54.145833333333336,
+    "gold": 36.486111111111114,
+    "level": 7.284722222222222,
+    "unit_value": 28.46527777777778,
+    "board_units": 7.145833333333333,
+    "bench_units": 5.277777777777778,
+    "board_strength": 24.708333333333332,
+    "gold_plus_unit_value": 64.95138888888889
+   },
+   "b_minus_a": {
+    "hp": {
+     "n": 30,
+     "mean": 1.522222222222222,
+     "sd": 2.91678434354836,
+     "ci95": 1.0891451538887122,
+     "low": 0.4330770683335097,
+     "high": 2.611367376110934
+    },
+    "gold": {
+     "n": 30,
+     "mean": 1.8772222222222221,
+     "sd": 6.507770897641843,
+     "ci95": 2.430041546082199,
+     "low": -0.552819323859977,
+     "high": 4.307263768304422
+    },
+    "level": {
+     "n": 30,
+     "mean": -0.11277777777777778,
+     "sd": 0.24297341250151408,
+     "ci95": 0.09072776166505761,
+     "low": -0.2035055394428354,
+     "high": -0.022050016112720172
+    },
+    "unit_value": {
+     "n": 30,
+     "mean": 0.08555555555555557,
+     "sd": 1.367960792758194,
+     "ci95": 0.5108049456717216,
+     "low": -0.4252493901161661,
+     "high": 0.5963605012272772
+    },
+    "board_strength": {
+     "n": 30,
+     "mean": 2.118333333333333,
+     "sd": 1.5643927616310676,
+     "ci95": 0.584153846984885,
+     "low": 1.5341794863484481,
+     "high": 2.702487180318218
+    }
+   }
+  },
+  "5-1": {
+   "A": {
+    "alive_share": 0.6333333333333333,
+    "hp": 47.21052631578947,
+    "gold": 57.578947368421055,
+    "level": 7.989473684210527,
+    "unit_value": 47.252631578947366,
+    "board_units": 7.978947368421053,
+    "bench_units": 8.463157894736842,
+    "board_strength": 32.68421052631579,
+    "gold_plus_unit_value": 104.83157894736843
+   },
+   "B": {
+    "alive_share": 0.8133333333333334,
+    "hp": 39.76229508196721,
+    "gold": 54.14754098360656,
+    "level": 8.0,
+    "unit_value": 49.32786885245902,
+    "board_units": 7.950819672131147,
+    "bench_units": 8.131147540983607,
+    "board_strength": 39.131147540983605,
+    "gold_plus_unit_value": 103.47540983606558
+   },
+   "b_minus_a": {
+    "hp": {
+     "n": 25,
+     "mean": -0.26799999999999985,
+     "sd": 9.418663652557086,
+     "ci95": 3.8878330934005434,
+     "low": -4.155833093400544,
+     "high": 3.6198330934005436
+    },
+    "gold": {
+     "n": 25,
+     "mean": 5.098000000000001,
+     "sd": 13.043729265365338,
+     "ci95": 5.384186565094793,
+     "low": -0.2861865650947921,
+     "high": 10.482186565094793
+    },
+    "level": {
+     "n": 25,
+     "mean": 0.008,
+     "sd": 0.04,
+     "ci95": 0.01651118773031047,
+     "low": -0.008511187730310468,
+     "high": 0.02451118773031047
+    },
+    "unit_value": {
+     "n": 25,
+     "mean": 1.4940000000000004,
+     "sd": 3.697643393658543,
+     "ci95": 1.5263121058109623,
+     "low": -0.03231210581096189,
+     "high": 3.0203121058109628
+    },
+    "board_strength": {
+     "n": 25,
+     "mean": 6.185333333333333,
+     "sd": 3.644469808516073,
+     "ci95": 1.5043631296464381,
+     "low": 4.680970203686895,
+     "high": 7.6896964629797715
+    }
+   }
+  }
+ },
+ "executor_stats_per_branch": {
+  "A": {
+   "rolls": 23.07,
+   "xp": 23.85
+  },
+  "B": {
+   "comp_swaps": 6.27,
+   "rolls": 31.25,
+   "xp": 23.63
+  }
+ },
+ "timing": {
+  "branch_seconds_mean": 17.048366666666666,
+  "branch_seconds_total": 5114.51,
+  "make_state_seconds_mean": 6.85
+ }
+}

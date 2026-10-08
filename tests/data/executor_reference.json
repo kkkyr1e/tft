@@ -1,0 +1,149 @@
+{
+ "lobby": [
+  "mimic",
+  "fast8",
+  "rolldown8",
+  "hp50",
+  "fast8roll",
+  "rule",
+  "rule",
+  "rule"
+ ],
+ "games": [
+  {
+   "seed": 7100,
+   "lobby": {
+    "player_0": "mimic",
+    "player_1": "fast8",
+    "player_2": "rolldown8",
+    "player_3": "hp50",
+    "player_4": "fast8roll",
+    "player_5": "rule",
+    "player_6": "rule",
+    "player_7": "rule"
+   },
+   "placements": {
+    "player_0": 7,
+    "player_1": 6,
+    "player_2": 1,
+    "player_3": 8,
+    "player_4": 5,
+    "player_5": 4,
+    "player_6": 2,
+    "player_7": 3
+   },
+   "actions": {
+    "player_0": 285,
+    "player_1": 345,
+    "player_2": 435,
+    "player_3": 240,
+    "player_4": 405,
+    "player_5": 420,
+    "player_6": 435,
+    "player_7": 435
+   },
+   "sim_fixes": [],
+   "sim_commit": "a2840a1dabbec0847075e1f159286657f71012b2",
+   "digest": {
+    "player_0": "77335e2670efae74",
+    "player_1": "8112f8841a87cdfb",
+    "player_2": "295d26a6c504c63b",
+    "player_3": "74eb10995d6d82ac",
+    "player_4": "1d2d994f2c58bd8a",
+    "player_5": "2a4eb1a438d306d5",
+    "player_6": "145c31dfc8359769",
+    "player_7": "4ffc8eb720df4e83"
+   }
+  },
+  {
+   "seed": 7101,
+   "lobby": {
+    "player_0": "mimic",
+    "player_1": "fast8",
+    "player_2": "rolldown8",
+    "player_3": "hp50",
+    "player_4": "fast8roll",
+    "player_5": "rule",
+    "player_6": "rule",
+    "player_7": "rule"
+   },
+   "placements": {
+    "player_0": 7,
+    "player_1": 1,
+    "player_2": 2,
+    "player_3": 5,
+    "player_4": 4,
+    "player_5": 3,
+    "player_6": 8,
+    "player_7": 6
+   },
+   "actions": {
+    "player_0": 285,
+    "player_1": 435,
+    "player_2": 435,
+    "player_3": 375,
+    "player_4": 405,
+    "player_5": 420,
+    "player_6": 270,
+    "player_7": 360
+   },
+   "sim_fixes": [],
+   "sim_commit": "a2840a1dabbec0847075e1f159286657f71012b2",
+   "digest": {
+    "player_0": "44d65c2cd78fd0ff",
+    "player_1": "cbdf9a2293772100",
+    "player_2": "d18924c48e5de055",
+    "player_3": "0d5ee6b9faf783bb",
+    "player_4": "196a9dc1edf7bea3",
+    "player_5": "5ca9d389a80c4a0d",
+    "player_6": "4206cf9dd2b1cca3",
+    "player_7": "f206d617a5090bca"
+   }
+  },
+  {
+   "seed": 7102,
+   "lobby": {
+    "player_0": "mimic",
+    "player_1": "fast8",
+    "player_2": "rolldown8",
+    "player_3": "hp50",
+    "player_4": "fast8roll",
+    "player_5": "rule",
+    "player_6": "rule",
+    "player_7": "rule"
+   },
+   "placements": {
+    "player_0": 7,
+    "player_1": 3,
+    "player_2": 4,
+    "player_3": 1,
+    "player_4": 6,
+    "player_5": 2,
+    "player_6": 5,
+    "player_7": 8
+   },
+   "actions": {
+    "player_0": 285,
+    "player_1": 405,
+    "player_2": 405,
+    "player_3": 450,
+    "player_4": 285,
+    "player_5": 450,
+    "player_6": 330,
+    "player_7": 255
+   },
+   "sim_fixes": [],
+   "sim_commit": "a2840a1dabbec0847075e1f159286657f71012b2",
+   "digest": {
+    "player_0": "1e81d587c4dce45d",
+    "player_1": "41634321c79a7d25",
+    "player_2": "43147197deefb833",
+    "player_3": "db4b5135ce6210fc",
+    "player_4": "24c69649e6e1f04a",
+    "player_5": "d30783083a8bc20c",
+    "player_6": "6e75a3dca81a44e0",
+    "player_7": "7e2196ce8b99c918"
+   }
+  }
+ ]
+}

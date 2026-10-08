@@ -1,0 +1,83 @@
+{
+ "hero": {
+  "policy": "stance+hold",
+  "name": "stance+hold",
+  "overlay": null
+ },
+ "control": null,
+ "window": [
+  "2-1",
+  "2-6"
+ ],
+ "seeds": [
+  21000,
+  21007
+ ],
+ "stance+hold": {
+  "n": 8,
+  "place": 4.12,
+  "unfinished": 0,
+  "policy_errors": 0,
+  "policy_errors_all_seats": 0,
+  "window": {
+   "fights": 5,
+   "lost": 3.12,
+   "won": 1.88,
+   "hp_lost": 17.25,
+   "streak_gold": 5.12,
+   "win_gold": 1.88,
+   "gold_from_fights": 7
+  },
+  "at_start_of": {
+   "3-1": {
+    "alive": 8,
+    "hp": 82.75,
+    "gold": 42.12,
+    "level": 5,
+    "lv8": 0.0,
+    "on_comp": null
+   },
+   "4-1": {
+    "alive": 8,
+    "hp": 57.0,
+    "gold": 48.5,
+    "level": 7,
+    "lv8": 0.0,
+    "on_comp": 0.73
+   },
+   "4-2": {
+    "alive": 8,
+    "hp": 51.12,
+    "gold": 38.38,
+    "level": 7.25,
+    "lv8": 0.25,
+    "on_comp": 0.73
+   },
+   "4-3": {
+    "alive": 8,
+    "hp": 45.25,
+    "gold": 32.5,
+    "level": 7.38,
+    "lv8": 0.38,
+    "on_comp": 0.75
+   },
+   "5-1": {
+    "alive": 7,
+    "hp": 38.14,
+    "gold": 42.43,
+    "level": 7.86,
+    "lv8": 0.86,
+    "on_comp": 0.8
+   }
+  },
+  "executor_per_game": {
+   "comp_swaps": 6.0,
+   "hold_filtered": 3.88,
+   "rolls": 30.5,
+   "survival_rounds": 3.12,
+   "swaps_dropped": 35.0,
+   "xp": 27.88,
+   "xp_preempt": 0.25
+  }
+ }
+}

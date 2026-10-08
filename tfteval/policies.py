@@ -93,32 +93,23 @@ class NoisyRulePolicy:
         return self._rule.act(observation, info, agent, env)
 
 
-class LLMPolicy:
-    """Placeholder for the agent under test.
-
-    Intended shape (see docs/PLAN.md, section 5): one model call per round returns a typed
-    plan (target comp, roll or save, level or not, item assignments); a rule executor expands
-    the plan into atomic simulator actions. That keeps a game at roughly 25 calls per seat instead of
-    roughly 370 and makes every call a loggable, replayable decision.
-    """
-
-    name = "llm"
-
-    def reset(self, seed: int) -> None:
-        raise NotImplementedError("LLMPolicy is not implemented yet; see docs/PLAN.md section 5")
-
-    def act(self, observation, info, agent, env):
-        raise NotImplementedError
-
-
-_REGISTRY = {"random": RandomPolicy, "rule": RuleBotPolicy, "llm": LLMPolicy}
+_REGISTRY = {"random": RandomPolicy, "rule": RuleBotPolicy}
 
 
 def make_policy(spec: str) -> Policy:
     """Build a policy from a spec: `random`, `rule`, `noisy20` (rule bot with 20% random
-    actions) or `llm`. Prefix `alias=` to report a seat under its own name, e.g. `hero=rule`."""
+    actions), `mimic` (plan executor with the rule bot's economy), `llm` (plan executor with a
+    model planner, see tfteval/planner.py) or `stance` and its ablations (rule stance planner, see
+    tfteval/stance.py). Prefix `alias=` to report a seat under its own name, e.g. `hero=rule`."""
     alias, _, kind = spec.rpartition("=")
-    if kind.startswith("noisy") and kind[5:].isdigit():
+    from tfteval.planner import VARIANTS, make_plan_policy
+    from tfteval.stance import STANCE_KINDS, make_stance_policy
+
+    if kind in VARIANTS or kind == "llm":
+        policy = make_plan_policy(kind)
+    elif kind in STANCE_KINDS:
+        policy = make_stance_policy(kind)
+    elif kind.startswith("noisy") and kind[5:].isdigit():
         policy = NoisyRulePolicy(int(kind[5:]) / 100)
     elif kind in _REGISTRY:
         policy = _REGISTRY[kind]()

@@ -1,0 +1,78 @@
+{
+ "hero": {
+  "policy": "rule",
+  "name": "rule",
+  "overlay": null
+ },
+ "control": null,
+ "window": [
+  "2-1",
+  "2-6"
+ ],
+ "seeds": [
+  24000,
+  24003
+ ],
+ "rules": "set4",
+ "sim": "default",
+ "sim_options": {},
+ "rule": {
+  "n": 4,
+  "place": 2,
+  "unfinished": 0,
+  "policy_errors": 0,
+  "policy_errors_all_seats": 0,
+  "window": {
+   "fights": 5,
+   "lost": 1,
+   "won": 4,
+   "hp_lost": 6.0,
+   "streak_gold": 6.5,
+   "win_gold": 4,
+   "gold_from_fights": 10.5
+  },
+  "at_start_of": {
+   "3-1": {
+    "alive": 4,
+    "hp": 94.0,
+    "gold": 51.75,
+    "level": 5,
+    "lv8": 0.0,
+    "on_comp": null
+   },
+   "4-1": {
+    "alive": 4,
+    "hp": 88.0,
+    "gold": 72.5,
+    "level": 6.75,
+    "lv8": 0.0,
+    "on_comp": null
+   },
+   "4-2": {
+    "alive": 4,
+    "hp": 80.25,
+    "gold": 71.25,
+    "level": 7,
+    "lv8": 0.0,
+    "on_comp": null
+   },
+   "4-3": {
+    "alive": 4,
+    "hp": 75.25,
+    "gold": 63.25,
+    "level": 7.5,
+    "lv8": 0.5,
+    "on_comp": null
+   },
+   "5-1": {
+    "alive": 4,
+    "hp": 68.25,
+    "gold": 76,
+    "level": 8,
+    "lv8": 1.0,
+    "on_comp": null
+   }
+  },
+  "executor_per_game": {}
+ }
+}
