@@ -1,0 +1,6 @@
+== 3-1 hp 60 vs 90, streak - save (stance): 3 pairs
+  pair            base  ks          side 0 (hp 60)          side 1 (hp 90)     interaction  corr
+  #9504       hp74 g53  32    +0.47 ±0.94 (6.34/5.88)    -0.09 ±0.60 (3.97/4.06)     +0.56 ±0.98  +0.25
+  #9511       hp74 g47  32    +0.34 ±0.70 (6.16/5.81)    +0.41 ±0.68 (5.03/4.62)     -0.06 ±0.95  +0.05
+  #9515       hp76 g62  32    +1.69 ±0.87 (6.75/5.06)    +1.50 ±0.87 (5.25/3.75)     +0.19 ±0.86  +0.51
+  pooled interaction: mean +0.23 (between-pair SE 0.18); inverse-variance +0.22 ±0.54, random effects +0.22 ±0.54 (tau 0.00)
