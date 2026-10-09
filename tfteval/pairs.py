@@ -67,13 +67,25 @@ def apply_edit(game, seat: str, edit: dict) -> dict:
     return changed
 
 
+def set_action_budget(game, actions: int) -> None:
+    """Every seat's per-round action budget from this planning phase on (the simulator's
+    TFTConfig.max_actions_per_round, 15 by default; the current phase's remaining budget too)."""
+    env = game.env.unwrapped
+    env.max_actions_per_round = int(actions)
+    manager = env.player_manager
+    manager.config.max_actions_per_round = int(actions)
+    for player in manager.player_states.values():
+        if player is not None:
+            player.actions_remaining = player.actions_per_round = int(actions)
+
+
 def candidate(name: str, rounds: int = bank2.COMMIT_ROUNDS) -> dict:
     return {"name": name, "desc": bank2.CANDIDATES[name]["desc"], "rounds": int(rounds),
             "spec": {k: v for k, v in bank2.CANDIDATES[name].items() if k != "desc"}}
 
 
-def pair_id(lineup: str, seed: int, point: str, axis: str, values) -> str:
-    return f"{lineup}#{seed}@{point}:{axis}={values[0]}|{values[1]}"
+def pair_id(lineup: str, seed: int, point: str, axis: str, values, actions: int | None = None) -> str:
+    return f"{lineup}#{seed}@{point}:{axis}={values[0]}|{values[1]}" + (f"@actions{actions}" if actions else "")
 
 
 def base_recipe(lineup: str, seed: int, point: str, settings: dict | None = None,
@@ -109,6 +121,8 @@ def play_side(spec: dict, side: int) -> dict:
     base = {"fingerprint_hash": bank.fingerprint_hash(fp), "features": bank2.trigger_features(bank.hero_view(game, seat)[0])}
     edit = {spec["axis"]: spec["values"][side]}
     changed = apply_edit(game, seat, edit)
+    if spec.get("actions"):
+        set_action_budget(game, spec["actions"])
     state, _, comp_now = bank.hero_view(game, seat)
     edited = bank.fingerprint_hash(bank.fingerprint(game, seat))
     cands = [candidate(c) for c in spec["cands"]]
@@ -134,12 +148,14 @@ def assemble(spec: dict, sides: list[dict]) -> dict:
     """The pair record from its two side results (both must start from the same unedited state)."""
     s0, s1 = sorted(sides, key=lambda s: s["side"])
     if s0["base"]["fingerprint_hash"] != s1["base"]["fingerprint_hash"]:
-        raise RuntimeError(f"the two sides of {pair_id(spec['lineup'], spec['seed'], spec['point'], spec['axis'], spec['values'])} "
+        raise RuntimeError(f"the two sides of {pair_id(spec['lineup'], spec['seed'], spec['point'], spec['axis'], spec['values'], spec.get('actions'))} "
                            f"rebuilt different states: {s0['base']['fingerprint_hash']} != {s1['base']['fingerprint_hash']}")
-    return {"schema": SCHEMA, "id": pair_id(spec["lineup"], spec["seed"], spec["point"], spec["axis"], spec["values"]),
+    return {"schema": SCHEMA, "id": pair_id(spec["lineup"], spec["seed"], spec["point"], spec["axis"], spec["values"],
+                                            spec.get("actions")),
             "game": f"{spec['lineup']}#{spec['seed']}", "lineup": spec["lineup"], "seed": int(spec["seed"]),
             "point": spec["point"], "axis": spec["axis"], "values": list(spec["values"]), "cands": list(spec["cands"]),
-            "k": int(spec["k"]), "continuation": spec["continuation"], "recipe": s0["recipe"], "base": s0["base"],
+            "k": int(spec["k"]), "continuation": spec["continuation"], "actions": spec.get("actions"),
+            "recipe": s0["recipe"], "base": s0["base"],
             "sides": [{k: v for k, v in s.items() if k not in ("recipe", "base", "branches")}
                       for s in (s0, s1)],
             "branches": s0["branches"] + s1["branches"]}

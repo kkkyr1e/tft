@@ -64,16 +64,17 @@ def report(rows: list[dict]) -> dict:
     out = {}
     groups: dict = {}
     for r in rows:
-        groups.setdefault((r["axis"], tuple(r["values"]), tuple(r["cands"]), r["point"], r["continuation"]), []).append(r)
-    for (axis, values, cands, point, cont), rs in groups.items():
-        a, b = cands
-        key = f"{point} {axis} {values[0]} vs {values[1]}, {a} - {b} ({cont})"
+        for b in r["cands"][1:]:
+            groups.setdefault((r["axis"], tuple(r["values"]), r["cands"][0], b, r["point"], r["continuation"],
+                               r.get("actions")), []).append(r)
+    for (axis, values, a, b, point, cont, actions), rs in groups.items():
+        key = f"{point} {axis} {values[0]} vs {values[1]}, {a} - {b} ({cont}" + (f", {actions} actions)" if actions else ")")
         print(f"== {key}: {len(rs)} pairs")
         print(f"  {'pair':10} {'base':>9} {'ks':>3}  {f'side 0 ({axis} {values[0]})':>22}  "
               f"{f'side 1 ({axis} {values[1]})':>22}  {'interaction':>14}  corr")
         ests = []
         for r in sorted(rs, key=lambda r: r["seed"]):
-            c = pairs.contrasts(r)
+            c = pairs.contrasts(r, a, b)
             base = r["base"]["features"]
             ests.append(c["interaction"])
             mp = c["mean_place"]
@@ -88,7 +89,7 @@ def report(rows: list[dict]) -> dict:
             line += (f"; inverse-variance {p['fixed']:+.2f} ±{1.96 * p['fixed_se']:.2f}, "
                      f"random effects {p['random']:+.2f} ±{1.96 * p['random_se']:.2f} (tau {p['tau2'] ** 0.5:.2f})")
         print(line)
-        out[key] = {"pairs": [{"id": r["id"], **pairs.contrasts(r)} for r in rs], "pooled": p}
+        out[key] = {"pairs": [{"id": r["id"], **pairs.contrasts(r, a, b)} for r in rs], "pooled": p}
     return out
 
 
@@ -98,7 +99,10 @@ def main():
     parser.add_argument("--states", nargs="+", help="SEED@POINT, e.g. 9501@4-1")
     parser.add_argument("--axis", choices=pairs.AXES)
     parser.add_argument("--values", nargs=2, type=int, help="the edited value on side 0 and on side 1")
-    parser.add_argument("--cands", nargs=2, choices=list(bank2.CANDIDATES), help="candidates A and B")
+    parser.add_argument("--cands", nargs="+", choices=list(bank2.CANDIDATES),
+                        help="candidates; the report contrasts the first with each other one")
+    parser.add_argument("--actions", type=int, help="every seat's per-round action budget from the decision point "
+                                                    "on (default: the simulator's, 15)")
     parser.add_argument("--k", type=int, default=32, help="branches per cell (side x candidate)")
     parser.add_argument("--continuation", default="stance")
     parser.add_argument("--workers", type=int, default=1)
@@ -117,6 +121,8 @@ def main():
         return
     if not (args.states and args.axis and args.values and args.cands and args.out):
         parser.error("--states, --axis, --values, --cands and --out are needed to build")
+    if len(args.cands) < 2:
+        parser.error("--cands needs at least two candidates")
     settings = bank.sim_settings(args.sim, args.rules)
     harness = bank.harness_commit()
     done = {r["id"] for r in load([args.out])}
@@ -125,8 +131,8 @@ def main():
         seed, point = text.split("@")
         spec = {"lineup": args.lineup, "seed": int(seed), "point": point, "axis": args.axis, "values": list(args.values),
                 "cands": list(args.cands), "k": args.k, "continuation": args.continuation, "settings": settings,
-                "harness": harness}
-        if pairs.pair_id(args.lineup, int(seed), point, args.axis, args.values) not in done:
+                "harness": harness, "actions": args.actions}
+        if pairs.pair_id(args.lineup, int(seed), point, args.axis, args.values, args.actions) not in done:
             specs.append(spec)
     print(f"{len(specs)} pairs to build ({len(done)} already in {args.out}); {args.axis} {args.values[0]} vs "
           f"{args.values[1]}, {args.cands[0]} vs {args.cands[1]}, {args.k} branches per cell, {args.workers} workers, "

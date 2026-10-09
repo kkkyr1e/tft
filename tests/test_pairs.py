@@ -127,3 +127,34 @@ def test_assemble_refuses_sides_from_different_states():
         pairs.assemble(spec, [side, other])
     pair = pairs.assemble(spec, [{**other, "base": {"fingerprint_hash": "x"}}, side])
     assert [s["side"] for s in pair["sides"]] == [0, 1] and pair["id"] == "stance@rule:7#1@4-1:hp=35|85"
+
+
+def test_set_action_budget_raises_every_seat_from_now_on():
+    class Config:
+        max_actions_per_round = 15
+
+    class Seat:
+        actions_remaining, actions_per_round = 15, 15
+
+    class Manager:
+        config = Config()
+        player_states = {"player_0": Seat(), "player_1": None, "player_2": Seat()}
+
+    class Env:
+        max_actions_per_round = 15
+        player_manager = Manager()
+
+    class Wrapped:
+        unwrapped = Env()
+
+    class Game:
+        env = Wrapped()
+
+    game = Game()
+    pairs.set_action_budget(game, 40)
+    env = game.env.unwrapped
+    assert env.max_actions_per_round == 40 and env.player_manager.config.max_actions_per_round == 40
+    seats = [p for p in env.player_manager.player_states.values() if p is not None]
+    assert all(p.actions_remaining == 40 and p.actions_per_round == 40 for p in seats)
+    assert pairs.pair_id("l", 1, "4-1", "hp", [35, 85], 40) == "l#1@4-1:hp=35|85@actions40"
+    assert pairs.pair_id("l", 1, "4-1", "hp", [35, 85]) == "l#1@4-1:hp=35|85"
