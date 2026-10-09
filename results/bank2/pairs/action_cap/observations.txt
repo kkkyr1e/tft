@@ -1,0 +1,24 @@
+Action cap checks (simulator 5e2cb1c, realistic set4, lineup stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1).
+Run from the repo root with PYTHONHASHSEED=0 PYTHONPATH=third_party/TFTMuZeroAgent:. ; CAP 0 = the simulator's 15.
+
+1. cap_check.py 9523 4-1 85 CAP 1 roll_all roll30 save  (k=0; per round: [round, hero gold, level, HP] at the start)
+   CAP 40 (every seat from the decision point on):
+     roll_all place 2  [[15,52,7,85],[16,31,7,85],[17,7,7,85],[18,11,7,85]]
+     roll30   place 3  [[15,52,7,85],[16,40,7,85],[17,39,7,85],[18,46,7,85]]
+     save     place 3  [[15,52,7,85],[16,60,7,72],[17,63,7,58],[18,18,8,58]]
+   CAP 15:
+     roll_all place 3  [[15,52,7,85],[16,53,7,71],[17,50,7,60],[18,62,7,46]]   action hashes = roll30's
+     roll30   place 3  [[15,52,7,85],[16,53,7,71],[17,50,7,60],[18,62,7,46]]
+     save     place 2  [[15,52,7,85],[16,60,7,74],[17,63,7,61],[18,56,7,46]]
+
+2. action_mix.py 9523 4-1 85 0 0 roll_all  (the hero's actions per round at cap 15; 3 buy, 4 sell, 5 move, 6 item)
+     round 15 (4-1, 52 gold): buy 5, item 2, roll 1, move 4, sell 3
+     round 16 (53 gold):      roll 4, buy 5, move 4, sell 2
+     round 17 (50 gold):      buy 2, move 2, sell 2, pass 9     (commitment over: stance)
+     round 18 (62 gold):      xp 11, move 1, roll 2, buy 1
+
+3. cap_games.py CAP 9600 9601 9602  (full games from the start; seconds / steps / last round)
+     cap 15: 37.0 s 450 steps r31; 26.4 s 420 steps r29; 34.9 s 510 steps r35
+     cap 40: 46.7 s 1200 steps r31; 41.6 s 1200 steps r31; 37.8 s 1160 steps r30
+   Every planning phase runs to the cap at 40 (some seat always has an action left), so steps grow
+   2.6x but a game takes only 8-58% longer.
