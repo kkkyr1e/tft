@@ -20,7 +20,7 @@ Optional plan fields (absent = the executor behaves exactly as before them):
   never fields a weaker unit. (On upstream the rule bot's swap check never fired, and without this
   field the comp decided what was bought but not what was fielded.)
 * `level_by` {"level": N, "by": "4-1"} (or "rounds": K): reach level N by that round. Xp is bought
-  as late as the action cap allows (at most XP_BUY_CAP buys in each earlier round, the rest on the
+  as late as the action cap allows (at most xp_buy_cap buys in each earlier round, the rest on the
   deadline round, where the executor takes action slots from the rule bot if it has to).
 * `spend` {"to": G, "by": "4-2"} (or "rounds": K, counted from the round the plan is issued):
   reroll down to G gold, spread evenly over the rounds up to the deadline.
@@ -71,9 +71,23 @@ from tfteval.policies import MASK_SHAPE
 PLAN_KEYS = ("comp", "level_to", "roll_floor", "carry")
 EXTRA_KEYS = ("level_by", "spend", "fodder", "field_comp", "survival", "xp_buys", "hold")
 
-ACTIONS_PER_ROUND = 15
-XP_BUY_CAP = 10  # buy-xp actions scheduled in a round before the deadline round
-SPEND_CAP = 30  # gold one round can spend on rerolls and the units they find
+ACTIONS_PER_ROUND = 15  # the simulator's default actions per planning phase; describe() gives the game's
+XP_BUY_CAP = 10  # at 15 actions: buy-xp actions scheduled in a round before the deadline round
+SPEND_CAP = 30  # at 15 actions: gold one round can spend on rerolls and the units they find
+# [guess] both scale with the game's budget (round_actions): xp_buy_cap and spend_cap
+
+
+def round_actions(state: dict) -> int:
+    """Actions per planning phase in the state's game (describe(); a state without it: the default 15)."""
+    return int(state.get("actions") or ACTIONS_PER_ROUND)
+
+
+def xp_buy_cap(state: dict) -> int:
+    return XP_BUY_CAP * round_actions(state) // ACTIONS_PER_ROUND
+
+
+def spend_cap(state: dict) -> int:
+    return SPEND_CAP * round_actions(state) // ACTIONS_PER_ROUND
 
 
 # --------------------------------------------------------------------------- state
@@ -108,6 +122,7 @@ def describe(player, shop, game_round: int, env=None, seat: str | None = None,
         "level": int(player.level),
         "xp": int(player.exp),
         "xp_needed": int(player.level_costs[player.level]) if player.level < len(player.level_costs) else 0,
+        "actions": int(getattr(player, "actions_per_round", ACTIONS_PER_ROUND)),
         "streak": public.streak(player),
         "dmg_per_loss": stages.damage_per_loss(idx, rules),
         "losses_to_death": stages.losses_to_death(hp, idx, rules),
@@ -164,7 +179,7 @@ def compile_knobs(plan: dict, state: dict) -> dict:
         else:
             later = deadline - idx  # planning phases after this one, up to the deadline
             buys = math.ceil(max(0, xp_to_level(level, xp, target, rules) - 2 * later) / 4)  # +2 xp each round start
-            knobs["xp_buys"] = max(0, buys - XP_BUY_CAP * later)
+            knobs["xp_buys"] = max(0, buys - xp_buy_cap(state) * later)
 
     if plan.get("xp_buys"):
         knobs["xp_buys"] = max(knobs["xp_buys"], int(plan["xp_buys"]))
@@ -175,7 +190,7 @@ def compile_knobs(plan: dict, state: dict) -> dict:
         excess = gold - target
         if idx <= deadline and excess > 0:
             left = deadline - idx + 1
-            share = max(math.ceil(excess / left), excess - SPEND_CAP * (left - 1))
+            share = max(math.ceil(excess / left), excess - spend_cap(state) * (left - 1))
             knobs["roll_floor"] = min(knobs["roll_floor"], max(target, gold - share))
 
     threshold = plan.get("survival")
@@ -273,7 +288,7 @@ VARIANTS = {
 
 
 PROMPT = """You are playing Teamfight Tactics (Set 4, 8 players, last one alive wins; you want the best placement).
-Once per round you set a plan. A fixed executor carries it out with at most 15 actions this round:
+Once per round you set a plan. A fixed executor carries it out with at most {actions} actions this round:
 it buys units for your target comp and pairs, fields a full board, sells excess bench units,
 places items on your carry first, levels up while level < level_to, and rerolls the shop while gold - 2 >= roll_floor.
 Leveling costs 4 gold per 4 xp; current xp and xp needed for the next level are in the state. A reroll costs 2 gold.
@@ -388,6 +403,7 @@ class LLMPlanner:
             comps="\n".join(f"- {t}: {', '.join(u)}" for t, u in comps.items()),
             comp_now=comp_now or "none yet (the executor picks one at round 11 unless you do)",
             state=json.dumps(state, ensure_ascii=False, separators=(",", ":")),
+            actions=round_actions(state),
         )
         self.calls += 1
         error, plan = None, None

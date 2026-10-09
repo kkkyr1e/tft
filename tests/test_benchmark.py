@@ -14,8 +14,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from tfteval import benchmark as bm  # noqa: E402
 
-CONFIG = bm.load_config()
+CONFIG = bm.load_config(bm.ROOT / "benchmarks" / "v1.json")
 V1_HASH = "3bc9bb108cc1c077"  # change only on purpose: a new hash is a new benchmark
+V2 = bm.load_config()
+V2_HASH = "d350c3ef563004e4"
 
 
 def test_the_v1_configuration_is_frozen():
@@ -28,6 +30,15 @@ def test_the_v1_configuration_is_frozen():
     assert not set(CONFIG["pools"]["dev"]["policies"]) & set(CONFIG["pools"]["heldout"]["policies"])
     assert bm.games_planned(CONFIG) == 312  # (1.96 x 2.25 / 0.25)^2
     assert bm.games_planned(CONFIG, sd=2.0, half_width=0.5) == 62
+
+
+def test_v2_is_v1_on_the_60_action_profile():
+    assert bm.config_hash(V2) == V2_HASH and V2["version"] == 2
+    assert {k: v for k, v in V2.items() if k not in ("_doc", "version")} == \
+        {k: v for k, v in CONFIG.items() if k not in ("_doc", "version")}
+    assert bm.config_sim(V2) == "realistic" and bm.config_sim(CONFIG) == "realistic15"  # v1 ran 15 actions
+    assert bm.sample_lobby(V2, "dev", 30005, "stance") == bm.sample_lobby(CONFIG, "dev", 30005, "stance")
+    assert bm.new_meta(V2, "stance", "set4", "dev", True, 312, "s", "h")["sim"] == "realistic"
 
 
 def test_config_hash_ignores_doc_keys_only():

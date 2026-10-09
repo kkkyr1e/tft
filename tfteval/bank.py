@@ -74,7 +74,7 @@ from pathlib import Path
 import numpy as np
 
 from tfteval import stages
-from tfteval.planner import SPEND_CAP, compile_knobs, xp_to_level
+from tfteval.planner import compile_knobs, spend_cap, xp_to_level
 from tfteval.stats import t_quantile
 
 SCHEMA = 1
@@ -307,11 +307,17 @@ def sim_settings(sim: str | None = None, rules: str | None = None, pickers: bool
 
 def recipe_settings(recipe: dict) -> dict:
     """A recipe's simulator settings (SETTING_KEYS). Recipes made before the simulator profiles (no
-    `sim` key) ran every fork option off and no carousel pickers: sim "default", pickers off."""
+    `sim` key) ran every fork option off and no carousel pickers: sim "default", pickers off. A recipe
+    recorded under an earlier definition of its profile names the profile that keeps it (LEGACY_PROFILES)."""
     if "sim" not in recipe:
         return {"rules": recipe.get("rules") or "set4", "sim": "default", "sim_options": {}, "pickers": False}
-    return {"rules": recipe.get("rules") or "set4", "sim": recipe["sim"], "sim_options": dict(recipe["sim_options"]),
-            "pickers": bool(recipe["pickers"])}
+    from tfteval.runner import LEGACY_PROFILES
+
+    sim, options = recipe["sim"], dict(recipe["sim_options"])
+    name, *overrides = [part.strip() for part in sim.split(",")]
+    if name in LEGACY_PROFILES and LEGACY_PROFILES[name][1](options):
+        sim = ",".join([LEGACY_PROFILES[name][0], *overrides])
+    return {"rules": recipe.get("rules") or "set4", "sim": sim, "sim_options": options, "pickers": bool(recipe["pickers"])}
 
 
 def make_recipe(lineup: str, seed: int, point: str, settings: dict | None = None) -> dict:
@@ -622,7 +628,7 @@ def label_item(item: dict, sd_floor: float = SD_FLOOR) -> dict:
 def plan_signature(plan: dict, state: dict) -> tuple[int, int]:
     """(gold the plan puts into xp, gold it puts into rerolls) this round, as intended: xp toward the
     plan's target level (level_to, a level_by target, or xp_buys) and rerolls down to its floor (or a
-    spend target), rerolls capped at SPEND_CAP (what one round's 15 actions can spend)."""
+    spend target), rerolls capped at planner.spend_cap (what one round's actions can spend)."""
     knobs = compile_knobs(plan, state)
     level, xp, gold = int(state["level"]), int(state["xp"]), int(state["gold"])
     target = max(level, int(knobs["level_to"]))
@@ -634,7 +640,7 @@ def plan_signature(plan: dict, state: dict) -> tuple[int, int]:
     floor = int(knobs["roll_floor"])
     if plan.get("spend") and not knobs["survival"]:
         floor = min(floor, int(plan["spend"]["to"]))
-    roll_gold = min(max(0, gold - xp_gold - floor), SPEND_CAP)
+    roll_gold = min(max(0, gold - xp_gold - floor), spend_cap(state))
     return xp_gold, roll_gold
 
 

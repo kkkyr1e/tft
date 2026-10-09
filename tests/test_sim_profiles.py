@@ -15,8 +15,10 @@ from tfteval.runner import SIM_PROFILES, Game, sim_options  # noqa: E402
 
 def test_sim_options_parse_profiles_and_overrides(monkeypatch):
     assert sim_options("default") == ("default", {})
-    assert sim_options("realistic")[1] == {"pve_damage": True, "fortune_orbs": True, "carousel_fixes": True,
-                                           "hide_next_opponent": True, "rng_streams": "keyed"}
+    old = {"pve_damage": True, "fortune_orbs": True, "carousel_fixes": True, "hide_next_opponent": True,
+           "rng_streams": "keyed"}
+    assert sim_options("realistic")[1] == {**old, "max_actions_per_round": 60}
+    assert sim_options("realistic15")[1] == old  # "realistic" until 2026-10-09
     spec, opts = sim_options("realistic, rng_streams=shared")
     assert opts == {**SIM_PROFILES["realistic"], "rng_streams": "shared"}
     assert sim_options("default,hide_next_opponent=true")[1] == {"hide_next_opponent": True}
@@ -28,6 +30,20 @@ def test_sim_options_parse_profiles_and_overrides(monkeypatch):
         sim_options("realistc")
     with pytest.raises(ValueError):
         sim_options("realistic,pve_damage")
+
+
+def test_a_recipe_recorded_under_the_old_realistic_replays_as_realistic15():
+    from tfteval import bank
+
+    old = {"pve_damage": True, "fortune_orbs": True, "carousel_fixes": True, "hide_next_opponent": True,
+           "rng_streams": "keyed"}
+    recipe = {"sim": "realistic", "sim_options": old, "rules": "set4", "pickers": True}
+    assert bank.game_kwargs(recipe) == {"rules": "set4", "sim": "realistic15", "pickers": True}
+    shared = {"sim": "realistic,rng_streams=shared", "sim_options": {**old, "rng_streams": "shared"}, "rules": "set4",
+              "pickers": True}
+    assert bank.game_kwargs(shared)["sim"] == "realistic15,rng_streams=shared"
+    new = {"sim": "realistic", "sim_options": {**old, "max_actions_per_round": 60}, "rules": "set4", "pickers": True}
+    assert bank.game_kwargs(new)["sim"] == "realistic"
 
 
 class Watch:

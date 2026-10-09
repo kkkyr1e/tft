@@ -32,7 +32,10 @@ from pathlib import Path
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
-CONFIG = ROOT / "benchmarks" / "v1.json"
+CONFIG = ROOT / "benchmarks" / "v2.json"
+# a configuration frozen while a simulator profile had another definition plays the profile that keeps it:
+# v1 ran "realistic" with 15 actions per planning phase, now "realistic15" (tfteval/runner.py SIM_PROFILES)
+LEGACY_SIM = {1: {"realistic": "realistic15"}}
 HERO = "hero"
 BANK_SCRIPT = ROOT / "scripts" / "score_bank.py"
 BANK_CMD = "{python} {script} {bank} --agent {scorer} --rules {rules} --out {out}"  # scripts/score_bank.py's CLI
@@ -46,6 +49,11 @@ class ConfigMismatch(ValueError):
 
 def load_config(path=CONFIG) -> dict:
     return json.loads(Path(path).read_text())
+
+
+def config_sim(config: dict) -> str:
+    """The simulator profile a configuration's games are played under (LEGACY_SIM for old versions)."""
+    return LEGACY_SIM.get(config.get("version"), {}).get(config["sim"], config["sim"])
 
 
 def config_hash(config: dict) -> str:
@@ -123,7 +131,7 @@ def new_meta(config: dict, agent: str, track: str, pool: str, record: bool, plan
              sim_commit: str | None, harness: str | None) -> dict:
     return {"benchmark": f"{config['name']}-v{config['version']}", "config_hash": config_hash(config),
             "config": {k: v for k, v in config.items() if not k.startswith("_")}, "agent": agent_kind(agent),
-            "track": track, "rules": track_rules(config, track), "pool": pool, "sim": config["sim"],
+            "track": track, "rules": track_rules(config, track), "pool": pool, "sim": config_sim(config),
             "record": bool(record), "planned_games": planned, "first_seed": config["pools"][pool]["first_seed"],
             "sim_commit": sim_commit, "harness_commit": harness}
 
@@ -191,7 +199,7 @@ def play_one(job: tuple) -> dict:
 
     lobby = sample_lobby(config, pool, seed, agent)
     seats = {seat: make_policy(spec) for seat, spec in lobby["seats"].items()}
-    result = play_game(seats, seed, rules=track_rules(config, track), sim=config["sim"],
+    result = play_game(seats, seed, rules=track_rules(config, track), sim=config_sim(config),
                        pickers=bool(config.get("carousel_pickers", True)),
                        record=[lobby["hero_seat"]] if record else False)
     return {"seed": seed, "hero_seat": lobby["hero_seat"], "lobby": lobby["seats"],

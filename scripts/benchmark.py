@@ -75,7 +75,7 @@ def run(args, config: dict) -> None:
         print(HELDOUT_WARNING, flush=True)
     planned = bm.games_planned(config, args.sd, args.half_width)
     print(f"benchmark {config['name']}-v{config['version']} (config {bm.config_hash(config)}): agent {args.agent}, "
-          f"track {args.track} ({rules}), {pool} pool, sim {config['sim']}", flush=True)
+          f"track {args.track} ({rules}), {pool} pool, sim {bm.config_sim(config)}", flush=True)
     print(f"sample size: {bm.needed_note(config, args.sd, args.half_width)}", flush=True)
     games = args.games or planned
     if args.games and args.games != planned:
@@ -101,7 +101,7 @@ def run(args, config: dict) -> None:
     print(f"{len(done)} games already in {out}, {len(todo)} to play, {args.workers} workers", flush=True)
 
     # play_one passes rules, sim, pickers and recording explicitly; these cover code that reads the defaults
-    os.environ["TFT_RULES"], os.environ["TFT_SIM"] = rules, config["sim"]
+    os.environ["TFT_RULES"], os.environ["TFT_SIM"] = rules, bm.config_sim(config)
     harness = meta["harness_commit"]
     started = time.time()
     jobs = [(config, args.agent, args.track, pool, seed, args.record) for seed in todo]
@@ -144,7 +144,7 @@ def main():
     parser.add_argument("--games", type=int, help="override the planned number of games (smoke runs)")
     parser.add_argument("--half-width", type=float, help="target 95%% half width in places (default from config)")
     parser.add_argument("--sd", type=float, help="measured SD of placement per game (default from config)")
-    parser.add_argument("--config", default=str(bm.CONFIG), help="benchmark configuration (default benchmarks/v1.json)")
+    parser.add_argument("--config", default=str(bm.CONFIG), help="benchmark configuration (default benchmarks/v2.json)")
     parser.add_argument("--out", help="results JSON (resumable)")
     parser.add_argument("--scorecard", nargs="+", metavar="RESULTS", help="print the card of existing results")
     parser.add_argument("--compare", help="results of a comparison agent (same config, track and pool)")

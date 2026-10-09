@@ -11,7 +11,8 @@ from contextlib import contextmanager
 import numpy as np
 import pytest
 
-from tfteval.planner import (LLMPlanner, ParamPlanner, XP_BUY_CAP, compile_knobs, xp_to_level)
+from tfteval.planner import (SPEND_CAP, LLMPlanner, ParamPlanner, XP_BUY_CAP, compile_knobs, spend_cap, xp_buy_cap,
+                             xp_to_level)
 
 BASE = {"comp": None, "level_to": 5, "roll_floor": 999, "carry": None}
 
@@ -41,6 +42,17 @@ def test_level_by_buys_as_late_as_the_action_cap_allows():
     assert late["level_to"] == 8
     done = compile_knobs(plan, state(15, level=8))
     assert done["level_to"] == 7 and not done["xp_priority"]  # reached: the field is inert
+
+
+def test_round_caps_scale_with_the_games_action_budget():
+    plan = {**BASE, "level_to": 7, "level_by": {"level": 8, "by": "4-1"}}
+    before = compile_knobs(plan, {**state(14, gold=60, level=7), "actions": 60})  # 14 buys fit in one round
+    assert xp_buy_cap({"actions": 60}) == 4 * XP_BUY_CAP and before["xp_buys"] == 0
+    assert spend_cap({}) == SPEND_CAP and spend_cap({"actions": 60}) == 4 * SPEND_CAP
+    spend = {**BASE, "roll_floor": 99, "spend": {"to": 10, "rounds": 2}}
+    at15 = compile_knobs(spend, state(20, gold=100))
+    at60 = compile_knobs(spend, {**state(20, gold=100), "actions": 60})
+    assert at15["roll_floor"] == 100 - (90 - SPEND_CAP) and at60["roll_floor"] == 100 - 45  # 90 to spend in 2 rounds
 
 
 def test_level_by_relative_rounds():
