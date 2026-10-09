@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import math
 import time
+import traceback
 
 import numpy as np
 
@@ -118,7 +119,10 @@ def play_side(spec: dict, side: int) -> dict:
     branches = []
     for k in range(int(spec["k"])):
         for c in cands:
-            b = bank.play_branch(snap, seat, c, k, spec["continuation"])
+            try:
+                b = bank.play_branch(snap, seat, c, k, spec["continuation"])
+            except Exception as err:  # noqa: BLE001 - a crashed branch is kept with its traceback, without a place
+                b = {"cand": c["name"], "k": k, "place": None, "error": repr(err), "traceback": traceback.format_exc()}
             branches.append({"side": side, **b})
     return {"side": side, "edit": edit, "changed": changed, "recipe": recipe, "base": base,
             "fingerprint_hash": edited, "public_state": state, "comp_now": comp_now,

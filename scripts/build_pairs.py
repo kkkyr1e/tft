@@ -20,6 +20,7 @@ import json
 import os
 import sys
 import time
+import traceback
 from concurrent.futures import FIRST_COMPLETED, ProcessPoolExecutor, wait
 from pathlib import Path
 
@@ -143,11 +144,16 @@ def main():
                 try:
                     sides.setdefault(i, []).append(fut.result())
                 except Exception as err:  # noqa: BLE001 - report and go on with the other pairs
-                    print(f"  #{spec['seed']}@{spec['point']} side {side} failed: {err!r}", flush=True)
+                    print(f"  #{spec['seed']}@{spec['point']} side {side} failed: {err!r}\n"
+                          f"{''.join(traceback.format_exception(err))}", flush=True)
                     sides.setdefault(i, []).append(None)
                     continue
+                errors = [b for b in sides[i][-1]["branches"] if b.get("error")]
                 print(f"  #{spec['seed']}@{spec['point']} side {side} done in {sides[i][-1]['seconds']:.0f}s "
-                      f"({(time.time() - started) / 60:.0f} min)", flush=True)
+                      f"({(time.time() - started) / 60:.0f} min)" + (f"; {len(errors)} branches crashed" if errors else ""),
+                      flush=True)
+                for b in errors[:2]:
+                    print(f"    {b['cand']} k={b['k']}: {b['traceback']}", flush=True)
                 if len(sides[i]) == 2 and None not in sides[i]:
                     pair = pairs.assemble(spec, sides[i])
                     with open(args.out, "a") as fh:
