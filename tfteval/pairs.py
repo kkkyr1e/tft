@@ -20,6 +20,7 @@ inert (interest is capped at 50 and the round's action cap limits rolls), so gol
 
 from __future__ import annotations
 
+import json
 import math
 import time
 import traceback
@@ -27,6 +28,7 @@ import traceback
 import numpy as np
 
 from tfteval import bank, bank2
+from tfteval.planner import ACTIONS_PER_ROUND
 
 SCHEMA = 1
 AXES = ("hp", "gold")
@@ -68,8 +70,8 @@ def apply_edit(game, seat: str, edit: dict) -> dict:
 
 
 def set_action_budget(game, actions: int) -> None:
-    """Every seat's per-round action budget from this planning phase on (the simulator's
-    TFTConfig.max_actions_per_round, 15 by default; the current phase's remaining budget too)."""
+    """Every seat's per-round action budget from this planning phase on (TFTConfig.max_actions_per_round:
+    15 in the simulator, 60 in the realistic profile; the current phase's remaining budget too)."""
     env = game.env.unwrapped
     env.max_actions_per_round = int(actions)
     manager = env.player_manager
@@ -85,7 +87,31 @@ def candidate(name: str, rounds: int = bank2.COMMIT_ROUNDS) -> dict:
 
 
 def pair_id(lineup: str, seed: int, point: str, axis: str, values, actions: int | None = None) -> str:
+    """The pair's state and edit; the simulator settings are not in it (settings_key)."""
     return f"{lineup}#{seed}@{point}:{axis}={values[0]}|{values[1]}" + (f"@actions{actions}" if actions else "")
+
+
+def settings_key(recipe: dict) -> str:
+    """The simulator settings a pair was played with (bank.recipe_settings, so a "realistic" recipe from
+    before 2026-10-09 is realistic15) and the simulator commit: pairs with the same id and another key are
+    other games (e.g. 15 and 60 actions per planning phase)."""
+    s = bank.recipe_settings(recipe)
+    return json.dumps([s["sim"], s["sim_options"], s["rules"], s["pickers"], recipe.get("sim_commit")], sort_keys=True)
+
+
+def action_budget(pair: dict) -> tuple[int, int]:
+    """(actions per planning phase up to the decision point, from it on): the profile's
+    max_actions_per_round (the simulator's ACTIONS_PER_ROUND without it), then the pair's `actions`."""
+    start = int(bank.recipe_settings(pair["recipe"])["sim_options"].get("max_actions_per_round") or ACTIONS_PER_ROUND)
+    return start, int(pair.get("actions") or start)
+
+
+def latest(rows: list[dict]) -> list[dict]:
+    """One row per id and settings_key, in first-seen order: a later line replaces an earlier one."""
+    out: dict = {}
+    for r in rows:
+        out[(r["id"], settings_key(r["recipe"]))] = r
+    return list(out.values())
 
 
 def base_recipe(lineup: str, seed: int, point: str, settings: dict | None = None,

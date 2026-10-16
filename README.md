@@ -690,7 +690,7 @@ python scripts/score_bank.py results/bank/pilot.jsonl --agent stance mimic --sto
 
 `ref41` 和 `lowhp4` 的候选一样；同一局 `lowhp4` 也在 4-1 触发时两道题是同一个局面，`ref41` 直接拷 `lowhp4` 的分叉（`copied_from`，出题时 `lowhp4` 排在前面）。`ref41` 只是对照，只在三分之一的源对局上出题，免得它占题库的四成。
 
-**一回合 15 个动作的上限**（`max_actions_per_round` 保持 15，和 benchmark v1、循环赛一致）：买牌、卖牌、上下场、刷新、买经验都算动作，一回合大约只能 D 10 次左右。"D 到多少"的候选只有在上限之内 D 的次数不同才是不同的决定。第一轮试跑里 40 金时 `roll0`（D 到 0）和 `roll20` 都只 D 了 10 次，是同一个决定，所以 `lowhp4`/`ref41` 改成"尽量 D"（`roll_all`）和"D 到 30"（`roll30`）。这两个在 40 多金时分得开（`roll30` 只 D 约 5 次）；金币到 50 以上时 `roll30` 也会被上限卡住，两者又成了同一个决定，这时由下面的"合并"处理。其他层：`pairs3` 的 `roll10`、`streak4` 的 `roll30`、`losing3` 的 `roll20` 在各自的菜单里是唯一一个"D 到多少"的候选，上限只让它少 D 几次，不会和别的候选撞上。
+**一回合 15 个动作的上限**（这段写于 2026-10-09 改成 60 个动作之前，那时 `max_actions_per_round` 是 15，和 benchmark v1、循环赛一致。60 个动作下，下面这些候选重合的情况多半不会再出现（推断），题库 v2c 出题前要重看候选菜单，见 `docs/BANK_V2.md` 的"动作上限改成 60"）：买牌、卖牌、上下场、刷新、买经验都算动作，一回合大约只能 D 10 次左右。"D 到多少"的候选只有在上限之内 D 的次数不同才是不同的决定。第一轮试跑里 40 金时 `roll0`（D 到 0）和 `roll20` 都只 D 了 10 次，是同一个决定，所以 `lowhp4`/`ref41` 改成"尽量 D"（`roll_all`）和"D 到 30"（`roll30`）。这两个在 40 多金时分得开（`roll30` 只 D 约 5 次）；金币到 50 以上时 `roll30` 也会被上限卡住，两者又成了同一个决定，这时由下面的"合并"处理。其他层：`pairs3` 的 `roll10`、`streak4` 的 `roll30`、`losing3` 的 `roll20` 在各自的菜单里是唯一一个"D 到多少"的候选，上限只让它少 D 几次，不会和别的候选撞上。
 
 **2. 配对的逐步淘汰（不做粗筛）。** 每个候选先跑 k = 0…7（`K_START`=8）。第一次看时先**合并重复**：某个候选在这 8 个分叉里每个分叉每回合的动作都和菜单里排在前面的某个候选完全相同，就并到那个候选上（记在 `race.merged`，后者 → 前者），不再给它分叉，它已有的分叉不算进预算，标签用前者的；只有所有候选都相同才丢题。之后每看一次：在所有还在场的候选共有的 k 上，平均名次最低的是领先者；其余每个候选和领先者逐 k 相减，平均差大于 2 个配对标准误（`ELIM_Z`；标准误 = max(标准差, 1 名) / √n，下限防止样本少时标准差碰巧为 0）就停掉。剩下的每个再加 4 个分叉（`K_STEP`），直到只剩一个，或者剩下的都到了 24 个（`K_MIN`）而预算不够再加一轮，或者到了 32 个（`K_MAX`），或者预算不够每个再加一个。预算按候选算：每个（合并之后）不同的候选 16 个分叉（`BUDGET_PER_CAND`），3 个候选 48、4 个候选 64。被停掉的候选保留它已有的 k。淘汰的过程（每次看的均值、差、标准误、停掉谁）存在 `race` 里；整个过程只取决于各分叉的名次，所以可以用存着的分叉重放（`bank2.replay_race`），也可以换更大的预算接着跑（`--extend`：重建、核对指纹，已有的分叉照用，只补缺的；结果和直接用新预算出题完全一样）。
 
@@ -719,7 +719,7 @@ python scripts/score_bank2.py results/bank2/bank.jsonl --agent stance mimic --st
 python scripts/rule_check_bank2.py results/bank2/bank.jsonl
 ```
 
-续跑时跳过文件里已有的题；续打策略、模拟器设置、某层的定义（窗口、条件、候选）和已有的题不一致就拒绝，淘汰参数不一致时也拒绝，除非给 `--extend`（这时按新参数重跑淘汰）。
+续跑时跳过文件里已有的题；续打策略、模拟器设置、模拟器提交、某层的定义（窗口、条件、候选）和已有的题不一致就拒绝。淘汰参数不一致、或者某层的候选只是加了几个时，给 `--extend` 才续：有决策点的题按新参数（新候选）重跑淘汰，没触发的题按新候选重写一行（`bank2.resume_check`）。`score_bank2.py` 也拒绝混了几个模拟器提交的文件。
 
 **题目的字段**（JSONL 一行一题，和 v1 相同的不再重复）：`schema` 2；`id`（`lineup#seed@层`）、`stratum`、`point`（触发的回合，没触发为空）；`trigger`（出题时这一层的窗口、条件、候选、承诺长度、`sample_mod`）；`scan`（窗口里打过的每回合的特征和是否触发）；`features`（触发那一回合的特征）；`racing`（`k_start`、`k_step`、`k_min`、`k_max`、`budget_per_cand`、`z`、`sd_floor`）；`branches`（每个分叉：`cand`、`k`、`look` 第几次看时跑的、`place`、`actions`、`applied`/`changed`、`steps`、`fallbacks`、`seconds`）；`race`（`looks`：每次看时在场的候选、`n`、领先者、各候选均值、和领先者的差与标准误、停掉谁，第一次看还有 `merged`；`stop` 为什么停；`survivors`；`n` 每个候选的分叉数；`merged` 合并了哪些候选）；`copied_from`（从哪道题拷的分叉）；`reraced`（换参数重跑淘汰的记录）。标签不存，`score_bank2.py` 的输出里有（`labels`、每层的先验 `fits`）。
 
@@ -838,12 +838,13 @@ python scripts/validate_rubric.py --summarize --out results/rubric/validate_stan
 - **局数**：用 `tfteval.stats.games_needed` 按目标区间算，默认 ±0.25 名、每局标准差 2.25（方针第 1 节的单局标准差），即 312 局，开跑前打出来。`--sd` 换成实测的标准差；续跑时也会打出到目前为止实测的标准差和它对应的局数，但计划的局数不变。`--games` 可以覆盖（冒烟用，卡片上会显示没跑够）。结果每局写一次，中断后重跑接着跑。
 
 ```bash
-# 开发池、set4，记录 hero 的逐回合（rubric 和多样性要用）
-python scripts/benchmark.py --agent stance --track set4 --record --workers 3 --out results/bench/v1_set4_dev_stance.json
-# 已有结果的记分卡（几个文件会先合并，要给 --out），附一个对照 agent
-python scripts/benchmark.py --scorecard results/bench/v1_set4_dev_stance.json --compare results/bench/v1_set4_dev_mimic.json
+# 开发池、set4，记录 hero 的逐回合（rubric 和多样性要用）；不给 --config 就是 v2
+python scripts/benchmark.py --agent stance --track set4 --record --workers 3 --out results/bench/v2_set4_dev_stance.json
+# 已有结果的记分卡（几个文件会先合并，要给 --out），附一个对照 agent；v1 的结果要给 --config benchmarks/v1.json
+python scripts/benchmark.py --config benchmarks/v1.json --scorecard results/bench/v1_set4_dev_stance.json \
+    --compare results/bench/v1_set4_dev_mimic.json
 # 只在里程碑跑：保留池
-python scripts/benchmark.py --agent stance --track set4 --heldout --record --out results/bench/v1_set4_heldout_stance.json
+python scripts/benchmark.py --agent stance --track set4 --heldout --record --out results/bench/v2_set4_heldout_stance.json
 ```
 
 **记分卡**（Markdown 打到屏幕上，另写 `.scorecard.json` 和 `.scorecard.md` 放在结果旁边）：
@@ -859,7 +860,7 @@ python scripts/benchmark.py --agent stance --track set4 --heldout --record --out
 
 冒烟（`--agent stance --record --games 1`，种子 30000，房间里 1 个姿态家族对手，1 个进程）：第 6 名，31 秒，`items_on_non_carries` 标记，`level_short` 2 次，其余门槛 0，记分卡各块都出来了；重跑时跳过已有的局，换 agent 或换赛道续写同一个文件都被拒绝。
 
-**第一次正式跑**（2026-10-08，set4、开发池、种子 30000～30311、每个 agent 312 局、`--record`，3 个进程，模拟器 2ba01d5、harness 1354633；结果在 `results/bench/`，整局文件是 gzip 过的 JSON，`gunzip` 后可以给 `--scorecard` 续用）：
+**第一次正式跑**（v1，15 个动作；2026-10-08，set4、开发池、种子 30000～30311、每个 agent 312 局、`--record`，3 个进程，模拟器 2ba01d5、harness 1354633；结果在 `results/bench/`，整局文件是 gzip 过的 JSON，`gunzip` 后可以给 `--scorecard` 续用）：
 
 | agent | 平均名次 | 前四 | 吃鸡 | 实测每局标准差 | `died_with_gold` | `banked_without_leveling` | `items_on_non_carries` |
 |---|---|---|---|---|---|---|---|
@@ -877,7 +878,8 @@ python scripts/benchmark.py --agent stance --track set4 --heldout --record --out
 **还没做的**：
 
 - 三项都还没有用 `validate_rubric.py` 验证和名次的关系，阈值是第一版的猜测；按方针，验证后和名次无关的项要删掉。
-- 每局标准差 2.25 是旧模拟器上"1 个规则 bot 对 7 个规则 bot"测的；混合房间、`realistic` 下实测 2.06～2.40，312 局的计划不用改。
+- 每局标准差 2.25 是旧模拟器上"1 个规则 bot 对 7 个规则 bot"测的；混合房间、15 个动作的 `realistic`（现在的 `realistic15`）下实测 2.06～2.40，312 局的计划不用改。
+- v2（60 个动作）只跑了一部分：`stance+hold` 142/312 局（种子 30000～30141，`results/bench/v2_set4_dev_stance+hold.json`），2026-10-09 暂停；`stance`、`mimic` 还没跑。续跑用 `results/bench/bench_v2.sh`（`docs/BANK_V2.md` 的"暂停的跑"）。v1 和 v2 的名次不能放在一起比。
 - 多样性的三个信号是第一版，互信息在几百局上很粗；最终阵容对规则 bot 以外的打法（比如大模型）只能从场上推。
 
 ## 对模拟器的修正
@@ -915,7 +917,7 @@ fork 里另外加了几个选项，默认都关：
 | `tfteval/record.py` | 逐回合记录（可选）：每个被记录的座位每个备战阶段一行 |
 | `tfteval/rubric.py` | Rubric v1：硬门槛和三项规则检查、按策略汇总、存档内关联的估计 |
 | `tfteval/variety.py` | 打法多样性：最终阵容的分布和熵、早期信号与最终阵容的互信息、非劣判断 |
-| `tfteval/benchmark.py` | Benchmark v1：抽房间、配置哈希、结果文件的合并与拒绝、记分卡 |
+| `tfteval/benchmark.py` | Benchmark（配置在 `benchmarks/`）：抽房间、配置哈希、结果文件的合并与拒绝（哈希对不上时提示该用哪个配置）、记分卡 |
 | `benchmarks/v1.json` | Benchmark v1 的冻结配置（15 个动作） |
 | `benchmarks/v2.json` | Benchmark v2 的冻结配置（60 个动作，现在的默认） |
 | `tfteval/branching.py` | 存档、续打、分叉 |
@@ -930,10 +932,12 @@ fork 里另外加了几个选项，默认都关：
 | `tfteval/stats.py` | 平均名次与区间、配对差、以存档为单位的区间、所需局数 |
 | `tfteval/bank.py` | 决策题库：配方与状态指纹、候选承诺（`CommitPlanner`）、出题、标签、打分；脚本是 `scripts/build_bank.py`、`scripts/score_bank.py`，题在 `results/bank/` |
 | `tfteval/bank2.py` | 决策题库 v2：分层的触发式决策点、配对的逐步淘汰、贝叶斯明确题与准确率上限、交叉拟合的参照、规则检查；脚本是 `scripts/build_bank2.py`、`scripts/score_bank2.py`、`scripts/rule_check_bank2.py`，题在 `results/bank2/` |
+| `tfteval/pairs.py` | 读局面的成对题：同一局面只改主角的一个特征（血量或金币）做成两边，候选在两边用同样的分叉种子打，按 k 配对算交互作用并合并；报告按设置分组（续打策略、模拟器配置、每回合动作数、模拟器提交），续跑时拒绝设置不同的文件；脚本是 `scripts/build_pairs.py`，结果在 `results/bank2/pairs/` |
 | `scripts/` | 批量对局、比较两次运行、安装模拟器、按经济规则测扣血（`measure_damage.py`）、执行器冒烟对比（`smoke_executor.py`）、分叉实验与分析（`branching_validity.py`、`analyze_branching.py`）、两个策略的分叉对比（`branch_compare.py`）、姿态分布统计（`stance_report.py`）、记录对战与拟合胜率模型（`collect_fights.py`、`fit_winprob.py`）、benchmark（`benchmark.py`）、rubric 的存档内验证（`validate_rubric.py`）、决策题库出题和打分（`build_bank.py`、`score_bank.py`；v2 是 `build_bank2.py`、`score_bank2.py`、`rule_check_bank2.py`） |
 | `results/` | 原始对局结果；`results/branching/` 是分叉实验，`results/fork_smoke/` 是 fork 上的执行器冒烟（`results/fork_smoke2/` 是修正扣血表、改 `hold` 之后重跑的），`results/damage/` 是两套经济规则下的扣血实测，`results/fights/` 是记录下的对战（`mixed_9600` 旧模拟器，`fork_22000` 和 `fork_set18_23000` 在 fork 上），`results/crn_pilot/` 是 shared 对 keyed 随机流的分叉试点，`results/realistic_smoke/` 是 `realistic` 配置上的冒烟 |
 | `docs/PLAN.md` | 方针 |
 | `docs/STRATEGY.md` | 策略层方案 |
+| `docs/BANK_V2.md` | 决策题库 v2：方案、中期结果、成对题试点、动作上限改成 60、暂停的跑 |
 
 ## 许可
 

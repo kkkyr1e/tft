@@ -1,4 +1,4 @@
-== 4-1 hp 35 vs 85, roll_all - save (stance): 4 pairs
+== 4-1 hp 35 vs 85, roll_all - save (stance, realistic15 set4, 15 actions, sim 5e2cb1c): 4 pairs
   pair            base  ks          side 0 (hp 35)          side 1 (hp 85)     interaction  corr
   #9502       hp62 g66  48    -0.92 ±0.50 (5.62/6.54)    -0.40 ±0.34 (3.62/4.02)     -0.52 ±0.59  +0.07
   #9512       hp53 g50  48    -0.17 ±0.41 (6.42/6.58)    -0.04 ±0.28 (4.58/4.62)     -0.12 ±0.45  +0.16

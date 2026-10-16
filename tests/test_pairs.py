@@ -12,7 +12,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from tfteval import bank2, pairs  # noqa: E402
+from tfteval import bank, bank2, pairs  # noqa: E402
 
 
 class FakePlayer:
@@ -158,3 +158,22 @@ def test_set_action_budget_raises_every_seat_from_now_on():
     assert all(p.actions_remaining == 40 and p.actions_per_round == 40 for p in seats)
     assert pairs.pair_id("l", 1, "4-1", "hp", [35, 85], 40) == "l#1@4-1:hp=35|85@actions40"
     assert pairs.pair_id("l", 1, "4-1", "hp", [35, 85]) == "l#1@4-1:hp=35|85"
+
+
+def test_settings_key_and_budget_tell_15_from_60_actions():
+    r60 = {**bank.sim_settings("realistic", "set4"), "sim_commit": "abc"}
+    r15 = {**bank.sim_settings("realistic15", "set4"), "sim_commit": "abc"}
+    legacy = {**r15, "sim": "realistic"}  # recorded as "realistic" before 2026-10-09
+    assert pairs.settings_key(r60) != pairs.settings_key(r15) == pairs.settings_key(legacy)
+    assert pairs.settings_key({**r15, "sim_commit": "def"}) != pairs.settings_key(r15)
+    assert pairs.action_budget({"recipe": r60, "actions": None}) == (60, 60)
+    assert pairs.action_budget({"recipe": legacy, "actions": None}) == (15, 15)
+    assert pairs.action_budget({"recipe": r15, "actions": 40}) == (15, 40)
+
+
+def test_latest_keeps_one_row_per_id_and_settings():
+    r60 = {**bank.sim_settings("realistic", "set4"), "sim_commit": "abc"}
+    r15 = {**bank.sim_settings("realistic15", "set4"), "sim_commit": "abc"}
+    rows = [{"id": "p", "recipe": r15, "n": 1}, {"id": "p", "recipe": r60, "n": 2},
+            {"id": "p", "recipe": r15, "n": 3}, {"id": "q", "recipe": r15, "n": 4}]
+    assert [r["n"] for r in pairs.latest(rows)] == [3, 2, 4]

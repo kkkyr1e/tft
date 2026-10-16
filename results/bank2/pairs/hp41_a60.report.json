@@ -1,5 +1,5 @@
 {
- "4-1 hp 35 vs 85, roll_all - save (stance)": {
+ "4-1 hp 35 vs 85, roll_all - save (stance, realistic set4, 60 actions, sim ff4db16)": {
   "pairs": [
    {
     "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9518@4-1:hp=35|85",
@@ -113,7 +113,7 @@
    "random_se": 0.3026165758602133
   }
  },
- "4-1 hp 35 vs 85, roll_all - level_roll10 (stance)": {
+ "4-1 hp 35 vs 85, roll_all - level_roll10 (stance, realistic set4, 60 actions, sim ff4db16)": {
   "pairs": [
    {
     "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9518@4-1:hp=35|85",

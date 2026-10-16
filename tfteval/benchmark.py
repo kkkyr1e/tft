@@ -62,6 +62,15 @@ def config_hash(config: dict) -> str:
     return hashlib.sha256(json.dumps(body, sort_keys=True, separators=(",", ":")).encode()).hexdigest()[:16]
 
 
+def config_hint(digest: str) -> str:
+    """The end of a config-hash error: which file in benchmarks/ has this hash ("" if none)."""
+    for path in sorted((ROOT / "benchmarks").glob("v*.json")):
+        if config_hash(load_config(path)) == digest:
+            rel = path.relative_to(ROOT).as_posix()
+            return f"; it is {rel}'s (pass --config {rel})"
+    return ""
+
+
 def pool_name(heldout: bool) -> str:
     return "heldout" if heldout else "dev"
 
@@ -176,7 +185,7 @@ def merge_results(docs: list, config: dict | None = None) -> dict:
     base = docs[0]["meta"]
     if config is not None and base["config_hash"] != config_hash(config):
         raise ConfigMismatch(f"refusing results of config hash {base['config_hash']}; this configuration is "
-                             f"{config_hash(config)}")
+                             f"{config_hash(config)}{config_hint(base['config_hash'])}")
     warnings = []
     for doc in docs[1:]:
         warnings += check_meta(doc["meta"], base)
@@ -323,7 +332,8 @@ def scorecard(doc: dict, config: dict, compare: dict | None = None, bank: dict |
     `bank`: the output of bank_regret."""
     meta = doc["meta"]
     if meta["config_hash"] != config_hash(config):
-        raise ConfigMismatch(f"results are of config hash {meta['config_hash']}, not {config_hash(config)}")
+        raise ConfigMismatch(f"results are of config hash {meta['config_hash']}, not {config_hash(config)}"
+                             f"{config_hint(meta['config_hash'])}")
     if compare is not None:
         check_meta(compare["meta"], meta, keys=("config_hash", "track", "pool"))
     games = [g for g in doc["games"] if g["result"]["finished"]]

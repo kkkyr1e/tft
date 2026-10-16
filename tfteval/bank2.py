@@ -28,7 +28,7 @@ candidate: an eliminated candidate keeps the ks it had. At the first look, a can
 are identical to an earlier candidate's (menu order) in all its branches is merged into it: it gets no
 more branches, its first ones do not count toward the budget (the item is raced as if the menu were its
 distinct candidates), and it shares the earlier one's labels (`race.merged`; e.g. two roll depths that
-a round's 15 actions cannot tell apart). The race is a deterministic function of the outcomes, so a
+a round's action cap cannot tell apart). The race is a deterministic function of the outcomes, so a
 stored item can be re-raced (e.g. with a larger budget) by replaying its stored branches and playing the
 missing ones.
 
@@ -123,9 +123,10 @@ LOWHP_GOLD = 40
 REF_WINDOW = ("4-1", "4-1")
 REF_SAMPLE_MOD = 3            # ref41 items only for source games with seed % REF_SAMPLE_MOD == 0
 
-# Roll depths that the round's 15 actions (planner.ACTIONS_PER_ROUND) cannot tell apart are one decision:
-# at 40 gold "roll to 0" and "roll to 20" both rolled 10 times in the pilot. The deep option is therefore
-# "as much as the cap allows" (roll_all), the shallow one roll30 (5 rolls at 40 gold).
+# Roll depths that a round's actions cannot tell apart are one decision: under 15 actions (realistic15, the
+# profile these menus were chosen under) "roll to 0" and "roll to 20" both rolled 10 times at 40 gold in the
+# pilot. The deep option is therefore "as much as the cap allows" (roll_all), the shallow one roll30 (5 rolls
+# at 40 gold). The default profile allows 60 actions since 2026-10-09 (docs/BANK_V2.md).
 LOWHP_MENU = ("roll_all", "roll30", "level_roll10", "save")
 
 # name -> round window (first, last stage label), trigger (feature_min / feature_max bounds over
@@ -522,6 +523,7 @@ def build_item(lineup: str, seed: int, stratum: str, cfg: dict | None = None, co
         if (donor.get("fingerprint_hash") == item["fingerprint_hash"] and donor["recipe"]["round"] == fired
                 and donor["game"] == item["game"] and donor.get("racing") == cfg
                 and donor.get("continuation") == continuation and not donor.get("dropped")
+                and donor["recipe"].get("sim_commit") == recipe["sim_commit"]
                 and [c["name"] for c in donor["candidates"]] == [c["name"] for c in cands]
                 and [c["spec"] for c in donor["candidates"]] == [c["spec"] for c in cands]):
             item.update(branches=copy.deepcopy(donor["branches"]), race=copy.deepcopy(donor["race"]),
@@ -584,13 +586,54 @@ def rerace_item(item: dict, cfg: dict, harness: str | None = None) -> dict:
     return new
 
 
+def resume_check(items: list[dict], settings: dict, racing: dict, continuation: str, sim_commit: str | None,
+                 extend: bool = False) -> tuple[list[dict], dict]:
+    """Whether a build (scripts/build_bank2.py) may go on in a file holding `items`. ValueError when an
+    item was built with another continuation, simulator settings (bank.SETTING_KEYS), simulator commit or
+    stratum definition; with `extend`, an item whose stratum's menu has only grown since is extended
+    (extend_menu), a dropped one too. Returns (stale, extended): the items with a decision point to race
+    again (other racing settings, or a grown menu; ValueError unless `extend`) and the extended items by id."""
+    stale, extended = [], {}
+    for it in items:
+        mismatch = [] if it.get("continuation") == continuation else ["continuation"]
+        built = bank.recipe_settings(it["recipe"])
+        mismatch += [key for key in bank.SETTING_KEYS if built[key] != settings[key]]
+        if it["recipe"].get("sim_commit") != sim_commit:
+            mismatch.append(f"simulator {str(it['recipe'].get('sim_commit'))[:7]}, not {str(sim_commit)[:7]}")
+        grown = False
+        if it.get("trigger") != trigger_spec(it["stratum"]):
+            only_menu = ({k: v for k, v in it["trigger"].items() if k != "menu"}
+                         == {k: v for k, v in trigger_spec(it["stratum"]).items() if k != "menu"})
+            note = " (a menu that only adds candidates is raced again with --extend)" if only_menu else ""
+            if only_menu and extend:
+                try:
+                    it = extended[it["id"]] = extend_menu(it)
+                    grown = True
+                except ValueError:
+                    note = (f" (menu {[c['name'] for c in it['candidates']]} is not part of the current "
+                            f"{list(STRATA[it['stratum']]['menu'])})")
+            if not grown:
+                mismatch.append(f"stratum {it['stratum']} definition{note}")
+        if mismatch:
+            raise ValueError(f"holds {it['id']} built with other settings ({', '.join(mismatch)}); use another --out")
+        if (it.get("racing") != racing or grown) and it.get("fingerprint_hash"):
+            stale.append(it)
+    if stale and not extend:
+        raise ValueError(f"holds {len(stale)} items raced with other settings (e.g. {stale[0]['racing']}); "
+                         f"give the same racing settings, or --extend to race them again with these")
+    return stale, extended
+
+
 # --------------------------------------------------------------------------- labels
 
 CLEAR_P = 0.85            # clear item: the posterior probability of the best candidate is at least this
 VAR_PRIOR_DF = 8          # degrees of freedom of the stratum's pooled noise variance in an item's estimate
 SD_FLOOR = bank.SD_FLOOR  # floor of the per-branch paired SD in the posterior (places)
 MIN_FIT_ITEMS = 5         # a stratum with fewer usable items gets alpha = 0 and tau = TAU_FALLBACK
-TAU_FALLBACK = 0.26       # v1: SD of a true two-candidate difference about 0.37 at 4-1 / 5-1 (tau = 0.37/sqrt 2)
+# v1 (scripts/bank1_effects.py): the RMS of the true gap between two candidates was about 0.37 at 4-1 / 5-1, so
+# tau = 0.37/sqrt 2. That RMS includes the candidates' average effect, as it should here, where alpha is 0;
+# it is a 4-1 / 5-1 number of the v1 menu under 15 actions (at 3-2 v1 measured about 0): docs/BANK_V2.md.
+TAU_FALLBACK = 0.26
 POSTERIOR_DRAWS = 20000
 PRIORS = ("candidate", "zero")  # prior mean: the stratum's candidate effects alpha, or 0 (exchangeable)
 
@@ -731,7 +774,10 @@ def fit_stratum(items: list[dict], prior: str = "candidate", sd_floor: float = S
                 est, weight = (float((dd ** 2).mean()) - float(w.mean())) / 2.0, n
             num += weight * est
             den += weight
-    fit.update(tau2=max(0.0, num / den) if den else TAU_FALLBACK ** 2, tau_source="moments")
+    if den:
+        fit.update(tau2=max(0.0, num / den), tau_source="moments")
+    else:
+        fit.update(tau2=TAU_FALLBACK ** 2, tau_source="fallback")
     return fit
 
 
@@ -1201,9 +1247,9 @@ def heldout_oracle(data: dict, folds: int = BRANCH_FOLDS) -> dict:
 
 
 def vpi(fit: dict, names: list[str], draws: int = VPI_DRAWS, seed: int = 0) -> float:
-    """Value of perfect information under the stratum prior: E[min_c (alpha_c + u_c)] - min_c alpha_c with
-    u_c ~ N(0, tau^2), in places; how much an agent that reads every state perfectly gains on average over
-    the best fixed candidate (an upper bound for state reading on this menu)."""
+    """Value of perfect information under the stratum prior: min_c alpha_c - E[min_c (alpha_c + u_c)] with
+    u_c ~ N(0, tau^2), in places (>= 0); how much an agent that reads every state perfectly gains on average
+    over the best fixed candidate (an upper bound for state reading on this menu)."""
     alpha = np.array([fit["alpha"].get(c, 0.0) for c in names])
     tau = math.sqrt(fit["tau2"])
     u = np.random.default_rng(seed).normal(0.0, tau, size=(draws, len(names)))

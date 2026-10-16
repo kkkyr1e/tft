@@ -6,7 +6,6 @@ Everything but the tests marked "on the simulator" is pure Python on synthetic d
 import json
 import math
 import sys
-from collections import Counter
 from pathlib import Path
 
 import numpy as np
@@ -96,6 +95,37 @@ def test_extend_menu_adds_candidates_and_keeps_branches():
     assert bank2.extend_menu(out) is out
     with pytest.raises(ValueError):
         bank2.extend_menu({**item, "candidates": list(reversed(item["candidates"]))})
+
+
+def test_resume_check_extends_dropped_items_and_refuses_other_simulators():
+    settings = bank.sim_settings("realistic15", "set4")
+    racing = bank2.racing_config()
+    old_menu = ["streak", "roll20", "level_roll10"]
+    recipe = {**{key: settings[key] for key in bank.SETTING_KEYS}, "sim_commit": "abc"}
+    dropped = {"id": "g#1@losing3", "stratum": "losing3", "recipe": recipe, "continuation": "stance",
+               "racing": racing, "trigger": {**bank2.trigger_spec("losing3"), "menu": old_menu},
+               "candidates": [c for c in bank2.menu("losing3") if c["name"] in old_menu],
+               "dropped": "trigger did not fire"}
+    with pytest.raises(ValueError, match="--extend"):
+        bank2.resume_check([dropped], settings, racing, "stance", "abc")
+    stale, extended = bank2.resume_check([dropped], settings, racing, "stance", "abc", extend=True)
+    assert stale == [] and extended[dropped["id"]]["trigger"] == bank2.trigger_spec("losing3")
+    # with a decision point the grown menu is raced again: only with --extend
+    item = {**dropped, "id": "g#2@losing3", "dropped": None, "fingerprint_hash": "f"}
+    with pytest.raises(ValueError):
+        bank2.resume_check([item], settings, racing, "stance", "abc")
+    stale, extended = bank2.resume_check([item], settings, racing, "stance", "abc", extend=True)
+    assert [it["id"] for it in stale] == [item["id"]] and len(stale[0]["candidates"]) == len(bank2.LOSING_MENU)
+    current = {**item, "trigger": bank2.trigger_spec("losing3"), "candidates": bank2.menu("losing3")}
+    assert bank2.resume_check([current], settings, racing, "stance", "abc") == ([], {})
+    legacy = {**current, "recipe": {**recipe, "sim": "realistic"}}  # "realistic" before 2026-10-09: realistic15
+    assert bank2.resume_check([legacy], settings, racing, "stance", "abc") == ([], {})
+    with pytest.raises(ValueError, match="racing"):
+        bank2.resume_check([current], settings, bank2.racing_config(k_max=40), "stance", "abc")
+    for other in ((settings, racing, "stance", "def"), (settings, racing, "mimic", "abc"),
+                  (bank.sim_settings("realistic", "set4"), racing, "stance", "abc")):
+        with pytest.raises(ValueError, match="other settings"):
+            bank2.resume_check([current], *other, extend=True)
 
 
 def test_ref41_is_sampled_every_third_seed():

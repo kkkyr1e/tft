@@ -1,5 +1,5 @@
 {
- "3-1 hp 60 vs 90, streak - save (stance)": {
+ "3-1 hp 60 vs 90, streak - save (stance, realistic15 set4, 15 actions, sim 5e2cb1c)": {
   "pairs": [
    {
     "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9504@3-1:hp=60|90",

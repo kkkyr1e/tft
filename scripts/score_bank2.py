@@ -74,6 +74,9 @@ def main():
     found = {json.dumps(bank.recipe_settings(it["recipe"]), sort_keys=True) for it in items}
     if len(found) > 1:
         raise SystemExit(f"{path} mixes simulator settings: {sorted(found)}")
+    commits = {str(it["recipe"].get("sim_commit")) for it in items}
+    if len(commits) > 1:
+        raise SystemExit(f"{path} mixes simulator commits: {sorted(commits)}")
     if found and (args.sim or args.rules):
         built = json.loads(found.pop())
         want = bank.sim_settings(args.sim or built["sim"], args.rules or built["rules"], built["pickers"])

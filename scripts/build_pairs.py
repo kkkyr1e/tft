@@ -8,9 +8,12 @@
     python scripts/build_pairs.py --report results/bank2/pairs/hp41.jsonl
 
 Each pair is two jobs, one per side (rebuild, edit, play every candidate on k = 0..K-1); a pair is
-written when both of its sides are done. A rerun skips the pairs already in --out. The report prints,
-per pair, the mean places of the four cells, the side contrasts A - B and the interaction
-(A - B on side 0) - (A - B on side 1), all paired by k, and the interaction pooled over the pairs.
+written when both of its sides are done. A rerun skips the pairs already in --out; it refuses a file
+holding pairs played with another continuation, simulator settings or simulator commit, or the same pair
+with other candidates or k. The report prints, per group of pairs with the same settings (continuation,
+simulator profile, actions per planning phase, simulator commit), the mean places of the four cells of
+each pair, the side contrasts A - B and the interaction (A - B on side 0) - (A - B on side 1), all paired
+by k, and the interaction pooled over the pairs.
 """
 
 from __future__ import annotations
@@ -30,7 +33,7 @@ if os.environ.get("PYTHONHASHSEED") != "0":  # recipes only replay with a pinned
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from tfteval import bank, bank2, pairs  # noqa: E402
+from tfteval import bank, bank2, pairs, simfixes  # noqa: E402
 
 
 def make_pool(args) -> ProcessPoolExecutor:
@@ -52,8 +55,15 @@ def load(paths) -> list[dict]:
     for path in paths:
         if Path(path).exists():
             rows += [json.loads(line) for line in Path(path).read_text().splitlines() if line.strip()]
-    latest = {r["id"]: r for r in rows}  # a later line replaces an earlier one with the same id
-    return list(latest.values())
+    return pairs.latest(rows)  # a later line replaces an earlier one with the same id and settings
+
+
+def settings_label(r: dict) -> str:
+    s = bank.recipe_settings(r["recipe"])
+    start, after = pairs.action_budget(r)
+    return (f"{r['continuation']}, {s['sim']} {s['rules']}" + ("" if s["pickers"] else ", pickers off")
+            + f", {start} actions" + (f", {after} from the decision point" if after != start else "")
+            + f", sim {(r['recipe'].get('sim_commit') or '?')[:7]}")
 
 
 def fmt(s: dict) -> str:
@@ -66,9 +76,9 @@ def report(rows: list[dict]) -> dict:
     for r in rows:
         for b in r["cands"][1:]:
             groups.setdefault((r["axis"], tuple(r["values"]), r["cands"][0], b, r["point"], r["continuation"],
-                               r.get("actions")), []).append(r)
-    for (axis, values, a, b, point, cont, actions), rs in groups.items():
-        key = f"{point} {axis} {values[0]} vs {values[1]}, {a} - {b} ({cont}" + (f", {actions} actions)" if actions else ")")
+                               pairs.settings_key(r["recipe"]), r.get("actions")), []).append(r)
+    for (axis, values, a, b, point, *_), rs in groups.items():
+        key = f"{point} {axis} {values[0]} vs {values[1]}, {a} - {b} ({settings_label(rs[0])})"
         print(f"== {key}: {len(rs)} pairs")
         print(f"  {'pair':10} {'base':>9} {'ks':>3}  {f'side 0 ({axis} {values[0]})':>22}  "
               f"{f'side 1 ({axis} {values[1]})':>22}  {'interaction':>14}  corr")
@@ -102,7 +112,7 @@ def main():
     parser.add_argument("--cands", nargs="+", choices=list(bank2.CANDIDATES),
                         help="candidates; the report contrasts the first with each other one")
     parser.add_argument("--actions", type=int, help="every seat's per-round action budget from the decision point "
-                                                    "on (default: the simulator's, 15)")
+                                                    "on (default: the profile's, 60 for realistic)")
     parser.add_argument("--k", type=int, default=32, help="branches per cell (side x candidate)")
     parser.add_argument("--continuation", default="stance")
     parser.add_argument("--workers", type=int, default=1)
@@ -125,15 +135,26 @@ def main():
         parser.error("--cands needs at least two candidates")
     settings = bank.sim_settings(args.sim, args.rules)
     harness = bank.harness_commit()
-    done = {r["id"] for r in load([args.out])}
+    this = {"recipe": {**settings, "sim_commit": simfixes.sim_commit()}, "continuation": args.continuation,
+            "actions": args.actions}
+    done = {}
+    for r in load([args.out]):
+        if pairs.settings_key(r["recipe"]) != pairs.settings_key(this["recipe"]) or r["continuation"] != args.continuation:
+            raise SystemExit(f"{args.out} holds {r['id']} played with other settings ({settings_label(r)}; this run: "
+                             f"{settings_label(this)}); use another --out")
+        done[r["id"]] = r
     specs = []
     for text in args.states:
         seed, point = text.split("@")
         spec = {"lineup": args.lineup, "seed": int(seed), "point": point, "axis": args.axis, "values": list(args.values),
                 "cands": list(args.cands), "k": args.k, "continuation": args.continuation, "settings": settings,
                 "harness": harness, "actions": args.actions}
-        if pairs.pair_id(args.lineup, int(seed), point, args.axis, args.values, args.actions) not in done:
+        pid = pairs.pair_id(args.lineup, int(seed), point, args.axis, args.values, args.actions)
+        if pid not in done:
             specs.append(spec)
+        elif (done[pid]["cands"], done[pid]["k"]) != (list(args.cands), args.k):
+            raise SystemExit(f"{args.out} holds {pid} with candidates {done[pid]['cands']} and k {done[pid]['k']}, "
+                             f"not {list(args.cands)} and {args.k}; use another --out")
     print(f"{len(specs)} pairs to build ({len(done)} already in {args.out}); {args.axis} {args.values[0]} vs "
           f"{args.values[1]}, {args.cands[0]} vs {args.cands[1]}, {args.k} branches per cell, {args.workers} workers, "
           f"harness {harness}, sim {settings}", flush=True)

@@ -19,11 +19,13 @@ candidate). A game whose trigger never fires (or whose hero is out first) is wri
 ref41 is a reference stratum and only every REF_SAMPLE_MOD-th seed (seed % 3 == 0) gets an item of it.
 
 A rerun skips the items already in --out, so a build can be stopped and resumed. The settings (racing,
-continuation, simulator, strata definitions) must match the items already in the file, or the build is
-refused; with --extend, items raced with other racing settings are raced again with these (their
-branches are reused, the missing ones played from the rebuilt state; a later line replaces an earlier
-one with the same id). ref41 at 4-1 is the same state and menu as lowhp4 when that fires at 4-1: it then
-copies lowhp4's branches (`copied_from`) instead of playing them again (jobs run lowhp4 first).
+continuation, simulator settings and commit, strata definitions) must match the items already in the
+file, or the build is refused (tfteval.bank2.resume_check); with --extend, items raced with other racing
+settings, or with a menu the stratum has since grown, are raced again with these (their branches are
+reused, the missing ones played from the rebuilt state; a later line replaces an earlier one with the same
+id), and dropped items of a grown menu are written again with it. ref41 at 4-1 is the same state and menu
+as lowhp4 when that fires at 4-1: it then copies lowhp4's branches (`copied_from`) instead of playing them
+again (jobs run lowhp4 first).
 
 Simulator settings as in build_bank.py (--sim, --rules, TFT_PICKERS). The CPU is shared: --workers
 defaults to 1; run it under `nice -n 19` when other jobs are running.
@@ -47,7 +49,7 @@ if os.environ.get("PYTHONHASHSEED") != "0":  # recipes only replay with a pinned
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from tfteval import bank, bank2, stages  # noqa: E402
+from tfteval import bank, bank2, simfixes, stages  # noqa: E402
 
 # lowhp4 before ref41: ref41 copies lowhp4's branches when both are the same 4-1 state
 JOB_ORDER = ("pairs3", "losing3", "lowhp4", "streak4", "ref41")
@@ -159,7 +161,7 @@ def main():
     if args.scan_only:
         rows = [json.loads(line) for line in out.read_text().splitlines() if line.strip()] if out.exists() else []
         for r in rows:
-            if r["settings"] != {k: settings[k] for k in bank.SETTING_KEYS}:
+            if bank.recipe_settings(r["settings"]) != {k: settings[k] for k in bank.SETTING_KEYS}:
                 raise SystemExit(f"{out} holds {r['game']} scanned with other settings; use another --out")
         done = {r["game"] for r in rows}
         first = min(stages.parse_label(bank2.STRATA[s]["window"][0]) for s in args.strata)
@@ -193,32 +195,17 @@ def main():
         return
 
     items = bank.load_items(out) if out.exists() else []
-    stale, extended = [], {}
-    for it in items:
-        mismatch = [] if it.get("continuation") == args.continuation else ["continuation"]
-        built = bank.recipe_settings(it["recipe"])
-        mismatch += [key for key in bank.SETTING_KEYS if built[key] != settings[key]]
-        grown = False
-        if it.get("trigger") != bank2.trigger_spec(it["stratum"]):
-            only_menu = ({k: v for k, v in it["trigger"].items() if k != "menu"}
-                         == {k: v for k, v in bank2.trigger_spec(it["stratum"]).items() if k != "menu"})
-            if only_menu and args.extend and it.get("fingerprint_hash"):
-                try:
-                    it = extended[it["id"]] = bank2.extend_menu(it)
-                    grown = True
-                except ValueError:
-                    pass
-            if not grown:
-                mismatch.append(f"stratum {it['stratum']} definition"
-                                + (" (a menu that only adds candidates is raced again with --extend)" if only_menu else ""))
-        if mismatch:
-            raise SystemExit(f"{out} holds {it['id']} built with other settings ({', '.join(mismatch)}); "
-                             f"use another --out")
-        if (it.get("racing") != racing or grown) and it.get("fingerprint_hash"):
-            stale.append(it)
-    if stale and not args.extend:
-        raise SystemExit(f"{out} holds {len(stale)} items raced with other settings (e.g. {stale[0]['racing']}); "
-                         f"give the same racing settings, or --extend to race them again with these")
+    try:
+        stale, extended = bank2.resume_check(items, settings, racing, args.continuation, simfixes.sim_commit(),
+                                             args.extend)
+    except ValueError as err:
+        raise SystemExit(f"{out} {err}") from None
+    regrown = [it for it in extended.values() if not it.get("fingerprint_hash")]
+    if regrown:  # dropped: nothing to race, so the grown menu is written now
+        with out.open("a") as fh:
+            for it in regrown:
+                fh.write(json.dumps(it) + "\n")
+        print(f"{len(regrown)} dropped items written again with their stratum's grown menu", flush=True)
     items = [extended.get(it["id"], it) for it in items]
     done = {it["id"]: it for it in items}
     order = {s: i for i, s in enumerate(JOB_ORDER)}

@@ -1,4 +1,4 @@
-== 3-1 hp 60 vs 90, streak - save (stance): 3 pairs
+== 3-1 hp 60 vs 90, streak - save (stance, realistic15 set4, 15 actions, sim 5e2cb1c): 3 pairs
   pair            base  ks          side 0 (hp 60)          side 1 (hp 90)     interaction  corr
   #9504       hp74 g53  32    +0.47 ±0.94 (6.34/5.88)    -0.09 ±0.60 (3.97/4.06)     +0.56 ±0.98  +0.25
   #9511       hp74 g47  32    +0.34 ±0.70 (6.16/5.81)    +0.41 ±0.68 (5.03/4.62)     -0.06 ±0.95  +0.05
