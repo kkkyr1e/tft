@@ -42,15 +42,15 @@ def opp(seat: str, board=EVEN, hp=80, level=6, streak=0, interest=3) -> dict:
 
 
 def make_state(idx=12, hp=80, gold=50, level=6, xp=0, streak=0, board=EVEN, bench=(), opponents=None,
-               next_from=None, comp=None, rules="set4") -> dict:
+               next_from=None, comp=None, rules="set4", actions=15) -> dict:
     """A synthetic describe() state (test_synthetic_state_has_the_describe_keys checks the keys)."""
     sched = stages.schedule(idx)
     opponents = [opp(f"player_{i}") for i in range(1, 8)] if opponents is None else opponents
     state = {
         "round": idx, "rules": rules, "stage": sched["stage"], "pve": sched["pve"],
         "next": {"carousel": sched["to_carousel"], "pve": sched["to_pve"], "stage": sched["to_stage"]},
-        "hp": hp, "gold": gold, "level": level, "xp": xp, "xp_needed": level_costs(rules)[level], "streak": streak,
-        "dmg_per_loss": stages.damage_per_loss(idx, rules), "losses_to_death": stages.losses_to_death(hp, idx, rules),
+        "hp": hp, "gold": gold, "level": level, "xp": xp, "xp_needed": level_costs(rules)[level], "actions": actions,
+        "streak": streak, "dmg_per_loss": stages.damage_per_loss(idx, rules), "losses_to_death": stages.losses_to_death(hp, idx, rules),
         "board": [own(t) for t in board], "bench": [own(t) for t in bench], "item_bench": [], "shop": [],
         "active_traits": {},
         "hp_rank": 1 + sum(o["hp"] > hp for o in opponents), "alive": len(opponents) + 1,

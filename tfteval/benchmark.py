@@ -32,7 +32,10 @@ from pathlib import Path
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
-CONFIG = ROOT / "benchmarks" / "v1.json"
+CONFIG = ROOT / "benchmarks" / "v2.json"
+# a configuration frozen while a simulator profile had another definition plays the profile that keeps it:
+# v1 ran "realistic" with 15 actions per planning phase, now "realistic15" (tfteval/runner.py SIM_PROFILES)
+LEGACY_SIM = {1: {"realistic": "realistic15"}}
 HERO = "hero"
 BANK_SCRIPT = ROOT / "scripts" / "score_bank.py"
 BANK_CMD = "{python} {script} {bank} --agent {scorer} --rules {rules} --out {out}"  # scripts/score_bank.py's CLI
@@ -48,10 +51,24 @@ def load_config(path=CONFIG) -> dict:
     return json.loads(Path(path).read_text())
 
 
+def config_sim(config: dict) -> str:
+    """The simulator profile a configuration's games are played under (LEGACY_SIM for old versions)."""
+    return LEGACY_SIM.get(config.get("version"), {}).get(config["sim"], config["sim"])
+
+
 def config_hash(config: dict) -> str:
     """sha256 of the configuration as canonical JSON, top-level keys starting with "_" left out."""
     body = {k: v for k, v in config.items() if not k.startswith("_")}
     return hashlib.sha256(json.dumps(body, sort_keys=True, separators=(",", ":")).encode()).hexdigest()[:16]
+
+
+def config_hint(digest: str) -> str:
+    """The end of a config-hash error: which file in benchmarks/ has this hash ("" if none)."""
+    for path in sorted((ROOT / "benchmarks").glob("v*.json")):
+        if config_hash(load_config(path)) == digest:
+            rel = path.relative_to(ROOT).as_posix()
+            return f"; it is {rel}'s (pass --config {rel})"
+    return ""
 
 
 def pool_name(heldout: bool) -> str:
@@ -123,7 +140,7 @@ def new_meta(config: dict, agent: str, track: str, pool: str, record: bool, plan
              sim_commit: str | None, harness: str | None) -> dict:
     return {"benchmark": f"{config['name']}-v{config['version']}", "config_hash": config_hash(config),
             "config": {k: v for k, v in config.items() if not k.startswith("_")}, "agent": agent_kind(agent),
-            "track": track, "rules": track_rules(config, track), "pool": pool, "sim": config["sim"],
+            "track": track, "rules": track_rules(config, track), "pool": pool, "sim": config_sim(config),
             "record": bool(record), "planned_games": planned, "first_seed": config["pools"][pool]["first_seed"],
             "sim_commit": sim_commit, "harness_commit": harness}
 
@@ -168,7 +185,7 @@ def merge_results(docs: list, config: dict | None = None) -> dict:
     base = docs[0]["meta"]
     if config is not None and base["config_hash"] != config_hash(config):
         raise ConfigMismatch(f"refusing results of config hash {base['config_hash']}; this configuration is "
-                             f"{config_hash(config)}")
+                             f"{config_hash(config)}{config_hint(base['config_hash'])}")
     warnings = []
     for doc in docs[1:]:
         warnings += check_meta(doc["meta"], base)
@@ -191,7 +208,7 @@ def play_one(job: tuple) -> dict:
 
     lobby = sample_lobby(config, pool, seed, agent)
     seats = {seat: make_policy(spec) for seat, spec in lobby["seats"].items()}
-    result = play_game(seats, seed, rules=track_rules(config, track), sim=config["sim"],
+    result = play_game(seats, seed, rules=track_rules(config, track), sim=config_sim(config),
                        pickers=bool(config.get("carousel_pickers", True)),
                        record=[lobby["hero_seat"]] if record else False)
     return {"seed": seed, "hero_seat": lobby["hero_seat"], "lobby": lobby["seats"],
@@ -315,7 +332,8 @@ def scorecard(doc: dict, config: dict, compare: dict | None = None, bank: dict |
     `bank`: the output of bank_regret."""
     meta = doc["meta"]
     if meta["config_hash"] != config_hash(config):
-        raise ConfigMismatch(f"results are of config hash {meta['config_hash']}, not {config_hash(config)}")
+        raise ConfigMismatch(f"results are of config hash {meta['config_hash']}, not {config_hash(config)}"
+                             f"{config_hint(meta['config_hash'])}")
     if compare is not None:
         check_meta(compare["meta"], meta, keys=("config_hash", "track", "pool"))
     games = [g for g in doc["games"] if g["result"]["finished"]]

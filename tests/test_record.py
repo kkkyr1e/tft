@@ -12,7 +12,7 @@ pytest.importorskip("Simulator")
 
 from tfteval import make_policy  # noqa: E402
 from tfteval.record import ACTION_KINDS, action_index, legal, record_seats  # noqa: E402
-from tfteval.runner import Game, play_game  # noqa: E402
+from tfteval.runner import Game, play_game, sim_options  # noqa: E402
 
 
 def test_action_index_inverts_the_simulators_action_space():
@@ -89,7 +89,8 @@ def test_recording_changes_nothing_and_rows_are_complete(monkeypatch):
         rounds = [r["round"] for r in rows]
         assert rounds == list(range(rounds[0], rounds[0] + len(rows)))  # one row per planning phase
         assert sum(sum(r["actions"].values()) for r in rows) == rec.actions[seat]
-        assert all(sum(r["actions"].values()) == 15 for r in rows)
+        budget = sim_options()[1].get("max_actions_per_round", 15)  # the default profile's actions per phase
+        assert all(sum(r["actions"].values()) == budget for r in rows)
         assert sum(r["fallbacks"] for r in rows) == rec.fallbacks[seat]
         for r in rows:
             assert {"end", "board", "bench", "items", "fight", "hp_lost"} <= set(r)

@@ -1,0 +1,110 @@
+/tmp/claude-0/-home-claude/c10acc4e-9037-548a-8e3c-11ca43d76ee0/scratchpad/bank2/prelim/bank80.jsonl: 160 items from 38 source games, 80 usable
+  pairs3   fired 16/36 {'3-2': 9, '3-3': 1, '3-5': 6}  usable 16  dropped {'trigger did not fire': 20}
+  streak4  fired 12/37 {'4-1': 9, '4-2': 3}  usable 12  dropped {'trigger did not fire': 25}
+  losing3  fired 20/38 {'3-1': 12, '3-2': 5, '3-3': 3}  usable 20  dropped {'trigger did not fire': 18}
+  lowhp4   fired 20/37 {'4-1': 4, '4-2': 7, '4-3': 3, '4-5': 3, '4-6': 2, '5-1': 1}  usable 20  dropped {'trigger did not fire': 17}
+  ref41    fired 12/12 {'4-1': 12}  usable 12  dropped {}
+  lowhp4   prior: tau 0.23 (moments, 20 items), pooled paired SD 1.34, alpha roll_all:+0.01 roll30:-0.00 level_roll10:-0.13 save:+0.12
+  pairs3   prior: tau 0.00 (moments, 16 items), pooled paired SD 1.77, alpha roll10:+0.05 level7:-0.13 save:+0.09
+  losing3  prior: tau 0.49 (moments, 20 items), pooled paired SD 2.41, alpha streak:+0.44 roll20:-0.09 level_roll10:-0.35
+  streak4  prior: tau 0.15 (moments, 12 items), pooled paired SD 1.45, alpha level8:+0.11 roll30:-0.18 save:+0.07
+  ref41    prior: tau 0.31 (moments, 12 items), pooled paired SD 1.51, alpha roll_all:-0.10 roll30:-0.05 level_roll10:+0.12 save:+0.04
+xfit:oracle: 80 items (all)
+stratum    items games  regret (95% CI by game)  clear ceiling exp.hits   acc  choices
+pairs3        16    16  +0.09 ±0.14                 15   14.19     8.43   59%  level7/level7:4 level7/roll10:3 level7/save:3 roll10/level7:1 roll10/roll10:2 save/level7:2 save/roll10:1
+streak4       12    12  +0.17 ±0.12                  6    5.52     4.27   77%  level8/level8:1 level8/roll30:3 roll30/level8:1 roll30/roll30:3 save/level8:3 save/roll30:1
+losing3       20    20  +0.33 ±0.17                  3    2.86     2.45   86%  level_roll10/level_roll10:4 level_roll10/roll20:5 roll20/level_roll10:3 roll20/roll20:1 roll20/streak:1 streak/roll20:4 streak/streak:2
+lowhp4        20    20  +0.19 ±0.12                  3    2.76     2.76  100%  level_roll10/level_roll10:4 level_roll10/roll30:1 level_roll10/roll_all:5 roll30/roll30:1 roll_all/level_roll10:1 roll_all/roll_all:4 roll_all/save:1 save/level_roll10:2 save/roll_all:1
+ref41         12    12  +0.12 ±0.10                  1    0.90     0.90  100%  level_roll10/level_roll10:1 level_roll10/roll_all:3 level_roll10/save:1 roll30/roll30:1 roll_all/roll_all:3 save/level_roll10:1 save/roll_all:1 save/save:1
+equal         80    36  +0.18 ±0.06                 28   26.23    18.81   72%  level7/level7:4 level7/roll10:3 level7/save:3 level8/level8:1 level8/roll30:3 level_roll10/level_roll10:9 level_roll10/roll20:5 level_roll10/roll30:1 level_roll10/roll_all:8 level_roll10/save:1 roll10/level7:1 roll10/roll10:2 roll20/level_roll10:3 roll20/roll20:1 roll20/streak:1 roll30/level8:1 roll30/roll30:5 roll_all/level_roll10:1 roll_all/roll_all:7 roll_all/save:1 save/level7:2 save/level8:3 save/level_roll10:3 save/roll10:1 save/roll30:1 save/roll_all:2 save/save:1 streak/roll20:4 streak/streak:2
+xfit:worst: 80 items (all)
+stratum    items games  regret (95% CI by game)  clear ceiling exp.hits   acc  choices
+pairs3        16    16  +0.25 ±0.27                 15   14.19     1.66   12%  roll10/level7:2 roll10/roll10:4 roll10/save:1 save/level7:2 save/roll10:2 save/save:5
+streak4       12    12  +0.40 ±0.30                  6    5.52     0.21    4%  level8/level8:3 level8/roll30:1 level8/save:2 roll30/level8:1 roll30/roll30:1 roll30/save:1 save/level8:1 save/save:2
+losing3       20    20  +1.00 ±0.58                  3    2.86     0.01    0%  level_roll10/level_roll10:1 level_roll10/streak:2 roll20/level_roll10:1 roll20/roll20:2 roll20/streak:2 streak/level_roll10:2 streak/roll20:2 streak/streak:8
+lowhp4        20    20  +0.32 ±0.29                  3    2.76     0.05    2%  level_roll10/level_roll10:1 level_roll10/roll_all:2 level_roll10/save:1 roll30/level_roll10:2 roll30/save:1 roll_all/roll_all:4 roll_all/save:3 save/level_roll10:2 save/roll_all:1 save/save:3
+ref41         12    12  +0.62 ±0.34                  1    0.90     0.03    4%  level_roll10/level_roll10:3 level_roll10/roll30:1 roll_all/roll_all:4 roll_all/save:1 save/level_roll10:2 save/save:1
+equal         80    36  +0.52 ±0.18                 28   26.23     1.96    7%  level8/level8:3 level8/roll30:1 level8/save:2 level_roll10/level_roll10:5 level_roll10/roll30:1 level_roll10/roll_all:2 level_roll10/save:1 level_roll10/streak:2 roll10/level7:2 roll10/roll10:4 roll10/save:1 roll20/level_roll10:1 roll20/roll20:2 roll20/streak:2 roll30/level8:1 roll30/level_roll10:2 roll30/roll30:1 roll30/save:2 roll_all/roll_all:8 roll_all/save:4 save/level7:2 save/level8:1 save/level_roll10:4 save/roll10:2 save/roll_all:1 save/save:11 streak/level_roll10:2 streak/roll20:2 streak/streak:8
+stance: 80 items (all)
+stratum    items games  regret (95% CI by game)  clear ceiling exp.hits   acc  choices
+pairs3        16    16  +0.09 ±0.14                 15   14.19     2.07   15%  level7:2 roll10:1 save:13
+streak4       12    12  +0.27 ±0.24                  6    5.52     1.14   21%  level8:9 roll30:1 save:2
+losing3       20    20  +0.80 ±0.51                  3    2.86     0.02    1%  level_roll10:1 roll20:5 streak:14
+lowhp4        20    20  +0.20 ±0.18                  3    2.76     1.78   65%  level_roll10:12 roll_all:5 save:3
+ref41         12    12  +0.15 ±0.13                  1    0.90     0.07    7%  level_roll10:6 roll30:1 roll_all:2 save:3
+equal         80    36  +0.30 ±0.12                 28   26.23     5.09   19%  level7:2 level8:9 level_roll10:19 roll10:1 roll20:5 roll30:2 roll_all:7 save:21 streak:14
+mimic: 80 items (all)
+stratum    items games  regret (95% CI by game)  clear ceiling exp.hits   acc  choices
+pairs3        16    16  +0.22 ±0.19                 15   14.19     0.07    0%  save:16
+streak4       12    12  +0.34 ±0.25                  6    5.52     0.26    5%  level8:9 save:3
+losing3       20    20  +1.02 ±0.55                  3    2.86     0.01    0%  level_roll10:1 streak:19
+lowhp4        20    20  +0.36 ±0.21                  3    2.76     0.87   32%  level_roll10:7 save:13
+ref41         12    12  +0.27 ±0.17                  1    0.90     0.07    7%  level_roll10:5 roll30:3 save:4
+equal         80    36  +0.44 ±0.14                 28   26.23     1.27    5%  level8:9 level_roll10:13 roll30:3 save:36 streak:19
+noisy50:stance: 80 items (all)
+stratum    items games  regret (95% CI by game)  clear ceiling exp.hits   acc  choices
+pairs3        16    16  +0.05 ±0.13                 15   14.19     6.74   47%  level7:7 roll10:2 save:7
+streak4       12    12  +0.25 ±0.24                  6    5.52     2.05   37%  level8:6 roll30:4 save:2
+losing3       20    20  +0.67 ±0.46                  3    2.86     0.98   34%  level_roll10:6 roll20:3 streak:11
+lowhp4        20    20  +0.32 ±0.22                  3    2.76     0.95   34%  level_roll10:12 roll30:3 roll_all:4 save:1
+ref41         12    12  +0.25 ±0.23                  1    0.90     0.07    7%  level_roll10:6 roll30:3 roll_all:1 save:2
+equal         80    36  +0.31 ±0.13                 28   26.23    10.78   41%  level7:7 level8:6 level_roll10:24 roll10:2 roll20:3 roll30:10 roll_all:5 save:12 streak:11
+random: 80 items (all)
+stratum    items games  regret (95% CI by game)  clear ceiling exp.hits   acc  choices
+pairs3        16    16  +0.15 ±0.21                 15   14.19     4.05   29%  level7:4 roll10:3 save:9
+streak4       12    12  +0.33 ±0.25                  6    5.52     1.95   35%  level8:5 roll30:4 save:3
+losing3       20    20  +0.65 ±0.48                  3    2.86     0.09    3%  level_roll10:9 roll20:7 streak:4
+lowhp4        20    20  +0.20 ±0.13                  3    2.76     2.01   73%  level_roll10:6 roll30:2 roll_all:8 save:4
+ref41         12    12  +0.32 ±0.33                  1    0.90     0.90  100%  roll30:6 roll_all:2 save:4
+equal         80    36  +0.33 ±0.15                 28   26.23     9.00   34%  level7:4 level8:5 level_roll10:15 roll10:3 roll20:7 roll30:12 roll_all:10 save:20 streak:4
+always:save: 60 items (all)
+stratum    items games  regret (95% CI by game)  clear ceiling exp.hits   acc  choices
+pairs3        16    16  +0.22 ±0.19                 15   14.19     0.07    0%  save:16
+streak4       12    12  +0.34 ±0.21                  6    5.52     0.23    4%  save:12
+lowhp4        20    20  +0.43 ±0.19                  3    2.76     0.12    4%  save:20
+ref41         12    12  +0.40 ±0.32                  1    0.90     0.07    7%  save:12
+equal         60    33  +0.35 ±0.10                 25   23.38     0.48    2%  save:60
+always:roll10: 16 items (all)
+stratum    items games  regret (95% CI by game)  clear ceiling exp.hits   acc  choices
+pairs3        16    16  +0.18 ±0.24                 15   14.19     0.74    5%  roll10:16
+equal         16    16  +0.18 ±0.24                 15   14.19     0.74    5%  roll10:16
+always:level7: 16 items (all)
+stratum    items games  regret (95% CI by game)  clear ceiling exp.hits   acc  choices
+pairs3        16    16  +0.00 ±0.00                 15   14.19    14.19  100%  level7:16
+equal         16    16  +0.00 ±0.00                 15   14.19    14.19  100%  level7:16
+always:level8: 12 items (all)
+stratum    items games  regret (95% CI by game)  clear ceiling exp.hits   acc  choices
+streak4       12    12  +0.39 ±0.28                  6    5.52     0.25    5%  level8:12
+equal         12    12  +0.39 ±0.28                  6    5.52     0.25    5%  level8:12
+always:roll30: 44 items (all)
+stratum    items games  regret (95% CI by game)  clear ceiling exp.hits   acc  choices
+streak4       12    12  +0.10 ±0.15                  6    5.52     5.52  100%  roll30:12
+lowhp4        20    20  +0.27 ±0.21                  3    2.76     0.08    3%  roll30:20
+ref41         12    12  +0.31 ±0.26                  1    0.90     0.90  100%  roll30:12
+equal         44    30  +0.23 ±0.12                 10    9.18     6.50   71%  roll30:44
+always:streak: 20 items (all)
+stratum    items games  regret (95% CI by game)  clear ceiling exp.hits   acc  choices
+losing3       20    20  +1.03 ±0.55                  3    2.86     0.01    0%  streak:20
+equal         20    20  +1.03 ±0.55                  3    2.86     0.01    0%  streak:20
+always:roll20: 20 items (all)
+stratum    items games  regret (95% CI by game)  clear ceiling exp.hits   acc  choices
+losing3       20    20  +0.46 ±0.34                  3    2.86     0.14    5%  roll20:20
+equal         20    20  +0.46 ±0.34                  3    2.86     0.14    5%  roll20:20
+always:level_roll10: 52 items (all)
+stratum    items games  regret (95% CI by game)  clear ceiling exp.hits   acc  choices
+losing3       20    20  +0.16 ±0.16                  3    2.86     2.86  100%  level_roll10:20
+lowhp4        20    20  +0.15 ±0.11                  3    2.76     2.76  100%  level_roll10:20
+ref41         12    12  +0.49 ±0.37                  1    0.90     0.03    4%  level_roll10:12
+equal         52    31  +0.27 ±0.13                  7    6.52     5.65   87%  level_roll10:52
+always:roll_all: 32 items (all)
+stratum    items games  regret (95% CI by game)  clear ceiling exp.hits   acc  choices
+lowhp4        20    20  +0.29 ±0.22                  3    2.76     0.06    2%  roll_all:20
+ref41         12    12  +0.26 ±0.23                  1    0.90     0.90  100%  roll_all:12
+equal         32    26  +0.27 ±0.15                  4    3.66     0.96   26%  roll_all:32
+differences A - B (regret, 95% CI by source game; equal-weighted over strata, then per stratum):
+      xfit:oracle vs stance               -0.12 ±0.13  holds                  pairs3 -0.00 ±0.15  streak4 -0.10 ±0.27  losing3 -0.47 ±0.54  lowhp4 -0.00 ±0.23  ref41 -0.03 ±0.14
+           stance vs noisy50:stance       -0.01 ±0.10  holds                  pairs3 +0.04 ±0.04  streak4 +0.02 ±0.08  losing3 +0.13 ±0.43  lowhp4 -0.12 ±0.17  ref41 -0.10 ±0.25
+   noisy50:stance vs random               -0.02 ±0.18  holds                  pairs3 -0.10 ±0.22  streak4 -0.08 ±0.17  losing3 +0.03 ±0.56  lowhp4 +0.12 ±0.25  ref41 -0.07 ±0.45
+           random vs xfit:worst           -0.19 ±0.13  holds (significant)    pairs3 -0.10 ±0.19  streak4 -0.07 ±0.25  losing3 -0.35 ±0.45  lowhp4 -0.12 ±0.30  ref41 -0.31 ±0.23
+           stance vs mimic                -0.14 ±0.07  holds (significant)    pairs3 -0.13 ±0.18  streak4 -0.07 ±0.15  losing3 -0.21 ±0.22  lowhp4 -0.17 ±0.16  ref41 -0.12 ±0.17
+scorecard: /tmp/claude-0/-home-claude/c10acc4e-9037-548a-8e3c-11ca43d76ee0/scratchpad/bank2/prelim/sanity80.json

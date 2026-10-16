@@ -48,11 +48,18 @@ def _seat_seed(game_seed: int, seat_index: int) -> int:
 # PvE losses cost HP, Fortune pays loot orbs, the 5-4 carousel table and random item-to-unit
 # pairing, the next opponent drawn at combat time (planners see only the candidates), and one
 # random stream per event (common random numbers for branch comparisons).
+REALISTIC_OPTIONS = {"pve_damage": True, "fortune_orbs": True, "carousel_fixes": True, "hide_next_opponent": True,
+                     "rng_streams": "keyed"}
 SIM_PROFILES = {
     "default": {},
-    "realistic": {"pve_damage": True, "fortune_orbs": True, "carousel_fixes": True, "hide_next_opponent": True,
-                  "rng_streams": "keyed"},
+    # 60 actions per planning phase: under the simulator's 15 the executor could not roll down (one reroll
+    # at 4-1 with 52 gold; docs/BANK_V2.md, 2026-10-09). Real planning phases are timed, not counted.
+    "realistic": {**REALISTIC_OPTIONS, "max_actions_per_round": 60},
+    # "realistic" until 2026-10-09 (15 actions): recipes and results recorded as "realistic" before then
+    "realistic15": dict(REALISTIC_OPTIONS),
 }
+# a recipe recorded under a profile's earlier definition replays under the profile that keeps it
+LEGACY_PROFILES = {"realistic": ("realistic15", lambda options: "max_actions_per_round" not in options)}
 DEFAULT_SIM = "realistic"
 
 

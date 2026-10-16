@@ -1,0 +1,482 @@
+[
+ {
+  "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9526@lowhp4",
+  "cand": "roll30",
+  "k": 6,
+  "stored": 6,
+  "replay": 6,
+  "same_place": true,
+  "same_actions": true,
+  "first_diff_round": null
+ },
+ {
+  "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9526@lowhp4",
+  "cand": "save",
+  "k": 10,
+  "stored": 6,
+  "replay": 6,
+  "same_place": true,
+  "same_actions": true,
+  "first_diff_round": null
+ },
+ {
+  "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9533@pairs3",
+  "cand": "level7",
+  "k": 6,
+  "stored": 2,
+  "replay": 2,
+  "same_place": true,
+  "same_actions": true,
+  "first_diff_round": null
+ },
+ {
+  "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9533@pairs3",
+  "cand": "save",
+  "k": 15,
+  "stored": 2,
+  "replay": 2,
+  "same_place": true,
+  "same_actions": true,
+  "first_diff_round": null
+ },
+ {
+  "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9500@lowhp4",
+  "cand": "roll_all",
+  "k": 10,
+  "stored": 4,
+  "replay": 4,
+  "same_place": true,
+  "same_actions": true,
+  "first_diff_round": null
+ },
+ {
+  "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9500@lowhp4",
+  "cand": "level_roll10",
+  "k": 11,
+  "stored": 5,
+  "replay": 5,
+  "same_place": true,
+  "same_actions": true,
+  "first_diff_round": null
+ },
+ {
+  "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9510@lowhp4",
+  "cand": "level_roll10",
+  "k": 2,
+  "stored": 2,
+  "replay": 2,
+  "same_place": true,
+  "same_actions": true,
+  "first_diff_round": null
+ },
+ {
+  "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9510@lowhp4",
+  "cand": "level_roll10",
+  "k": 9,
+  "stored": 2,
+  "replay": 2,
+  "same_place": true,
+  "same_actions": true,
+  "first_diff_round": null
+ },
+ {
+  "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9523@pairs3",
+  "cand": "roll10",
+  "k": 7,
+  "stored": 5,
+  "replay": 5,
+  "same_place": true,
+  "same_actions": true,
+  "first_diff_round": null
+ },
+ {
+  "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9523@pairs3",
+  "cand": "save",
+  "k": 3,
+  "stored": 3,
+  "replay": 3,
+  "same_place": true,
+  "same_actions": true,
+  "first_diff_round": null
+ },
+ {
+  "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9503@streak4",
+  "cand": "roll30",
+  "k": 15,
+  "stored": 1,
+  "replay": 1,
+  "same_place": true,
+  "same_actions": true,
+  "first_diff_round": null
+ },
+ {
+  "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9503@streak4",
+  "cand": "level8",
+  "k": 2,
+  "stored": 1,
+  "replay": 1,
+  "same_place": true,
+  "same_actions": true,
+  "first_diff_round": null
+ },
+ {
+  "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9517@lowhp4",
+  "cand": "level_roll10",
+  "k": 0,
+  "stored": 2,
+  "replay": 2,
+  "same_place": true,
+  "same_actions": true,
+  "first_diff_round": null
+ },
+ {
+  "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9517@lowhp4",
+  "cand": "level_roll10",
+  "k": 13,
+  "stored": 3,
+  "replay": 3,
+  "same_place": true,
+  "same_actions": true,
+  "first_diff_round": null
+ },
+ {
+  "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9518@pairs3",
+  "cand": "level7",
+  "k": 13,
+  "stored": 3,
+  "replay": 3,
+  "same_place": true,
+  "same_actions": true,
+  "first_diff_round": null
+ },
+ {
+  "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9518@pairs3",
+  "cand": "save",
+  "k": 16,
+  "stored": 3,
+  "replay": 3,
+  "same_place": true,
+  "same_actions": true,
+  "first_diff_round": null
+ },
+ {
+  "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9520@streak4",
+  "cand": "roll30",
+  "k": 3,
+  "stored": 3,
+  "replay": 3,
+  "same_place": true,
+  "same_actions": true,
+  "first_diff_round": null
+ },
+ {
+  "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9520@streak4",
+  "cand": "roll30",
+  "k": 1,
+  "stored": 6,
+  "replay": 6,
+  "same_place": true,
+  "same_actions": true,
+  "first_diff_round": null
+ },
+ {
+  "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9521@losing3",
+  "cand": "roll20",
+  "k": 12,
+  "stored": 3,
+  "replay": 3,
+  "same_place": true,
+  "same_actions": true,
+  "first_diff_round": null
+ },
+ {
+  "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9521@losing3",
+  "cand": "level_roll10",
+  "k": 11,
+  "stored": 7,
+  "replay": 7,
+  "same_place": true,
+  "same_actions": true,
+  "first_diff_round": null
+ },
+ {
+  "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9506@losing3",
+  "cand": "streak",
+  "k": 2,
+  "stored": 3,
+  "replay": 3,
+  "same_place": true,
+  "same_actions": true,
+  "first_diff_round": null
+ },
+ {
+  "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9506@losing3",
+  "cand": "level_roll10",
+  "k": 7,
+  "stored": 3,
+  "replay": 3,
+  "same_place": true,
+  "same_actions": true,
+  "first_diff_round": null
+ },
+ {
+  "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9529@lowhp4",
+  "cand": "roll30",
+  "k": 14,
+  "stored": 3,
+  "replay": 2,
+  "same_place": false,
+  "same_actions": false,
+  "first_diff_round": "20"
+ },
+ {
+  "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9529@lowhp4",
+  "cand": "roll30",
+  "k": 2,
+  "stored": 4,
+  "replay": 4,
+  "same_place": true,
+  "same_actions": true,
+  "first_diff_round": null
+ },
+ {
+  "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9516@losing3",
+  "cand": "roll20",
+  "k": 3,
+  "stored": 1,
+  "replay": 1,
+  "same_place": true,
+  "same_actions": true,
+  "first_diff_round": null
+ },
+ {
+  "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9516@losing3",
+  "cand": "level_roll10",
+  "k": 15,
+  "stored": 1,
+  "replay": 1,
+  "same_place": true,
+  "same_actions": true,
+  "first_diff_round": null
+ },
+ {
+  "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9505@pairs3",
+  "cand": "roll10",
+  "k": 11,
+  "stored": 1,
+  "replay": 1,
+  "same_place": true,
+  "same_actions": true,
+  "first_diff_round": null
+ },
+ {
+  "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9505@pairs3",
+  "cand": "save",
+  "k": 0,
+  "stored": 1,
+  "replay": 2,
+  "same_place": false,
+  "same_actions": false,
+  "first_diff_round": "18"
+ },
+ {
+  "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9500@pairs3",
+  "cand": "save",
+  "k": 12,
+  "stored": 1,
+  "replay": 1,
+  "same_place": true,
+  "same_actions": true,
+  "first_diff_round": null
+ },
+ {
+  "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9500@pairs3",
+  "cand": "roll10",
+  "k": 14,
+  "stored": 2,
+  "replay": 2,
+  "same_place": true,
+  "same_actions": true,
+  "first_diff_round": null
+ },
+ {
+  "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9510@pairs3",
+  "cand": "level7",
+  "k": 3,
+  "stored": 3,
+  "replay": 3,
+  "same_place": true,
+  "same_actions": true,
+  "first_diff_round": null
+ },
+ {
+  "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9510@pairs3",
+  "cand": "roll10",
+  "k": 12,
+  "stored": 3,
+  "replay": 3,
+  "same_place": true,
+  "same_actions": true,
+  "first_diff_round": null
+ },
+ {
+  "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9514@losing3",
+  "cand": "level_roll10",
+  "k": 3,
+  "stored": 4,
+  "replay": 4,
+  "same_place": true,
+  "same_actions": true,
+  "first_diff_round": null
+ },
+ {
+  "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9514@losing3",
+  "cand": "roll20",
+  "k": 10,
+  "stored": 3,
+  "replay": 3,
+  "same_place": true,
+  "same_actions": true,
+  "first_diff_round": null
+ },
+ {
+  "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9510@losing3",
+  "cand": "roll20",
+  "k": 3,
+  "stored": 1,
+  "replay": 1,
+  "same_place": true,
+  "same_actions": true,
+  "first_diff_round": null
+ },
+ {
+  "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9510@losing3",
+  "cand": "streak",
+  "k": 12,
+  "stored": 4,
+  "replay": 4,
+  "same_place": true,
+  "same_actions": true,
+  "first_diff_round": null
+ },
+ {
+  "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9509@pairs3",
+  "cand": "save",
+  "k": 14,
+  "stored": 1,
+  "replay": 1,
+  "same_place": true,
+  "same_actions": true,
+  "first_diff_round": null
+ },
+ {
+  "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9509@pairs3",
+  "cand": "roll10",
+  "k": 15,
+  "stored": 1,
+  "replay": 1,
+  "same_place": true,
+  "same_actions": true,
+  "first_diff_round": null
+ },
+ {
+  "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9530@pairs3",
+  "cand": "roll10",
+  "k": 12,
+  "stored": 4,
+  "replay": 4,
+  "same_place": true,
+  "same_actions": true,
+  "first_diff_round": null
+ },
+ {
+  "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9530@pairs3",
+  "cand": "save",
+  "k": 0,
+  "stored": 4,
+  "replay": 4,
+  "same_place": true,
+  "same_actions": true,
+  "first_diff_round": null
+ },
+ {
+  "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9515@losing3",
+  "cand": "level_roll10",
+  "k": 4,
+  "stored": 5,
+  "replay": 5,
+  "same_place": true,
+  "same_actions": true,
+  "first_diff_round": null
+ },
+ {
+  "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9515@losing3",
+  "cand": "streak",
+  "k": 3,
+  "stored": 1,
+  "replay": 1,
+  "same_place": true,
+  "same_actions": true,
+  "first_diff_round": null
+ },
+ {
+  "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9529@losing3",
+  "cand": "roll20",
+  "k": 10,
+  "stored": 5,
+  "replay": 5,
+  "same_place": true,
+  "same_actions": true,
+  "first_diff_round": null
+ },
+ {
+  "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9529@losing3",
+  "cand": "level_roll10",
+  "k": 16,
+  "stored": 2,
+  "replay": 2,
+  "same_place": true,
+  "same_actions": true,
+  "first_diff_round": null
+ },
+ {
+  "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9513@pairs3",
+  "cand": "roll10",
+  "k": 5,
+  "stored": 1,
+  "replay": 1,
+  "same_place": true,
+  "same_actions": true,
+  "first_diff_round": null
+ },
+ {
+  "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9513@pairs3",
+  "cand": "level7",
+  "k": 7,
+  "stored": 1,
+  "replay": 1,
+  "same_place": true,
+  "same_actions": true,
+  "first_diff_round": null
+ },
+ {
+  "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9506@streak4",
+  "cand": "level8",
+  "k": 2,
+  "stored": 4,
+  "replay": 4,
+  "same_place": true,
+  "same_actions": true,
+  "first_diff_round": null
+ },
+ {
+  "id": "stance@rule:2,mimic:1,mimicfc:1,fast8:1,stance:1,stance+hold:1#9506@streak4",
+  "cand": "save",
+  "k": 7,
+  "stored": 2,
+  "replay": 2,
+  "same_place": true,
+  "same_actions": true,
+  "first_diff_round": null
+ }
+]

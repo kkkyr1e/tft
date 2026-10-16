@@ -92,7 +92,7 @@ from statistics import mean, median
 from types import SimpleNamespace
 
 from tfteval import stages, winprob
-from tfteval.planner import ParamPlanner, PlanPolicy, level_costs, xp_to_level
+from tfteval.planner import ACTIONS_PER_ROUND, ParamPlanner, PlanPolicy, level_costs, round_actions, xp_to_level
 
 # --------------------------------------------------------------------------- thresholds
 # [doc] the trigger suggested in the stance table of docs/STRATEGY.md section 3; [sim] chosen from a
@@ -114,7 +114,8 @@ STABILIZE_WEAK_RATIO = 0.85    # [guess] ... with board score < 0.85 x the candi
 STABILIZE_V2_FROM = "3-2"      # [2nd]
 STABILIZE_LTD_BASE = 2         # [2nd] trigger at losses to death <= 2 + ceil(max(0, gold - 20) / 15):
 STABILIZE_GOLD_FREE = 20       # [2nd]   each 15 gold above 20 is about one round of rolling under the
-STABILIZE_GOLD_PER_ROUND = 15  # [2nd]   15-action cap (README: 10-20 gold spent per stabilize round)
+STABILIZE_GOLD_PER_ROUND = 15  # [2nd]   15-action cap (README: 10-20 gold spent per stabilize round);
+                               # [guess] it scales with the game's actions per round (planner.round_actions)
 STABILIZE_WEAK_FLOOR = 10      # [2nd] weaker: roll to 10
 STABILIZE_CLOSE_FLOOR = 20     # [2nd] close: level first if that leaves 20, then roll to 20
 STABILIZE_XP8_FROM = "4-1"     # [2nd] from stage 4 below level 8: level to 8 first ...
@@ -577,7 +578,8 @@ class StancePlanner:
     def _stabilize_why(self, state: dict, f: dict) -> str | None:
         idx = state["round"]
         if self.opts["stabilize_v2"] and idx >= stages.parse_label(STABILIZE_V2_FROM):
-            reach = STABILIZE_LTD_BASE + math.ceil(max(0, f["gold"] - STABILIZE_GOLD_FREE) / STABILIZE_GOLD_PER_ROUND)
+            per_round = STABILIZE_GOLD_PER_ROUND * round_actions(state) / ACTIONS_PER_ROUND
+            reach = STABILIZE_LTD_BASE + math.ceil(max(0, f["gold"] - STABILIZE_GOLD_FREE) / per_round)
             if self.fast8 and self.fast8["landed"] is None:
                 reach = min(reach, STABILIZE_LTD)  # a fast 8 on its way spends its gold on xp: only dying stops it
             if f["ltd"] <= reach and f["strength"] != "stronger":

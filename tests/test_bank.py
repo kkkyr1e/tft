@@ -244,7 +244,7 @@ def test_recipes_record_the_simulator_settings(monkeypatch):
     st = bank.sim_settings()
     assert st == {"rules": "set18", "sim": "realistic,rng_streams=shared", "pickers": False,
                   "sim_options": {"pve_damage": True, "fortune_orbs": True, "carousel_fixes": True,
-                                  "hide_next_opponent": True, "rng_streams": "shared"}}
+                                  "hide_next_opponent": True, "rng_streams": "shared", "max_actions_per_round": 60}}
     assert bank.sim_settings("default", "set4", True) == {"rules": "set4", "sim": "default", "sim_options": {},
                                                            "pickers": True}
     monkeypatch.delenv("TFT_SIM")

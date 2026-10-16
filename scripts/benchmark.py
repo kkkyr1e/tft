@@ -1,19 +1,23 @@
-"""Benchmark v1: one agent against sampled opponent lobbies under the frozen configuration benchmarks/v1.json.
+"""The benchmark: one agent against sampled opponent lobbies under a frozen configuration (benchmarks/v2.json
+by default: 60 actions per planning phase; benchmarks/v1.json is the same with 15).
 
     # the agent on the dev pool, Set 4 economy, with the hero's rounds recorded for the rubric and variety
-    python scripts/benchmark.py --agent stance --track set4 --record --workers 3 --out results/bench/v1_set4_dev_stance.json
+    python scripts/benchmark.py --agent stance --track set4 --record --workers 3 --out results/bench/v2_set4_dev_stance.json
 
     # the scorecard of existing results (several files of one run are merged), with a comparison agent
-    python scripts/benchmark.py --scorecard results/bench/v1_set4_dev_stance.json \\
-        --compare results/bench/v1_set4_dev_mimic.json
+    python scripts/benchmark.py --scorecard results/bench/v2_set4_dev_stance.json \\
+        --compare results/bench/v2_set4_dev_mimic.json
+    # v1 results need their configuration
+    python scripts/benchmark.py --config benchmarks/v1.json --scorecard results/bench/v1_set4_dev_stance.json
 
     # milestones only: the held-out pool and seeds
-    python scripts/benchmark.py --agent stance --track set4 --heldout --record --out results/bench/v1_set4_heldout_stance.json
+    python scripts/benchmark.py --agent stance --track set4 --heldout --record --out results/bench/v2_set4_heldout_stance.json
 
 Every game: the agent on seat player_(seed mod 8), reported as `hero`, and 7 opponents drawn for that seed
 from the pool with replacement (tfteval/benchmark.py). Dev pool {rule, mimic, mimicfc, fast8, stance,
 stance+hold}, seeds 30000 on; held-out pool {stance1, stance+lossstreak, noisy20}, seeds 39000 on, never
-used for tuning. Simulator profile `realistic`; rules from the track (set4, or set18 as the second track).
+used for tuning. Simulator profile from the configuration (v2 `realistic`, v1 `realistic15`); rules from the
+track (set4, or set18 as the second track).
 
 The number of games comes from tfteval.stats.games_needed for the configured interval (±0.25 places at an
 SD of 2.25 per game: 312 games), printed before anything runs; --sd gives a measured SD instead and
@@ -75,7 +79,7 @@ def run(args, config: dict) -> None:
         print(HELDOUT_WARNING, flush=True)
     planned = bm.games_planned(config, args.sd, args.half_width)
     print(f"benchmark {config['name']}-v{config['version']} (config {bm.config_hash(config)}): agent {args.agent}, "
-          f"track {args.track} ({rules}), {pool} pool, sim {config['sim']}", flush=True)
+          f"track {args.track} ({rules}), {pool} pool, sim {bm.config_sim(config)}", flush=True)
     print(f"sample size: {bm.needed_note(config, args.sd, args.half_width)}", flush=True)
     games = args.games or planned
     if args.games and args.games != planned:
@@ -101,7 +105,7 @@ def run(args, config: dict) -> None:
     print(f"{len(done)} games already in {out}, {len(todo)} to play, {args.workers} workers", flush=True)
 
     # play_one passes rules, sim, pickers and recording explicitly; these cover code that reads the defaults
-    os.environ["TFT_RULES"], os.environ["TFT_SIM"] = rules, config["sim"]
+    os.environ["TFT_RULES"], os.environ["TFT_SIM"] = rules, bm.config_sim(config)
     harness = meta["harness_commit"]
     started = time.time()
     jobs = [(config, args.agent, args.track, pool, seed, args.record) for seed in todo]
@@ -144,7 +148,7 @@ def main():
     parser.add_argument("--games", type=int, help="override the planned number of games (smoke runs)")
     parser.add_argument("--half-width", type=float, help="target 95%% half width in places (default from config)")
     parser.add_argument("--sd", type=float, help="measured SD of placement per game (default from config)")
-    parser.add_argument("--config", default=str(bm.CONFIG), help="benchmark configuration (default benchmarks/v1.json)")
+    parser.add_argument("--config", default=str(bm.CONFIG), help="benchmark configuration (default benchmarks/v2.json)")
     parser.add_argument("--out", help="results JSON (resumable)")
     parser.add_argument("--scorecard", nargs="+", metavar="RESULTS", help="print the card of existing results")
     parser.add_argument("--compare", help="results of a comparison agent (same config, track and pool)")

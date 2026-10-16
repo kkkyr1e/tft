@@ -6,8 +6,10 @@ setting:
 
     PYTHONHASHSEED=0 python tests/replay_lobby.py --seeds 7100 7101 7102 --workers 2 --sim default \\
         --no-pickers > tests/data/executor_reference.json
-    PYTHONHASHSEED=0 python tests/replay_lobby.py --seeds 7100 7101 7102 --workers 2 --sim realistic \\
+    PYTHONHASHSEED=0 python tests/replay_lobby.py --seeds 7100 7101 7102 --workers 2 --sim realistic15 \\
         > tests/data/executor_reference_realistic.json
+    PYTHONHASHSEED=0 python tests/replay_lobby.py --seeds 7100 7101 7102 --workers 2 --sim realistic \\
+        > tests/data/executor_reference_realistic60.json
 
 executor_reference.json was first generated on commit 57ef4d7, before tfteval/stages.py,
 tfteval/public.py and the optional plan fields existed, on the upstream simulator; the
@@ -18,8 +20,10 @@ pick left to the simulator; the fork's develop at 2ba01d5, the simulator profile
 carousel picker (off here) and the keyed-stream generator of the executor (unused with shared
 streams) replay it unchanged.
 
-executor_reference_realistic.json is the same lobby as games run now: the `realistic` profile, with
-the plan seats' carousel picker. Recorded on 2ba01d5 when the profile was introduced.
+executor_reference_realistic.json is the `realistic` profile as it was until 2026-10-09 (15 actions
+per planning phase, now `realistic15`), with the plan seats' carousel picker. Recorded on 2ba01d5
+when the profile was introduced. executor_reference_realistic60.json is the same lobby as games run
+now: `realistic` with 60 actions per planning phase, recorded on ff4db16 when the budget was raised.
 
 Each game records the simulator commit it was played on (sim_commit). Replaying the same seeds must
 give the same numbers: executor code paths for the optional plan fields may only act when a plan
@@ -40,7 +44,8 @@ ROOT = Path(__file__).resolve().parents[1]
 
 CASES = {
     "executor_reference.json": ["--sim", "default", "--no-pickers"],
-    "executor_reference_realistic.json": ["--sim", "realistic"],
+    "executor_reference_realistic.json": ["--sim", "realistic15"],
+    "executor_reference_realistic60.json": ["--sim", "realistic"],
 }
 
 

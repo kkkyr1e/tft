@@ -1,0 +1,205 @@
+{
+ "lobby": [
+  "mimic",
+  "fast8",
+  "rolldown8",
+  "hp50",
+  "fast8roll",
+  "rule",
+  "rule",
+  "rule"
+ ],
+ "sim": "realistic",
+ "pickers": true,
+ "games": [
+  {
+   "seed": 7100,
+   "lobby": {
+    "player_0": "mimic",
+    "player_1": "fast8",
+    "player_2": "rolldown8",
+    "player_3": "hp50",
+    "player_4": "fast8roll",
+    "player_5": "rule",
+    "player_6": "rule",
+    "player_7": "rule"
+   },
+   "placements": {
+    "player_0": 1,
+    "player_1": 3,
+    "player_2": 4,
+    "player_3": 5,
+    "player_4": 2,
+    "player_5": 8,
+    "player_6": 6,
+    "player_7": 7
+   },
+   "actions": {
+    "player_0": 1800,
+    "player_1": 1680,
+    "player_2": 1680,
+    "player_3": 1500,
+    "player_4": 1800,
+    "player_5": 1320,
+    "player_6": 1500,
+    "player_7": 1440
+   },
+   "sim_fixes": [],
+   "sim_commit": "ff4db16ea7fa577e7875bc7a41ab6dcf0a655c81",
+   "rules": "set4",
+   "sim": "realistic",
+   "sim_options": {
+    "pve_damage": true,
+    "fortune_orbs": true,
+    "carousel_fixes": true,
+    "hide_next_opponent": true,
+    "rng_streams": "keyed",
+    "max_actions_per_round": 60
+   },
+   "carousel_pickers": [
+    "player_0",
+    "player_1",
+    "player_2",
+    "player_3",
+    "player_4"
+   ],
+   "seconds": 82.44,
+   "digest": {
+    "player_0": "bbac6ba416367331",
+    "player_1": "acf28b4bd44d6d45",
+    "player_2": "1ba710825afe0556",
+    "player_3": "a1994476e06d1568",
+    "player_4": "c5873d4dcb4965b6",
+    "player_5": "f535b6356673095f",
+    "player_6": "926957f2e6f308d5",
+    "player_7": "bd747df5bad977b1"
+   }
+  },
+  {
+   "seed": 7101,
+   "lobby": {
+    "player_0": "mimic",
+    "player_1": "fast8",
+    "player_2": "rolldown8",
+    "player_3": "hp50",
+    "player_4": "fast8roll",
+    "player_5": "rule",
+    "player_6": "rule",
+    "player_7": "rule"
+   },
+   "placements": {
+    "player_0": 2,
+    "player_1": 4,
+    "player_2": 6,
+    "player_3": 5,
+    "player_4": 7,
+    "player_5": 1,
+    "player_6": 3,
+    "player_7": 8
+   },
+   "actions": {
+    "player_0": 1800,
+    "player_1": 1620,
+    "player_2": 1380,
+    "player_3": 1500,
+    "player_4": 1140,
+    "player_5": 1800,
+    "player_6": 1680,
+    "player_7": 1020
+   },
+   "sim_fixes": [],
+   "sim_commit": "ff4db16ea7fa577e7875bc7a41ab6dcf0a655c81",
+   "rules": "set4",
+   "sim": "realistic",
+   "sim_options": {
+    "pve_damage": true,
+    "fortune_orbs": true,
+    "carousel_fixes": true,
+    "hide_next_opponent": true,
+    "rng_streams": "keyed",
+    "max_actions_per_round": 60
+   },
+   "carousel_pickers": [
+    "player_0",
+    "player_1",
+    "player_2",
+    "player_3",
+    "player_4"
+   ],
+   "seconds": 60.95,
+   "digest": {
+    "player_0": "dce34c12f4740b18",
+    "player_1": "5bf8d9fbb7131f30",
+    "player_2": "8aad4a9f6c99db26",
+    "player_3": "42d9a86db86b4aca",
+    "player_4": "75c01760925ca1ec",
+    "player_5": "07c6f61e584f5aa5",
+    "player_6": "b06fddd0ef790813",
+    "player_7": "0e47b676eab18a91"
+   }
+  },
+  {
+   "seed": 7102,
+   "lobby": {
+    "player_0": "mimic",
+    "player_1": "fast8",
+    "player_2": "rolldown8",
+    "player_3": "hp50",
+    "player_4": "fast8roll",
+    "player_5": "rule",
+    "player_6": "rule",
+    "player_7": "rule"
+   },
+   "placements": {
+    "player_0": 7,
+    "player_1": 5,
+    "player_2": 1,
+    "player_3": 3,
+    "player_4": 6,
+    "player_5": 8,
+    "player_6": 2,
+    "player_7": 4
+   },
+   "actions": {
+    "player_0": 1320,
+    "player_1": 1380,
+    "player_2": 1680,
+    "player_3": 1620,
+    "player_4": 1320,
+    "player_5": 1080,
+    "player_6": 1680,
+    "player_7": 1500
+   },
+   "sim_fixes": [],
+   "sim_commit": "ff4db16ea7fa577e7875bc7a41ab6dcf0a655c81",
+   "rules": "set4",
+   "sim": "realistic",
+   "sim_options": {
+    "pve_damage": true,
+    "fortune_orbs": true,
+    "carousel_fixes": true,
+    "hide_next_opponent": true,
+    "rng_streams": "keyed",
+    "max_actions_per_round": 60
+   },
+   "carousel_pickers": [
+    "player_0",
+    "player_1",
+    "player_2",
+    "player_3",
+    "player_4"
+   ],
+   "seconds": 67.67,
+   "digest": {
+    "player_0": "032bc7f709723721",
+    "player_1": "de6ecd2abf1da0c2",
+    "player_2": "076652c30db24a59",
+    "player_3": "f5075b15d8a2ea6c",
+    "player_4": "ef22d66a26e0d772",
+    "player_5": "953f687645bfa39e",
+    "player_6": "8b20c56e635e17eb",
+    "player_7": "3037f928741c727a"
+   }
+  }
+ ]
+}
