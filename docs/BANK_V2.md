@@ -120,7 +120,7 @@
 
 **2026-10-22 续跑**（10-09 16:47 UTC 暂停，10-22 18:10 UTC 在云端续上；benchmark 和题库都会跳过文件里已有的部分）：
 
-- Benchmark v2 的 `stance+hold`：312/312 局跑完（种子 30000～30311），平均名次 4.25 ±0.24，前四 55%，吃鸡 13%（`results/bench/v2_set4_dev_stance+hold.scorecard.md`）。同一批种子在 v1（15 个动作）上是 3.83 ±0.24、63%、18%。`stance`、`mimic` 接着跑：`results/bench/bench_v2.sh stance 2`，然后 `mimic`。
+- Benchmark v2 的 `stance+hold`：312/312 局跑完（种子 30000～30311），平均名次 4.25 ±0.24，前四 55%，吃鸡 13%（`results/bench/v2_set4_dev_stance+hold.scorecard.md`）。同一批种子在 v1（15 个动作）上是 3.83 ±0.24、63%、18%。`stance`：312/312 局，4.09 ±0.24，前四 56%，吃鸡 16%（`results/bench/v2_set4_dev_stance.scorecard.md`；v1 是 3.87 ±0.23）。按种子配对（同一种子房间和座位相同）：`stance+hold` − `stance` +0.16 ±0.27，和 v1 一样分不出；60 个动作比 15 个动作，`stance+hold` 差了 0.42 ±0.25 名，`stance` 差了 0.22 ±0.24 名（不显著）。名次是相对房间里的对手算的，对手也多了动作，所以这是相对的变化；一个可能的解释是执行器被 15 个动作卡得更多的对手（v1 里 `mimic` 的 `level_short` 是 `stance` 的近两倍）从放宽里得益更多（推断），`mimic` 的 v2 跑完可以核对。`mimic` 接着跑：`results/bench/bench_v2.sh mimic 2`。
 - 60 个动作的成对题：4 个局面都跑完，结论见上。9535 的一边要 86～108 分钟，一个局面要两边都跑完才写进文件，`run_pairs.sh` 默认的 6900 秒上限放不下（现在可以用 `TIMEOUT` 放宽）；这次是用同样的参数直接调 `build_pairs.py`、上限 18000 秒跑完的。
 - 题库 v2c：2026-10-22 19:58 UTC 开始，losing3 和 ref41，种子 9500～9559（共 80 题，ref41 只抽种子号是 3 的倍数的），3 个进程，写进新文件 `results/bank2/bank_c.jsonl`（`bank.jsonl`（模拟器 2ba01d5）和 `bank_b.jsonl`（5e2cb1c）不是现在的 ff4db16，往里续跑会被拒绝）。60 个动作下一道题单进程估计要 2 小时左右（15 个动作时 32～40 分钟，按每个分叉的耗时放大，推断），中途停下会丢掉正在跑的题，所以每次的上限要远长于一道题，这次用 12 小时：
 
