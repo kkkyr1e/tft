@@ -129,3 +129,7 @@ nice -n 19 timeout 43200 python scripts/build_bank2.py --lineups stance@rule:2,m
   --seeds 9500:60 --strata losing3 ref41 --sim realistic --rules set4 --workers 4 --fresh-workers \
   --k-start 8 --k-step 4 --k-min 32 --k-max 32 --budget-per-cand 32 --z 2.0 --out results/bank2/bank_c.jsonl
 ```
+
+**2026-10-23 暂停**（08:40 UTC 按要求暂停）：题库 v2c 写完 47/80 题，在 `results/bank2/bank_c.jsonl`：losing3 36 题（18 题触发），ref41 11 题。还差 33 题：ref41 的种子 9534、9537、9540、9543、9546、9549、9552、9555、9558，losing3 的种子 9532、9535、9538～9559。10-23 云端环境重启过三次（04:24、04:45、09:30 前后），每次丢掉当时在跑的题，写完的题不受影响。已触发的题 4 个进程同时跑时一道要 15～165 分钟，平均 72 分钟（`timing.item_seconds`），剩下的估计 6～8 小时（按 losing3 一半触发算，推断）。
+
+续跑：在这个分支或 `claude/bank-v2`（000930a）的 checkout 上（两者的 `tfteval/`、`scripts/` 相同），先用 `scripts/setup_sim.sh` 装好模拟器 ff4db16，再跑上面同一条命令，会跳过文件里已有的 47 题。
